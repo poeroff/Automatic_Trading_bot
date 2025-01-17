@@ -1,18 +1,19 @@
 from gui import Program_Gui
 from kiwoom_api import KiwoomAPI
 from  Auth.Login import Auth
+from PyQt5.QtWidgets import QApplication
+import sys
 
 def main():
-    a = Auth()
-    Kiwoom_OpenAPI= KiwoomAPI()
-    kiwoom = a.Kiwoom_Login()
-    Program = Program_Gui()
+    app = QApplication(sys.argv)
+    Login = Auth()
+    kiwoom = Login.Kiwoom_Login()
+    Program = Program_Gui(kiwoom)
     if(kiwoom.GetConnectState()):
-        root = Program_Gui.create_login_window()
-        root.mainloop()
-        # Kiwoom_OpenAPI.All_Stock_Data(kiwoom)
-        Program.on_login(kiwoom)
-       
+        Program.run()
+
+    app.exec_()
+
 if __name__ == "__main__":
     main()
 

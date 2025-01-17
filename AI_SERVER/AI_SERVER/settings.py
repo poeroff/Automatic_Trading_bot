@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -74,16 +75,19 @@ WSGI_APPLICATION = 'AI_SERVER.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default' : {
-        'ENGINE': 'django.db.backends.mysql', 
-        'NAME': 'test', 
-        'USER': 'root',  
-        'PASSWORD':'wqdsdsf123!',
-        'HOST': 'localhost', 
-        'PORT': '3306', 
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'test',
+        'USER': 'root',
+        'PASSWORD': 'wqdsdsf123!',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'use_unicode': True,
+        },
     }
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -124,3 +128,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
+}

@@ -6,7 +6,7 @@ import matplotlib.dates as mdates
 import pandas as pd
 
 def load_data():
-    conn = sqlite3.connect('stock_012330.db')
+    conn = sqlite3.connect('stock_035900.db')
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM stock_data")
     data = cursor.fetchall()
@@ -181,12 +181,36 @@ def plot_waves(df, peaks, waves):
         y_mid = (y1 + y2) / 2
         print("slope", slope)
 
-          # 기울기 제한 조건 추가 (기울기가 1보다 큰 경우 그리지 않음)
-        if (abs(slope) > 140 or slope < 0):
-            return
+        # 기울기가 제한 조건을 벗어나는 경우
+        if (abs(slope) > 140 or slope < -50):
+            if slope < -50:  # 음의 기울기가 너무 큰 경우
+                return  # 바로 종료
+            
+            # 기울기가 140보다 큰 경우에만 과거 고점 찾기
+            if abs(slope) > 140:
+                # 과거의 모든 고점들을 확인
+                highest_valid_peak = None
+                highest_price = 0
+                
+                for past_peak in peaks:  # peaks는 전체 고점 리스트
+                    if past_peak[0] >= x1:  # 현재 지점 이후의 고점은 제외
+                        continue
+                        
+                    # 과거 고점과의 새로운 기울기 계산
+                    new_slope = (y2 - past_peak[1]) / (x2 - past_peak[0])
+                    
+                    # 새로운 기울기가 조건을 만족하고, 가격이 더 높은 경우
+                    if (abs(new_slope) <= 140 and new_slope >= -50 and past_peak[1] > highest_price):
+                        highest_price = past_peak[1]
+                        highest_valid_peak = past_peak
+                
+                # 조건을 만족하는 과거 고점을 찾은 경우
+                if highest_valid_peak:
+                    x1, y1 = highest_valid_peak
+                    slope = (y2 - y1) / (x2 - x1)
+                else:
+                    return  # 적절한 과거 고점을 찾지 못한 경우
         
-      
-
         # 비슷한 선이 있는지 확인 (tolerance 값을 더 크게 설정)
         for existing_slope, existing_y in existing_lines:
             if is_similar_line(slope, y_mid, existing_slope, existing_y, tolerance=0.1):

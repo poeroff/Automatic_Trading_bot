@@ -86,7 +86,7 @@ export default function Header() {
 
           {/* Main Navigation - Hidden on mobile */}
           <nav className="hidden md:flex space-x-4">
-            <Link href="/market" className="text-gray-600 hover:text-blue-600">
+            <Link href="/" className="text-gray-600 hover:text-blue-600">
               시장동향
             </Link>
             <Link href="/stocks" className="text-gray-600 hover:text-blue-600">

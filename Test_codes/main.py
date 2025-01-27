@@ -6,7 +6,7 @@ import matplotlib.dates as mdates
 import pandas as pd
 
 def load_data():
-    conn = sqlite3.connect('stock_035900.db')
+    conn = sqlite3.connect('stock_012330.db')
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM stock_data")
     data = cursor.fetchall()
@@ -16,42 +16,74 @@ def load_data():
     return df
 
 
-def find_peaks(dataframe, high_column='High', compare_window=23, min_gap=184, threshold=0.2):
-        peaks = []
-        prices = dataframe[high_column].values
-        last_peak_idx = -min_gap
-        last_peak_price = 0
-        
-        # 224일 이동평균선 계산
-        ma224 = dataframe[high_column].rolling(window=184).mean()
-        
-        for i in range(compare_window, len(dataframe)):
-            window_before = prices[max(0, i-compare_window):i]
-            window_after = prices[i+1:min(len(prices), i+compare_window+1)]
-            current_price = prices[i]
+def find_peaks(dataframe, high_column='High', compare_window=23, threshold=0.2):
+    # 데이터의 단위 확인 (1일 vs 1분)
+    first_date = int(float(dataframe['Date'].iloc[0]))
+    second_date = int(float(dataframe['Date'].iloc[1]))
+    
+    # YYYYMMDD 형식으로 저장된 날짜를 datetime으로 변환
+    first_date = pd.to_datetime(str(first_date), format='%Y%m%d')
+    second_date = pd.to_datetime(str(second_date), format='%Y%m%d')
+
+    time_diff = second_date - first_date
+
+    
+    # 시간 차이가 1일이면 186, 7일이면 124
+    min_gap = 124 if time_diff.days >= 7 else 186
+    
+    peaks = []
+    prices = dataframe[high_column].values
+    last_peak_idx = -min_gap
+    last_peak_price = 0
+    
+    for i in range(compare_window, len(dataframe)):
+        window_before = prices[max(0, i-compare_window):i]
+        window_after = prices[i+1:min(len(prices), i+compare_window+1)]
+        current_price = prices[i]
+   
+        if (
+            current_price > np.max(window_before) and 
+            (len(window_after) == 0 or current_price > np.max(window_after))):
             
-            # 현재 가격이 224일 이동평균선 위에 있는지 확인
-            if (
-                current_price > np.max(window_before) and 
-                (len(window_after) == 0 or current_price > np.max(window_after))):
-                
-                future_min = np.min(prices[i:]) if i < len(prices)-1 else current_price
-                drop_ratio = (current_price - future_min) / current_price
-                
-                if drop_ratio >= threshold:
-                    if peaks and (i - last_peak_idx < min_gap):
-                        if current_price > last_peak_price:
-                            peaks.pop()
-                            peaks.append((i, current_price))
-                            last_peak_idx = i
-                            last_peak_price = current_price
-                    else:
+            future_min = np.min(prices[i:]) if i < len(prices)-1 else current_price
+            drop_ratio = (current_price - future_min) / current_price
+            
+            if drop_ratio >= threshold:
+                if peaks and (i - last_peak_idx < min_gap):
+                    if current_price > last_peak_price:
+                        peaks.pop()
                         peaks.append((i, current_price))
                         last_peak_idx = i
                         last_peak_price = current_price
-        
-        return peaks
+                else:
+                    peaks.append((i, current_price))
+                    last_peak_idx = i
+                    last_peak_price = current_price
+    
+    return peaks
 
+def get_resistance_price(peaks, n, current_idx):
+    if n == len(peaks) - 1:
+        current_peak = peaks[n-1]  # 이전 고점
+        next_peak = peaks[n]      # 현재(마지막) 고점
+    else:
+        current_peak = peaks[n]    # 현재 고점
+        next_peak = peaks[n + 1]   # 다음 고점
+    
+    # 같은 x 좌표를 가진 피크 처리
+    if next_peak[0] - current_peak[0] == 0:
+        return 0
+        
+    # 기울기 계산
+    slope = (next_peak[1] - current_peak[1]) / (next_peak[0] - current_peak[0])
+    
+    # y절편 계산
+    intercept = current_peak[1] - slope * current_peak[0]
+    
+    # 현재 x좌표에서의 저항선 가격 계산
+    resistance_price = slope * current_idx + intercept
+    
+    return resistance_price
 
 def analyze_waves( dataframe, peaks):
         waves = []
@@ -59,9 +91,13 @@ def analyze_waves( dataframe, peaks):
         # 날짜를 datetime 객체로 변환
         dates = pd.to_datetime(dataframe['Date'], format='%Y%m%d').values
 
+
+
         for i in range(len(peaks)):
+            
             peak_idx = peaks[i][0]
             next_idx = len(dataframe) if i == len(peaks) - 1 else peaks[i + 1][0]
+            
             
             wave_section = dataframe['Low'].iloc[peak_idx:next_idx]
             current_min = float('inf')
@@ -69,58 +105,70 @@ def analyze_waves( dataframe, peaks):
             max_rebound = 0  # 최대 반등 비율
             best_wave = None  # 최적의 파동 정보 저장
 
+
             # 고점 날짜를 pandas.Timestamp로 변환
             peak_date = pd.Timestamp(dates[peak_idx])
             
             for j in range(1, len(wave_section) - 1):
+                current_idx = wave_section.index[j]
                 current_price = wave_section.iloc[j]
-                current_date = pd.Timestamp(dates[wave_section.index[j]])  # 현재 날짜를 pandas.Timestamp로 변환
+                current_date = pd.Timestamp(dates[current_idx])  # 현재 날짜를 pandas.Timestamp로 변환
 
                 # 1년 이내 조건 확인
                 if current_date > peak_date + timedelta(days=365):
                     break  # 1년이 넘으면 더 이상 검사하지 않음
+           
+              
+                resistance_price = get_resistance_price(peaks, i, current_idx)
 
                 if current_price < current_min:
                     current_min = current_price
                     min_idx = wave_section.index[j]
                     continue  # 새로운 최저점을 찾았으므로 다음 반복으로
+                
 
                 # 현재 가격의 반등 비율 계산
                 rebound_ratio = (current_price - current_min) / current_min
-
+              
                 # 10~17% 사이의 반등이고, 지금까지 찾은 것보다 더 큰 반등이면 저장
-                if 0.1 <= rebound_ratio <= 0.175 and rebound_ratio > max_rebound:
-                    max_rebound = rebound_ratio
-                    best_wave = {
-                        'Wave_Number': i + 1,
-                        'Start_Index': peak_idx,
-                        'End_Index': next_idx,
-                        'Start_Price': peaks[i][1],
-                        'End_Price': peaks[i + 1][1] if i < len(peaks) - 1 else prices[-1],
-                        'Wave_Low': current_min,
-                        'Wave_Low_Index': min_idx,
-                        'Wave_High': max(wave_section),
-                        'Wave_Length': next_idx - peak_idx,
-                        'Rebound_Ratio': rebound_ratio * 100  # 백분율로 변환
-                    }
+                if rebound_ratio > max_rebound:
+
+                    # 저항선 가격 계산
+                    resistance_price = get_resistance_price(peaks, i, min_idx)  # 최저점에서의 저항선 가격
+
+                    # 최저점이 저항선보다 낮고
+                    if current_min < resistance_price:  # 최저점이 저항선보다 낮은지 먼저 확인
+                            max_rebound = rebound_ratio
+                            best_wave = {
+                                'Wave_Number': i + 1,
+                                'Start_Index': peak_idx,
+                                'End_Index': next_idx,
+                                'Start_Price': peaks[i][1],
+                                'End_Price': peaks[i + 1][1] if i < len(peaks) - 1 else prices[-1],
+                                'Wave_Low': current_min,
+                                'Wave_Low_Index': min_idx,
+                                'Wave_High': max(wave_section),
+                                'Wave_Length': next_idx - peak_idx,
+                                'Rebound_Ratio': rebound_ratio * 100  # 백분율로 변환
+                            }
 
             # 10~17% 사이의 반등을 찾은 경우
             if best_wave:
                 waves.append(best_wave)
             else:
-                # 반등이 없거나 조건에 맞지 않는 경우 기본 정보 저장
                 waves.append({
-                    'Wave_Number': i + 1,
-                    'Start_Index': peak_idx,
-                    'End_Index': next_idx,
-                    'Start_Price': peaks[i][1],
-                    'End_Price': peaks[i + 1][1] if i < len(peaks) - 1 else prices[-1],
-                    'Wave_Low': min(wave_section),
-                    'Wave_Low_Index': wave_section.idxmin(),
-                    'Wave_High': max(wave_section),
-                    'Wave_Length': next_idx - peak_idx,
-                    'Rebound_Ratio': 0  # 조건에 맞는 반등 없음
-                })
+                        'Wave_Number': i + 1,
+                        'Start_Index': peak_idx,
+                        'End_Index': next_idx,
+                        'Start_Price': peaks[i][1],
+                        'End_Price': peaks[i + 1][1] if i < len(peaks) - 1 else prices[-1],
+                        'Wave_Low': min(wave_section),
+                        'Wave_Low_Index': wave_section.idxmin(),
+                        'Wave_High': max(wave_section),
+                        'Wave_Length': next_idx - peak_idx,
+                        'Rebound_Ratio': 0  # 조건에 맞는 반등 없음
+                    })
+ 
 
         return waves
 
@@ -148,6 +196,8 @@ def filter_waves(waves, peaks):
     return filtered_waves, filtered_peaks
 
 
+
+
 def plot_waves(df, peaks, waves):
     plt.style.use('dark_background')
     fig, ax = plt.subplots(figsize=(15, 8))
@@ -167,108 +217,194 @@ def plot_waves(df, peaks, waves):
     max_price = max(df['High']) * 1.2
     ax.set_ylim(0, max_price)
     
-    def is_similar_line(slope1, y1, slope2, y2, tolerance=0.05):
-        """두 선이 비슷한지 확인 (기울기와 y값 모두 고려)"""
-        slope_similar = abs(slope1 - slope2) / (abs(slope1) + 1e-6) < tolerance
-        y_similar = abs(y1 - y2) / (abs(y1) + 1e-6) < tolerance
-        return slope_similar and y_similar
-    
-    existing_lines = []  # [(slope, y_value)] 리스트
     
     def draw_trendline_with_parallel(x1, y1, x2, y2, wave_low_x, wave_low_y):
-        # 추세선의 기울기와 y값 계산
-        slope = (y2 - y1) / (x2 - x1)
-        y_mid = (y1 + y2) / 2
-        print("slope", slope)
+        # 같은 x 좌표를 가진 점 처리
+        if x2 - x1 == 0:
+            return
 
-        # 기울기가 제한 조건을 벗어나는 경우
-        if (abs(slope) > 140 or slope < -50):
-            if slope < -50:  # 음의 기울기가 너무 큰 경우
-                return  # 바로 종료
-            
-            # 기울기가 140보다 큰 경우에만 과거 고점 찾기
-            if abs(slope) > 140:
-                # 과거의 모든 고점들을 확인
-                highest_valid_peak = None
-                highest_price = 0
+        # 현재 고점(x2, y2)을 지나는 모든 가능한 추세선들 찾기
+        valid_connections = []
+        for prev_peak in peaks:
+            if prev_peak[0] >= x2:
+                continue
                 
-                for past_peak in peaks:  # peaks는 전체 고점 리스트
-                    if past_peak[0] >= x1:  # 현재 지점 이후의 고점은 제외
-                        continue
-                        
-                    # 과거 고점과의 새로운 기울기 계산
-                    new_slope = (y2 - past_peak[1]) / (x2 - past_peak[0])
-                    
-                    # 새로운 기울기가 조건을 만족하고, 가격이 더 높은 경우
-                    if (abs(new_slope) <= 140 and new_slope >= -50 and past_peak[1] > highest_price):
-                        highest_price = past_peak[1]
-                        highest_valid_peak = past_peak
-                
-                # 조건을 만족하는 과거 고점을 찾은 경우
-                if highest_valid_peak:
-                    x1, y1 = highest_valid_peak
-                    slope = (y2 - y1) / (x2 - x1)
-                else:
-                    return  # 적절한 과거 고점을 찾지 못한 경우
+            prev_slope = (y2 - prev_peak[1]) / (x2 - prev_peak[0])
         
-        # 비슷한 선이 있는지 확인 (tolerance 값을 더 크게 설정)
-        for existing_slope, existing_y in existing_lines:
-            if is_similar_line(slope, y_mid, existing_slope, existing_y, tolerance=0.1):
-                return  # 비슷한 선이 있으면 그리지 않음
-        
-        # 새로운 선 추가 및 그리기
-        existing_lines.append((slope, y_mid))
-        x_extended = np.array([x1, len(df)])
-        y_extended = slope * x_extended + (y1 - slope * x1)
-        ax.plot(x_extended, y_extended, color='green', linestyle='-', linewidth=2, alpha=0.5)
+            if -30 <= prev_slope <= 160 and not does_line_cross_price(df, prev_peak[0], prev_peak[1], x2, y2):
+                valid_connections.append(prev_peak)
+     
+
+        if valid_connections:
+            # 시간순으로 정렬
+            valid_connections.sort(key=lambda x: x[0])
+            # 가장 오래된 고점과 가장 최근 고점만 선택
+            oldest_peak = valid_connections[0]
+            # newest_peak = valid_connections[-1]
       
-        # 평행선 그리기
-        parallel_intercept = wave_low_y - slope * wave_low_x
-        x_parallel = np.array([wave_low_x, len(df)])
-        y_parallel = slope * x_parallel + parallel_intercept
-        ax.plot(x_parallel, y_parallel, color='blue', linestyle='--', linewidth=2, alpha=0.5)
+        
+            
+            # 가장 오래된 고점과의 추세선
+            x_extended = np.array([oldest_peak[0], len(df)])
+            y_extended = oldest_peak[1] + (y2 - oldest_peak[1]) * (x_extended - oldest_peak[0]) / (x2 - oldest_peak[0])
+            ax.plot(x_extended, y_extended, color='green', linestyle='-', linewidth=2, alpha=0.5)
+            print("추세선이 연결하는 두 점:")
+            print("시작점: ({}, {})".format(oldest_peak[0], oldest_peak[1]))
+            print("끝점: ({}, {})".format(x2, y2))
+
+
+            # # 가장 최근 고점과의 추세선 (오래된 것과 다른 경우에만)
+            # if newest_peak != oldest_peak:
+            #     x_extended = np.array([newest_peak[0], len(df)])
+            #     y_extended = newest_peak[1] + (y2 - newest_peak[1]) * (x_extended - newest_peak[0]) / (x2 - newest_peak[0])
+            #     ax.plot(x_extended, y_extended, color='green', linestyle='-', linewidth=2, alpha=0.5)
+
+            # 평행선 그리기 (n+1번째 고점의 파동에 대해서만)
+            if(oldest_peak[0] == x1):
+                x_parallel = np.array([wave_low_x, len(df)])
+                y_parallel = wave_low_y + (y2 - y1) * (x_parallel - wave_low_x) / (x2 - x1)
+                ax.plot(x_parallel, y_parallel, color='blue', linestyle='--', linewidth=2, alpha=0.5)
+ 
     
     # 최근 고점들만 사용
-    recent_peaks = peaks[-6:]
-    recent_waves = waves[-6:]
+    recent_peaks = peaks[:]
+    recent_waves = waves[:]
     
     for i in range(len(recent_peaks) - 1):
         current_peak = recent_peaks[i]
         next_peak = recent_peaks[i+1]
         
-        # 다음 고점이 현재 고점보다 높을 때만 가격 차이 계산
-        if next_peak[1] > current_peak[1]:
+        # 같은 x 좌표를 가진 피크 처리
+        if next_peak[0] - current_peak[0] == 0:
+            continue
         
-            price_diff_percent = (next_peak[1] - current_peak[1]) / current_peak[1] * 100
+        # 현재 고점과 다음 고점 사이의 기울기 계산 - x축과 y축의 스케일을 맞춤
+        x_range = df['High'].index.max() - df['High'].index.min()
+        y_range = df['High'].max() - df['High'].min()
+        
+        # 스케일 조정된 기울기 계산
+        dx = (next_peak[0] - current_peak[0]) / x_range * 100  # x 변화량을 100 기준으로 정규화
+        dy = (next_peak[1] - current_peak[1]) / y_range * 100  # y 변화량을 100 기준으로 정규화
+        slope = dy / dx * 100  # 실제 각도에 가까운 기울기
+        print("slope:",slope)
+    
+
+        # 기울기가 160 이상인 경우는 그대로 유지
+        if slope > 160:
+            all_previous_peaks = recent_peaks[:i+1]
+            highest_valid_peak = None
+            highest_price = 0
+                
+            # 과거 고점 중에서 가장 높은 가격을 찾고, 기울기가 160 이하인 경우
+            for prev_peak in all_previous_peaks:
+                dx = (next_peak[0] - prev_peak[0]) / x_range * 100
+                dy = (next_peak[1] - prev_peak[1]) / y_range * 100
+                new_slope = dy / dx * 100
          
+                    
+                if new_slope <= 160 and prev_peak[1] > highest_price:
+                    highest_price = prev_peak[1]
+                    highest_valid_peak = prev_peak
+          
+                # 조건을 만족하는 과거 고점을 찾은 경우
+                if highest_valid_peak:
+                    draw_trendline_with_parallel(highest_valid_peak[0], highest_valid_peak[1],
+                                        next_peak[0], next_peak[1],
+                                        recent_waves[i+1]['Wave_Low_Index'],
+                                        recent_waves[i+1]['Wave_Low'])
+                    highest_valid_peak = None
+            continue
             
-            if price_diff_percent >= 25:
-                # 40% 이상 높을 경우: 다음 고점과 가장 가까운 과거 고점 찾기
-                all_previous_peaks = recent_peaks[:i+1]
-                closest_peak = None
-                min_diff = float('inf')
-                
-                # 가장 가까운 가격의 고점 찾기
-                for prev_peak in all_previous_peaks:
-                    diff = abs(prev_peak[1] - next_peak[1])
-                 
-                    if diff < min_diff:
-                        min_diff = diff
-                        closest_peak = prev_peak
-                
-                if closest_peak:
-                    draw_trendline_with_parallel(closest_peak[0], closest_peak[1],
-                                               next_peak[0], next_peak[1],
-                                               recent_waves[i+1]['Wave_Low_Index'],
-                                               recent_waves[i+1]['Wave_Low'])
-                continue  # 다음 반복으로 넘어감
+        # 기울기가 -30도보다 작을 때는 기존 로직 그대로 적용
+        elif slope < -30:
+            # 기존 로직 적용 (미래 고점 찾기)
+            future_peaks = recent_peaks[i+1:]
+            valid_peak = None
+            min_positive_slope = float('inf')
+            min_negative_slope = float('-inf')
+            positive_peak = None
+            negative_peak = None
+            
+            for future_peak in future_peaks:
+                new_slope = (future_peak[1] - current_peak[1]) / (future_peak[0] - current_peak[0])
+                if not does_line_cross_price(df, current_peak[0], current_peak[1], 
+                                           future_peak[0], future_peak[1]):
+                    if 0 <= new_slope <= 160:
+                        if new_slope < min_positive_slope:
+                            min_positive_slope = new_slope
+                            positive_peak = future_peak
+                    elif new_slope > min_negative_slope:
+                        min_negative_slope = new_slope
+                        negative_peak = future_peak
+            
+            valid_peak = positive_peak if positive_peak else negative_peak
+            
+            if valid_peak:
+                valid_peak_idx = next(idx for idx, peak in enumerate(recent_peaks) if peak[0] == valid_peak[0])
+                draw_trendline_with_parallel(current_peak[0], current_peak[1],
+                                           valid_peak[0], valid_peak[1],
+                                           recent_waves[valid_peak_idx]['Wave_Low_Index'],
+                                           recent_waves[valid_peak_idx]['Wave_Low'])
+            
+            # 다음 고점과도 연결
+            draw_trendline_with_parallel(current_peak[0], current_peak[1],
+                                         next_peak[0], next_peak[1],
+                                         recent_waves[i+1]['Wave_Low_Index'],
+                                         recent_waves[i+1]['Wave_Low'])
+            continue
         
-        # 그 외의 경우: 인접한 고점끼리 연결
+        # 기울기가 0~-30도 사이일 때는 기존 로직과 다음 고점 연결 둘 다 적용
+        elif -30 <= slope < 0:
+            # 기존 로직 적용 (미래 고점 찾기)
+         
+            future_peaks = recent_peaks[i+1:]
+            valid_peak = None
+            min_positive_slope = float('inf')
+            min_negative_slope = float('-inf')
+            positive_peak = None
+            negative_peak = None
+            
+            # 다음 고점과 직접 연결 (이 부분을 조건문 시작 부분으로 이동)
+            draw_trendline_with_parallel(current_peak[0], current_peak[1],
+                                       next_peak[0], next_peak[1],
+                                       recent_waves[i+1]['Wave_Low_Index'],
+                                       recent_waves[i+1]['Wave_Low'])
+            
+            for future_peak in future_peaks:
+                new_slope = (future_peak[1] - current_peak[1]) / (future_peak[0] - current_peak[0])
+                if not does_line_cross_price(df, current_peak[0], current_peak[1], 
+                                           future_peak[0], future_peak[1]):
+                    if 0 <= new_slope <= 160:
+                        if new_slope < min_positive_slope:
+                            min_positive_slope = new_slope
+                            positive_peak = future_peak
+                    elif new_slope > min_negative_slope:
+                        min_negative_slope = new_slope
+                        negative_peak = future_peak
+            
+            valid_peak = positive_peak if positive_peak else negative_peak
+            
+            if valid_peak:
+                valid_peak_idx = next(idx for idx, peak in enumerate(recent_peaks) if peak[0] == valid_peak[0])
+                draw_trendline_with_parallel(current_peak[0], current_peak[1],
+                                           valid_peak[0], valid_peak[1],
+                                           recent_waves[valid_peak_idx]['Wave_Low_Index'],
+                                           recent_waves[valid_peak_idx]['Wave_Low'])
+            
+            # 다음 고점과도 연결
+            draw_trendline_with_parallel(current_peak[0], current_peak[1],
+                                         next_peak[0], next_peak[1],
+                                         recent_waves[i+1]['Wave_Low_Index'],
+                                         recent_waves[i+1]['Wave_Low'])
+            continue
+        
+        # 그 외의 경우(기울기가 0 이상): 인접한 고점끼리 연결
         draw_trendline_with_parallel(current_peak[0], current_peak[1],
-                                   next_peak[0], next_peak[1],
-                                   recent_waves[i+1]['Wave_Low_Index'],
-                                   recent_waves[i+1]['Wave_Low'])
+                                     next_peak[0], next_peak[1],
+                                     recent_waves[i+1]['Wave_Low_Index'],
+                                     recent_waves[i+1]['Wave_Low'])
    
+
     ax.set_title('Stock Price Waves Analysis')
     ax.grid(True, alpha=0.2)
     ax.legend()
@@ -284,6 +420,7 @@ def analyze_stock_data():
     
     # trend_lines 받아서 출력
     trend_lines = generate_trend_lines(df, filtered_peaks, filtered_waves)
+
     print("\n=== 저항선 정보 ===")
     print("주요 저항선 개수:", len(trend_lines["trends"]))
     print(trend_lines['trends'])
@@ -310,123 +447,235 @@ def generate_trend_lines(df, peaks, waves):
         "parallels": []    # 평행선
     }
     
-    existing_lines = []  # 중복 방지용
-    
-    def is_similar_line(slope1, y1, slope2, y2, tolerance=0.05):
-        slope_similar = abs(slope1 - slope2) / (abs(slope1) + 1e-6) < tolerance
-        y_similar = abs(y1 - y2) / (abs(y1) + 1e-6) < tolerance
-        return slope_similar and y_similar
-    
-    def add_trendline_with_parallel(x1, y1, x2, y2, wave_low_x, wave_low_y):
-        # 추세선의 기울기와 y값 계산
-        slope = (y2 - y1) / (x2 - x1)
-        y_mid = (y1 + y2) / 2
+    def add_trend_and_parallel(x1, y1, x2, y2, wave_low_x, wave_low_y):
+        # 같은 x 좌표를 가진 점 처리
+        if x2 - x1 == 0:
+            return
+
+        # 현재 고점(x2, y2)을 지나는 모든 가능한 추세선들 찾기
+        valid_connections = []
+        for prev_peak in peaks:
+            if prev_peak[0] >= x2:
+                continue
+                
+            prev_slope = (y2 - prev_peak[1]) / (x2 - prev_peak[0])
+            if -30 <= prev_slope <= 160 and not does_line_cross_price(df, prev_peak[0], prev_peak[1], x2, y2):
+                valid_connections.append(prev_peak)
         
-        # 중복 체크
-        for existing_slope, existing_y in existing_lines:
-            if is_similar_line(slope, y_mid, existing_slope, existing_y, tolerance=0.1):
-                return
-        
-        existing_lines.append((slope, y_mid))
-        
-        # 추세선 정보 저장
-        trend_lines["trends"].append({
-            "start": (df.index[x1], y1),
-            "end": (df.index[x2], y2),
-            "slope": slope
-        })
-        
-        # 평행선 정보 저장
-        parallel_intercept = wave_low_y - slope * wave_low_x
-        trend_lines["parallels"].append({
-            "start": (df.index[wave_low_x], wave_low_y),
-            "slope": slope,
-            "intercept": parallel_intercept
-        })
-    
+        if valid_connections:
+            # 시간순으로 정렬
+            valid_connections.sort(key=lambda x: x[0])
+            # 가장 오래된 고점과 가장 최근 고점만 선택
+            oldest_peak = valid_connections[0]
+            # newest_peak = valid_connections[-1]
+            
+            # 가장 오래된 고점과의 추세선 (중복 체크)
+            new_trend = {
+                "start": (oldest_peak[0], oldest_peak[1]),
+                "end": (x2, y2),
+                "slope": (y2 - oldest_peak[1]) / (x2 - oldest_peak[0])
+            }
+            
+            # 중복 체크
+            if not any(
+                t["start"] == new_trend["start"] and 
+                t["end"] == new_trend["end"] and 
+                abs(t["slope"] - new_trend["slope"]) < 0.0001 
+                for t in trend_lines["trends"]
+            ):
+                trend_lines["trends"].append(new_trend)
+            
+            # # 가장 최근 고점과의 추세선 (오래된 것과 다른 경우에만)
+            # if newest_peak != oldest_peak:
+            #     new_trend = {
+            #         "start": (newest_peak[0], newest_peak[1]),
+            #         "end": (x2, y2),
+            #         "slope": (y2 - newest_peak[1]) / (x2 - newest_peak[0])
+            #     }
+                
+            #     # 중복 체크
+            #     if not any(
+            #         t["start"] == new_trend["start"] and 
+            #         t["end"] == new_trend["end"] and 
+            #         abs(t["slope"] - new_trend["slope"]) < 0.0001 
+            #         for t in trend_lines["trends"]
+            #     ):
+            #         trend_lines["trends"].append(new_trend)
+            if(oldest_peak[0] == x1):
+                # 평행선 정보 저장 - 조건문 밖으로 이동
+                parallel_slope = (y2 - y1) / (x2 - x1)
+                parallel_intercept = wave_low_y - parallel_slope * wave_low_x
+                
+                # 지지선 중복 체크
+                new_parallel = {
+                    "start": (wave_low_x, wave_low_y),
+                    "slope": parallel_slope,
+                    "intercept": parallel_intercept
+                }
+                
+                if not any(
+                    p["start"] == new_parallel["start"] and 
+                    abs(p["slope"] - new_parallel["slope"]) < 0.0001 
+                    for p in trend_lines["parallels"]
+                ):
+                    trend_lines["parallels"].append(new_parallel)
+
     # 최근 고점들만 사용
-    recent_peaks = peaks[-6:]
-    recent_waves = waves[-6:]
+    recent_peaks = peaks[:]
+    recent_waves = waves[:]
     
     for i in range(len(recent_peaks) - 1):
         current_peak = recent_peaks[i]
         next_peak = recent_peaks[i+1]
         
-        # 50% 이상 상승 시
-        if next_peak[1] > current_peak[1]:
-            price_diff_percent = (next_peak[1] - current_peak[1]) / current_peak[1] * 100
-            
-            if price_diff_percent >= 50:
-                # 가장 가까운 과거 고점 찾기
-                all_previous_peaks = recent_peaks[:i+1]
-                closest_peak = min(all_previous_peaks, 
-                                 key=lambda x: abs(x[1] - next_peak[1]))
-                
-                add_trendline_with_parallel(closest_peak[0], closest_peak[1],
-                                          next_peak[0], next_peak[1],
-                                          recent_waves[i+1]['Wave_Low_Index'],
-                                          recent_waves[i+1]['Wave_Low'])
-                continue
+        # 같은 x 좌표를 가진 피크 처리
+        if next_peak[0] - current_peak[0] == 0:
+            continue
         
-        # 일반적인 경우
-        add_trendline_with_parallel(current_peak[0], current_peak[1],
-                                  next_peak[0], next_peak[1],
-                                  recent_waves[i+1]['Wave_Low_Index'],
-                                  recent_waves[i+1]['Wave_Low'])
+        # 현재 고점과 다음 고점 사이의 기울기 계산 - x축과 y축의 스케일을 맞춤
+        x_range = df['High'].index.max() - df['High'].index.min()
+        y_range = df['High'].max() - df['High'].min()
+        
+        # 스케일 조정된 기울기 계산
+        dx = (next_peak[0] - current_peak[0]) / x_range * 100  # x 변화량을 100 기준으로 정규화
+        dy = (next_peak[1] - current_peak[1]) / y_range * 100  # y 변화량을 100 기준으로 정규화
+        slope = dy / dx * 100  # 실제 각도에 가까운 기울기
+
+        # 기울기가 160 이상인 경우는 그대로 유지
+        if slope > 160:
+            all_previous_peaks = recent_peaks[:i+1]
+            highest_valid_peak = None
+            highest_price = 0
+                
+            # 과거 고점 중에서 가장 높은 가격을 찾고, 기울기가 160 이하인 경우
+            for prev_peak in all_previous_peaks:
+                dx = (next_peak[0] - prev_peak[0]) / x_range * 100
+                dy = (next_peak[1] - prev_peak[1]) / y_range * 100
+                new_slope = dy / dx * 100
+                    
+                if new_slope <= 160 and prev_peak[1] > highest_price:
+            
+                    highest_price = prev_peak[1]
+                    highest_valid_peak = prev_peak
+            
+            # 조건을 만족하는 과거 고점을 찾은 경우
+            if highest_valid_peak:
+                add_trend_and_parallel(highest_valid_peak[0], highest_valid_peak[1],
+                                     next_peak[0], next_peak[1],
+                                     recent_waves[i+1]['Wave_Low_Index'],
+                                     recent_waves[i+1]['Wave_Low'])
+            continue
+            
+        # 기울기가 -30도보다 작을 때는 기존 로직 그대로 적용
+        if slope < -30:
+            # 기존 로직 적용 (미래 고점 찾기)
+            future_peaks = recent_peaks[i+1:]
+            valid_peak = None
+            min_positive_slope = float('inf')
+            min_negative_slope = float('-inf')
+            positive_peak = None
+            negative_peak = None
+            
+            for future_peak in future_peaks:
+                new_slope = (future_peak[1] - current_peak[1]) / (future_peak[0] - current_peak[0])
+                if not does_line_cross_price(df, current_peak[0], current_peak[1], 
+                                           future_peak[0], future_peak[1]):
+                    if 0 <= new_slope <= 160:
+                        if new_slope < min_positive_slope:
+                            min_positive_slope = new_slope
+                            positive_peak = future_peak
+                    elif new_slope > min_negative_slope:
+                        min_negative_slope = new_slope
+                        negative_peak = future_peak
+            
+            valid_peak = positive_peak if positive_peak else negative_peak
+            
+            if valid_peak:
+                valid_peak_idx = next(idx for idx, peak in enumerate(recent_peaks) if peak[0] == valid_peak[0])
+                add_trend_and_parallel(current_peak[0], current_peak[1],
+                                     valid_peak[0], valid_peak[1],
+                                     recent_waves[valid_peak_idx]['Wave_Low_Index'],
+                                     recent_waves[valid_peak_idx]['Wave_Low'])
+            
+            # 다음 고점과도 연결
+            add_trend_and_parallel(current_peak[0], current_peak[1],
+                                     next_peak[0], next_peak[1],
+                                     recent_waves[i+1]['Wave_Low_Index'],
+                                     recent_waves[i+1]['Wave_Low'])
+            continue
+        
+        # 기울기가 0~-30도 사이일 때는 기존 로직과 다음 고점 연결 둘 다 적용
+        if -30 <= slope < 0:
+            # 기존 로직 적용 (미래 고점 찾기)
+            future_peaks = recent_peaks[i+1:]
+            valid_peak = None
+            min_positive_slope = float('inf')
+            min_negative_slope = float('-inf')
+            positive_peak = None
+            negative_peak = None
+            
+            # 다음 고점과 직접 연결 (이 부분을 조건문 시작 부분으로 이동)
+            add_trend_and_parallel(current_peak[0], current_peak[1],
+                                   next_peak[0], next_peak[1],
+                                   recent_waves[i+1]['Wave_Low_Index'],
+                                   recent_waves[i+1]['Wave_Low'])
+            
+            for future_peak in future_peaks:
+                new_slope = (future_peak[1] - current_peak[1]) / (future_peak[0] - current_peak[0])
+                if not does_line_cross_price(df, current_peak[0], current_peak[1], 
+                                           future_peak[0], future_peak[1]):
+                    if 0 <= new_slope <= 160:
+                        if new_slope < min_positive_slope:
+                            min_positive_slope = new_slope
+                            positive_peak = future_peak
+                    elif new_slope > min_negative_slope:
+                        min_negative_slope = new_slope
+                        negative_peak = future_peak
+            
+            valid_peak = positive_peak if positive_peak else negative_peak
+            
+            if valid_peak:
+                valid_peak_idx = next(idx for idx, peak in enumerate(recent_peaks) if peak[0] == valid_peak[0])
+                add_trend_and_parallel(current_peak[0], current_peak[1],
+                                     valid_peak[0], valid_peak[1],
+                                     recent_waves[valid_peak_idx]['Wave_Low_Index'],
+                                     recent_waves[valid_peak_idx]['Wave_Low'])
+            
+            # 다음 고점과도 연결
+            add_trend_and_parallel(current_peak[0], current_peak[1],
+                                     next_peak[0], next_peak[1],
+                                     recent_waves[i+1]['Wave_Low_Index'],
+                                     recent_waves[i+1]['Wave_Low'])
+            continue
+        
+        # 그 외의 경우(기울기가 0 이상): 인접한 고점끼리 연결
+        add_trend_and_parallel(current_peak[0], current_peak[1],
+                             next_peak[0], next_peak[1],
+                             recent_waves[i+1]['Wave_Low_Index'],
+                             recent_waves[i+1]['Wave_Low'])
     
     return trend_lines
 
 
-def plot_with_trend_lines(df, trend_lines):
-    """주가 데이터와 추세선을 함께 시각화"""
-    plt.style.use('dark_background')
-    fig, ax = plt.subplots(figsize=(15, 8))
+def does_line_cross_price(df, x1, y1, x2, y2):
+    """두 점을 잇는 선이 그 사이의 가격을 가로지르는지 확인"""
+    if x1 >= x2 or x2 - x1 == 0:  # x 좌표가 같은 경우도 체크
+        return True
     
-    # 주가 그래프
-    ax.plot(df['High'], color='white', alpha=0.7, label='Price')
+    # 선의 방정식 계수
+    slope = (y2 - y1) / (x2 - x1)
+    intercept = y1 - slope * x1
     
-    # 저항선 그리기
-    for trend in trend_lines['trends']:
-        start_idx, start_price = trend['start']
-        end_idx, end_price = trend['end']
+    # 두 점 사이의 모든 가격 데이터 확인
+    for x in range(x1 + 1, x2):
+        line_y = slope * x + intercept  # 선 위의 y값
+        price = df.iloc[x]['High']      # 해당 시점의 가격
         
-        # 추세선 연장
-        x_extended = np.array([start_idx, len(df)])
-        slope = trend['slope']
-        y_extended = slope * (x_extended - start_idx) + start_price
-        
-        ax.plot(x_extended, y_extended, color='red', linestyle='-', 
-                linewidth=2, alpha=0.7, label='Resistance')
+        # 선이 가격을 가로지르는지 확인
+        if line_y < price:
+            return True
     
-    # 지지선 그리기
-    for parallel in trend_lines['parallels']:
-        start_idx, start_price = parallel['start']
-        slope = parallel['slope']
-        intercept = parallel['intercept']
-        
-        # 지지선 연장
-        x_extended = np.array([start_idx, len(df)])
-        y_extended = slope * x_extended + intercept
-        
-        ax.plot(x_extended, y_extended, color='green', linestyle='--', 
-                linewidth=2, alpha=0.7, label='Support')
-    
-    # 그래프 설정
-    ax.set_title('Stock Price with Trend Lines', fontsize=15)
-    ax.grid(True, alpha=0.2)
-    
-    # 중복되는 레이블 제거
-    handles, labels = plt.gca().get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    plt.legend(by_label.values(), by_label.keys())
-    
-    plt.tight_layout()
-    plt.show()
-
-
-
-
-
+    return False
 
 if __name__ == "__main__":
     analyze_stock_data()

@@ -24,6 +24,7 @@ class Trade:
         self.alert_cooldown = {}
         self.stock_dataframes = {} 
         self.fids = ["10"]  # 현재가
+        self.alert_history = {}  # 코드별 마지막 알람 시간을 저장할 딕셔너리
         
         # 키움 객체의 내부 QAxWidget에 이벤트 핸들러 연결
         self.kiwoom.ocx.OnReceiveRealData.connect(self._receive_real_data)
@@ -75,6 +76,18 @@ class Trade:
             return 500  # 예시: 500원
         else:
             return 1000  # 예시: 1000원
+        
+
+    def queue_telegram_message(self, code, current_price, trend_price, line_type):
+        """텔레그램 메시지 큐에 추가"""
+        message = f"🔔 {line_type} 근접 알림!\n\n"
+        message += f"종목코드: {code}\n"
+        message += f"현재가격: {current_price:,}원\n"
+        message += f"{line_type} 가격: {trend_price:,}원\n"
+        message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        
+        # 비동기 이벤트 루프에서 메시지 전송
+        asyncio.get_event_loop().create_task(self.send_telegram_message(message))
 
 
     async def send_error_message(self, error_type, details):
@@ -98,23 +111,21 @@ class Trade:
         except Exception as e:
             print(f"에러 메시지 전송 실패: {str(e)}")
 
-    async def send_alert(self, code, current_price, trend_price, line_type):
-        """알람 전송"""
+    async def send_telegram_message(self, message):
+        """텔레그램 메시지 전송"""
         try:
-            message = f"🔔 {line_type} 근접 알림!\n\n"
-            message += f"종목코드: {code}\n"
-            message += f"현재가격: {current_price:,}원\n"
-            message += f"{line_type} 가격: {trend_price:,}원\n"
-            message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            
-            # 텔레그램 봇을 사용하여 메시지 전송
+            if self.telegram_bot is None:
+                print("텔레그램 봇이 초기화되지 않았습니다.")
+                return
+                
             await self.telegram_bot.send_message(
                 chat_id=self.telegram_chat_id,
                 text=message
             )
+            print("텔레그램 메시지 전송 완료")
+            
         except Exception as e:
-            print(f"알람 전송 중 에러: {str(e)}")
-
+            print(f"텔레그램 메시지 전송 실패: {str(e)}")
    
     async def surveillance(self):
         """종목 분석 수행"""
@@ -145,13 +156,14 @@ class Trade:
                     result = await self.analyze_stock(code)
                     if result:
                         all_trend_lines.update(result)
-                        successful_codes.append(code)  # 성공한 종목 코드 추가
+                        successful_codes.append(code)
                         print(f"종목 {code} 분석 성공")
                     else:
                         failed_codes.append(code)
-                        print(f"종목 {code} 분석 실패")
+                        print(f"종목 {code} 분석 실패 - 결과 없음")
                 except Exception as e:
-                    error_msg = f"종목 분석 실패: {code}\n에러 내용: {str(e)}"
+                    error_msg = f"종목 분석 실패: {code}\n에러 내용: {str(e)}\n"
+                    print(error_msg)  # 콘솔에 출력
                     await self.send_error_message("종목 분석 에러", error_msg)
                     failed_codes.append(code)
 
@@ -197,7 +209,13 @@ class Trade:
                     if response.status == 200:
                         data = await response.json()
                         if data['status'] == 'success':
+                            if not data['data']:  # 데이터가 비어있는 경우 체크
+                                print(f"종목 {code}: 데이터가 비어있습니다")
+                                return None
                             df = pd.DataFrame(data['data'])
+                            if len(df) < 2:  # 최소 데이터 포인트 체크
+                                print(f"종목 {code}: 충분한 데이터 포인트가 없습니다 (개수: {len(df)})")
+                                return None
                             df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y%m%d').astype(int)
                             self.stock_dataframes[code] = df
                             peaks = self.Trading_Technique.find_peaks(df)
@@ -205,19 +223,32 @@ class Trade:
                             filtered_waves, filtered_peaks = self.Trading_Technique.filter_waves(waves, peaks)
                             trend_lines = self.Trading_Technique.generate_trend_lines(df, filtered_peaks, filtered_waves)
                             return {code: trend_lines}
+                        else:
+                            print(f"종목 {code}: API 응답 실패 - {data.get('message', '알 수 없는 오류')}")
+                            return None
                     else:
-                        print(f"API 호출 실패: {response.status}")
+                        print(f"종목 {code}: API 호출 실패 - 상태 코드 {response.status}")
                         return None
-                    
+                
         except Exception as e:
-            print(f"종목 {code} 분석 중 에러: {str(e)}")
+            print(f"종목 {code} 분석 중 에러: {str(e)}\n상세 정보: {type(e).__name__}")
             return None
 
     def _receive_real_data(self, code, real_type, real_data):
         """실시간 데이터 수신"""
         try:
             if real_type == "주식체결":
-                current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))  # 절대값 처리
+                # 현재 시간 확인
+                current_time = time.time()
+                
+                # 마지막 알람으로부터 8시간이 지났는지 확인
+                if code in self.alert_history:
+                    last_alert_time = self.alert_history[code]
+                    time_diff = current_time - last_alert_time
+                    if time_diff < 8 * 3600:  # 8시간(초 단위)
+                        return  # 8시간이 지나지 않았으면 알람 보내지 않음
+                
+                current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))
                 closest_trend, closest_parallel = self.find_closest_line(code, current_price)
                 if closest_trend is not None:
                     closest_trend = self.adjust_price(closest_trend)
@@ -229,14 +260,20 @@ class Trade:
                 
                 price_margin = self.get_price_margin(current_price)
 
+                # 알람 조건이 만족되면 현재 시간을 저장
+                if ((closest_trend is not None and abs(current_price - closest_trend) <= price_margin) or
+                    (closest_parallel is not None and abs(current_price - closest_parallel) <= price_margin)):
+                    self.alert_history[code] = current_time
+
                 # 알람 조건 설정
                 if closest_trend is not None and abs(current_price - closest_trend) <= price_margin:
                     print(f"저항선 알람 조건 만족: {code}")
-                    #self.send_alert(code, current_price, closest_trend, "저항선")
+                    self.queue_telegram_message(code, current_price, closest_trend, "저항선")
+
                 
                 if closest_parallel is not None and abs(current_price - closest_parallel) <= price_margin:
                     print(f"지지선 알람 조건 만족: {code}")
-                    #self.send_alert(code, current_price, closest_parallel, "지지선")
+                    self.queue_telegram_message(code, current_price, closest_parallel, "지지선")
 
         except Exception as e:
             print(f"실시간 데이터 처리 중 에러: {str(e)}")

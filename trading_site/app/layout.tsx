@@ -5,7 +5,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "./header";
 
-
+import { getServerSession } from "next-auth";
+import Providers from "./providers";
 
 
 export const metadata: Metadata = {
@@ -15,13 +16,17 @@ export const metadata: Metadata = {
     icon: './test.png',
   }
 };
-
-export default function RootLayout({children,}: {children: React.ReactNode}) {
+export default async function RootLayout({children,}: {children: React.ReactNode;}) {
+  const session = await getServerSession();
+  
   return (
     <html lang="en">
       <body>
-        <Header></Header>
-        {children}
+        <Providers session={session}>
+          <Header></Header>
+        
+          {children}
+        </Providers>
       </body>
     </html>
   );

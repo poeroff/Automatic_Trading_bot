@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Search, User, Bell, Menu, X, LogOut, CreditCard, UserCircle } from "lucide-react"
-
-interface HeaderProps {
-  children: React.ReactNode;
-}
+import { LoginModal } from "@/components/page/LoginModal";
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 
 type Notification = {
@@ -15,17 +14,94 @@ type Notification = {
   isRead: boolean
 }
 
+type MarketItem = {
+  name: string;
+  value: string;
+  change: string;
+  isPositive: string;
+}
+
+type MarketGroup = MarketItem[];
+type MarketDataGroups = MarketGroup[];
+
 
 export default function Header() {
+
+  const { data: session , status} = useSession();
+  const router = useRouter();
+  
+  
+
+  const [marketGroups, setMarketGroups] = useState<MarketDataGroups>([]);
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [isSearchVisible, setIsSearchVisible] = useState(false)
   const [isNotificationsVisible, setIsNotificationsVisible] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, message: "KOSPI 지수가 2% 상승했습니다.", isRead: false },
     { id: 2, message: "관심 종목 '삼성전자'의 주가가 5% 상승했습니다.", isRead: false },
     { id: 3, message: "새로운 시장 분석 리포트가 도착했습니다.", isRead: true },
   ])
-  const [marketData, setMarketData] = useState<{ Kospi: { current_price: string; day_before_change: string }; Kosdaq: { current_price: string; day_before_change: string } } | null>(null);
+ 
+
+
+
+  const transformData = (data: any) => {
+    // 첫 번째 그룹
+    const group1 = [
+      {
+        name: "KOSPI",
+        value: data.Kospi.value,
+        change: data.Kospi.change,
+        isPositive: data.Kospi.isPositive
+      },
+      {
+        name: "KOSDAQ",
+        value: data.Kosdaq.value,
+        change: data.Kosdaq.change,
+        isPositive: data.Kosdaq.isPositive
+      },
+      {
+        name: "KOSPI200",
+        value: data.Kospi200.value,
+        change: data.Kospi200.change,
+        isPositive: data.Kospi200.isPositive
+      },
+    ];
+ 
+    // 두 번째 그룹 (다른 종목들)
+    const group2 = [
+      {
+        name: "USD/KRW(원)",
+        value: data.USD.value,
+        change: data.USD.change,
+        isPositive: data.USD.blind
+      },
+      {
+        name: "JPY(100엔)",
+        value: data.JPY.value,
+        change: data.JPY.change,
+        isPositive: data.JPY.blind
+      },
+      {
+        name: "GOLD(달러)",
+        value: data.GOLD.value,
+        change: data.GOLD.change,
+        isPositive: data.GOLD.blind
+      },
+      // 여기에 추가 종목들 넣기
+    ];
+    console.log(group1, group2)
+    setMarketGroups([group1, group2]);
+  };
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentGroupIndex(prev => (prev + 1) % 2);
+    }, 10000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible)
@@ -35,48 +111,58 @@ export default function Header() {
       setIsProfileMenuVisible(false)
     }
 
-
+   
     setIsNotificationsVisible(!isNotificationsVisible)
 
   }
   const toggleProfileMenu = () => {
+    
     if (isNotificationsVisible) {
       setIsNotificationsVisible(false)
     }
 
-    setIsProfileMenuVisible(!isProfileMenuVisible)
+    if (!session) {
+      router.push("/signin");
+    }
+    else{
+      setIsProfileMenuVisible(!isProfileMenuVisible)
+    }
+ 
   }
 
   const unreadCount = notifications.filter((n) => !n.isRead).length
 
 
 
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8765');
+  // useEffect(() => {
+  //   const ws = new WebSocket('ws://localhost:8765');
 
-    ws.onopen = () => {
-      console.log('WebSocket 연결됨');
-      ws.send('market_info');
-    };
+  //   ws.onopen = () => {
+  //     console.log('WebSocket 연결됨');
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setMarketData(data);
-    };
+  //   };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket 에러:', error);
-    };
+  //   ws.onmessage = (event) => {
+  //     const data = JSON.parse(event.data);
+  //     console.log(data)
+  //     transformData(data)
+  //     //setMarketData(data);
+  //   };
 
-    ws.onclose = () => {
-      console.log('WebSocket 연결 종료');
-    };
+  //   ws.onerror = (error) => {
+  //     console.error('WebSocket 에러:', error);
+  //   };
 
-    return () => {
-      ws.close();
-    };
-  }, []);
-  console.log(marketData)
+  //   ws.onclose = () => {
+  //     console.log('WebSocket 연결 종료');
+  //   };
+
+  //   return () => {
+  //     ws.close();
+  //   };
+  // }, []);
+
+
 
   return (
     <header className="bg-white">
@@ -99,28 +185,19 @@ export default function Header() {
               뉴스
             </Link>
           </nav>
-
-          {/* Market Index - Hidden on mobile */}
           <div className="hidden md:flex space-x-4 text-sm">
-            <span>
-              코스피{" "}
-              <span className="text-red-500">
-                {marketData?.Kosdaq &&
-                  (Number(marketData.Kospi.current_price) / 100).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                {` -5.00 (-0.58%)`}
+            {marketGroups[currentGroupIndex]?.map((item, index) => (
+              <span key={item.name} className={index > 0 ? "ml-4" : ""}>
+                {item.name}{" "}
+                <span className={item.isPositive?.includes('+') || item.isPositive === "상승" ? "text-red-500" : "text-blue-500"}>
+                  {item.value} {item.isPositive?.includes('+') || item.isPositive === "상승" ? "+" : "-"}{item.change}
+                  {(item.isPositive !== "상승" && item.isPositive !== "하락") && (
+                    <span>({item.isPositive})</span>
+                  )}
+                </span>
+
               </span>
-            </span>
-            <span>
-              코스닥 <span className="text-blue-500">{marketData?.Kosdaq &&
-                (Number(marketData.Kosdaq.current_price) / 100).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-                {` -5.00 (-0.58%)`} </span>
-            </span>
+            ))}
           </div>
 
           {/* Search and User Actions */}
@@ -175,15 +252,16 @@ export default function Header() {
               </button>
               {isProfileMenuVisible && (
                 <div className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-40 bg-white rounded-md shadow-lg py-1 z-10">
-                  <Link href="/Login" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={toggleProfileMenu}>
+                  
+                  <Link href="/profile" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setIsProfileMenuVisible(false)}>
                     <UserCircle className="h-4 w-4 mr-2" />
                     프로필 보기
                   </Link>
-                  <Link href="/account" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={toggleProfileMenu}>
+                  <Link href="/account" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setIsProfileMenuVisible(false)}>
                     <CreditCard className="h-4 w-4 mr-2" />
                     내 계좌 보기
                   </Link>
-                  <button className="flex justify-center items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={toggleProfileMenu}>
+                  <button onClick={() => {signOut({ callbackUrl: '/' }); setIsProfileMenuVisible(false)}} className="flex justify-center items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" >
                     <LogOut className="h-4 w-4 mr-2" />
                     로그아웃
                   </button>
@@ -197,6 +275,7 @@ export default function Header() {
           </div>
         </div>
       </div>
+     
     </header>
   )
 }

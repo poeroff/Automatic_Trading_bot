@@ -6,7 +6,7 @@ import matplotlib.dates as mdates
 import pandas as pd
 
 def load_data():
-    conn = sqlite3.connect('stock_012330.db')
+    conn = sqlite3.connect('stock_007660.db')
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM stock_data")
     data = cursor.fetchall()

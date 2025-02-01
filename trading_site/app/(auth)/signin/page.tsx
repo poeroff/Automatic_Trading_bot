@@ -35,13 +35,12 @@ export default function LoginPage() {
 
   const KakaoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-      const result = await signIn("kakao", { callbackUrl: "/" });
-      console.log(result)
-      if (result?.error) {
+    const result = await signIn("kakao", { callbackUrl: "/" });
+    console.log(result)
+    if (result?.error) {
         console.error(result.error);
       }
-    }
+  }
     
 
 

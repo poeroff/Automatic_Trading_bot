@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import re
 import sys
 from PyQt5.QAxContainer import *
 from PyQt5.QtWidgets import *
@@ -26,10 +27,11 @@ class KiwoomAPI:
         kosdaq_codes = [code for code in kosdaq_codes if code.isdigit()]
 
         all_codes = kospi_codes + kosdaq_codes
-        # 일반 주식만 필터링
-        stock_codes = []
+        stock_codes = {}  # 종목코드와 종목명을 저장할 딕셔너리
+
         for code in all_codes:
             stock_name = self.kiwoom.GetMasterCodeName(code)
+            
             exclude_keywords = [
                 'ETF', 'ETN', '선물', 
                 'KODEX', 'TIGER', 'KBSTAR',
@@ -42,30 +44,27 @@ class KiwoomAPI:
                 'KoAct', '채권', "스팩","PLUS"
             ]
             
-            print(f"종목명: {stock_name}")  # 디버깅용 출력
-            
             # 단순히 in 연산자로 체크
-            if not any(keyword in stock_name for keyword in exclude_keywords):
-                stock_codes.append(code)
+            if not any(keyword in stock_name for keyword in exclude_keywords) and not re.search(r'\d', stock_name):
+                print(f"종목명: {stock_name}")  # 디버깅용 출력
+                stock_codes[code] = stock_name  # 종목코드와 종목명을 딕셔너리에 저장
 
-        return stock_codes
+        return stock_codes  # 종목코드와 종목명을 포함한 딕셔너리 반환
     
 
 
     def Stock_Data(self, code, set_d):
         df_list = []
-        max_days = 252 * 30  # 30년치
         total_rows = 0
-        check_period = 252 * 10  # 10년 기준
         
         # 첫 번째 일봉 데이터 요청
         df_firstblock = self.kiwoom.block_request(
-            "opt10081",
-            종목코드=code,
-            기준일자=set_d,
-            수정주가구분=1,
-            output="주식일봉차트조회",
-            next=0
+                "opt10082",
+                종목코드=code,
+                기준일자=set_d,
+                수정주가구분=1,
+                output="주식주봉차트조회",
+                next=0
         )
         time.sleep(3.6)
         
@@ -75,14 +74,14 @@ class KiwoomAPI:
         df_list.append(df_firstblock)
         total_rows += len(df_firstblock)
         
-        # 일정 기간 동안 일봉 데이터 수집
-        while self.kiwoom.tr_remained and total_rows < check_period:
+        # 모든 일봉 데이터 수집
+        while self.kiwoom.tr_remained:
             df_nextblock = self.kiwoom.block_request(
-                "opt10081",
+                "opt10082",
                 종목코드=code,
                 기준일자=set_d,
                 수정주가구분=1,
-                output="주식일봉차트조회",
+                output="주식주봉차트조회",
                 next=2
             )
             time.sleep(3.6)
@@ -92,40 +91,12 @@ class KiwoomAPI:
             
             df_list.append(df_nextblock)
             total_rows += len(df_nextblock)
-            
-            # 10년치 데이터가 모이면 주봉으로 전환할지 결정
-            if total_rows >= check_period:
-                print(f"종목 {code}: 데이터가 10년 이상으로 주봉 차트로 전환합니다.")
-                return self.get_weekly_data(code, set_d)
-        
-        # 10년 미만이면 계속 일봉 데이터 수집
-        while self.kiwoom.tr_remained and total_rows < max_days:
-            df_nextblock = self.kiwoom.block_request(
-                "opt10081",
-                종목코드=code,
-                기준일자=set_d,
-                수정주가구분=1,
-                output="주식일봉차트조회",
-                next=2
-            )
-            time.sleep(3.6)
-            
-            if len(df_nextblock) == 0:
-                break
-            
-            df_list.append(df_nextblock)
-            total_rows += len(df_nextblock)
-            
-            if total_rows >= max_days:
-                break
         
         final_df = pd.concat(df_list)
         final_df = final_df.reset_index(drop=True)
         
-        if len(final_df) > max_days:
-            final_df = final_df.iloc[:max_days]
-        
         return final_df
+
 
     def get_weekly_data(self, code, set_d):
         """주봉 데이터 조회"""
@@ -208,33 +179,26 @@ class KiwoomAPI:
         return df
     
     def get_stock_data_all(self, Tr_code): 
-        
         set_d = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
 
-
         all_stock_data = {}
-        total_codes = len(Tr_code)  # 전체 종목 수
+        total_codes = len(Tr_code)
 
-        for idx, code in enumerate(Tr_code, 1):  # enumerate로 인덱스 추가
+        for idx, code in enumerate(Tr_code, 1):
             print(f"\n[{idx}/{total_codes}] 종목 코드 {code} 데이터 조회 중...")
             df_list = []
-            max_days = 252 * 10
             total_rows = 0
 
             # 첫 번째 블록 요청
             df_firstblock = self.kiwoom.block_request(
-                "opt10081",
-                종목코드=code,
-                기준일자=set_d,
-                수정주가구분=1,
-                output="주식일봉차트조회",
-                next=0
+                    "opt10082",
+                    종목코드=code,
+                    기준일자=set_d,
+                    수정주가구분=1,
+                    output="주식주봉차트조회",
+                    next=0
             )
             time.sleep(3.6)
-            current_time = datetime.now()
-            if current_time.hour == 4 and current_time.minute >= 56:
-                print("오전 4시 58분입니다. 10분 동안 대기합니다.")
-                time.sleep(600)  # 10분 대기 (600초)
 
             # 데이터가 있는지 확인
             if len(df_firstblock) == 0:
@@ -245,13 +209,13 @@ class KiwoomAPI:
             total_rows += len(df_firstblock)
 
             # 연속 조회
-            while self.kiwoom.tr_remained and total_rows < max_days:
+            while self.kiwoom.tr_remained:
                 df_nextblock = self.kiwoom.block_request(
-                    "opt10081",
+                    "opt10082",
                     종목코드=code,
                     기준일자=set_d,
                     수정주가구분=1,
-                    output="주식일봉차트조회",
+                    output="주식주봉차트조회",
                     next=2
                 )
 
@@ -263,15 +227,9 @@ class KiwoomAPI:
                 df_list.append(df_nextblock)
                 total_rows += len(df_nextblock)
 
-                if total_rows >= max_days:
-                    break
-
             # 각 종목별 데이터프레임 처리
             final_df = pd.concat(df_list)
             final_df = final_df.reset_index(drop=True)
-
-            if len(final_df) > max_days:
-                final_df = final_df.iloc[:max_days]  # 10년치만 잘라내기
 
             try:
                 df = pd.DataFrame(final_df)
@@ -313,6 +271,7 @@ class KiwoomAPI:
                 print(f"종목 코드 {code} 처리 중 에러 발생: {str(e)}")
 
         return all_stock_data
+
 
 
 

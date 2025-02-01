@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Search, User, Bell, Menu, X, LogOut, CreditCard, UserCircle } from "lucide-react"
-import { LoginModal } from "@/components/page/LoginModal";
+
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -28,6 +28,9 @@ type MarketDataGroups = MarketGroup[];
 export default function Header() {
 
   const { data: session , status} = useSession();
+  useEffect(() => {
+    console.log(session);
+  }, [session]);
   const router = useRouter();
   
   
@@ -179,10 +182,10 @@ export default function Header() {
               주식
             </Link>
             <Link href="/etf" className="text-gray-600 hover:text-blue-600">
-              ETF
+              뉴스스
             </Link>
-            <Link href="/news" className="text-gray-600 hover:text-blue-600">
-              뉴스
+           <Link href="/stock?code=000020" className="text-gray-600 hover:text-blue-600">
+              종목 관리(admin)
             </Link>
           </nav>
           <div className="hidden md:flex space-x-4 text-sm">

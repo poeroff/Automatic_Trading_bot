@@ -7,7 +7,7 @@ from AI_SERVER import get_db_connection
 def tr_code_Collection(request):
     try:
         data = json.loads(request.body)
-        tr_codes = data.get('tr_codes')
+        tr_codes = data.get('tr_codes')  # [{'code': '007660', 'name': '삼성전자'}, ...]
         
         connection = get_db_connection()
         try:
@@ -21,6 +21,20 @@ def tr_code_Collection(request):
                 """)
                 tr_codes_exists = cursor.fetchone()[0] == 1
                 
+                if not tr_codes_exists:
+                    # tr_codes 테이블 생성
+                    cursor.execute("""
+                        CREATE TABLE tr_codes (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            code VARCHAR(10) NOT NULL,
+                            name VARCHAR(100) NOT NULL, 
+                            current_inflection_count INT DEFAULT 0,  
+                            previous_inflection_count INT DEFAULT 0, 
+                            previous_peak_count INT DEFAULT 0, 
+                            current_peak_count INT DEFAULT 0  
+                        )
+                    """)
+                
                 # stock_data 테이블 존재 여부 확인
                 cursor.execute("""
                     SELECT COUNT(*)
@@ -29,15 +43,6 @@ def tr_code_Collection(request):
                     AND table_name = 'stock_data'
                 """)
                 stock_data_exists = cursor.fetchone()[0] == 1
-                
-                if not tr_codes_exists:
-                    # tr_codes 테이블 생성
-                    cursor.execute("""
-                        CREATE TABLE tr_codes (
-                            id INT AUTO_INCREMENT PRIMARY KEY,
-                            code VARCHAR(10) NOT NULL
-                        )
-                    """)
                 
                 if not stock_data_exists:
                     # stock_data 테이블 생성
@@ -56,14 +61,13 @@ def tr_code_Collection(request):
                         )
                     """)
                 
-      
                 # 테이블이 있는 경우 데이터 동기화
                 cursor.execute("SELECT code FROM tr_codes")
                 existing_codes = set(row[0] for row in cursor.fetchall())
-                new_codes = set(tr_codes)
-                    
+                new_codes = {item['code']: item['name'] for item in tr_codes}  # 종목명과 함께 저장
+                
                 # 삭제해야 할 코드 (DB에는 있지만 tr_codes에는 없는 것)
-                codes_to_delete = existing_codes - new_codes
+                codes_to_delete = existing_codes - new_codes.keys()
                 if codes_to_delete:
                     # 자식 테이블 데이터 삭제
                     cursor.execute(
@@ -79,11 +83,11 @@ def tr_code_Collection(request):
                     )
                     
                 # 추가해야 할 코드 (tr_codes에는 있지만 DB에는 없는 것)
-                codes_to_add = new_codes - existing_codes
+                codes_to_add = set(new_codes.keys()) - existing_codes
                 for code in codes_to_add:
                     cursor.execute(
-                        "INSERT INTO tr_codes (code) VALUES (%s)",
-                        (code,)
+                        "INSERT INTO tr_codes (code, name) VALUES (%s, %s)",
+                        (code, new_codes[code])  # 종목명도 함께 저장
                     )
                     
                 connection.commit()
@@ -110,10 +114,66 @@ def Stock_Data_Collection(request):
             data = json.loads(request.body)
             code = data.get('code')
             stock_data = data.get('data')  # 리스트로 받음
-            
+            peak_dates = data.get('peak_dates')
+            filtered_peaks = data.get('filtered_peaks')
+            peak_prices = data.get('peak_prices')
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:
+                    # peak_dates 테이블 생성
+                    cursor.execute(""" 
+                        SELECT COUNT(*)
+                        FROM information_schema.tables
+                        WHERE table_name = 'peak_dates'
+                    """)
+                    if cursor.fetchone()[0] == 0:
+                        cursor.execute(""" 
+                            CREATE TABLE peak_dates (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                tr_code_id INT NOT NULL,
+                                date DATE NOT NULL,
+                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id),
+                                UNIQUE KEY unique_peak_date (tr_code_id, date)
+                           )
+                        """)
+
+
+                  
+                    cursor.execute(""" 
+                        SELECT COUNT(*)
+                        FROM information_schema.tables
+                        WHERE table_name = 'peak_prices'
+                    """)
+                    if cursor.fetchone()[0] == 0:
+                        cursor.execute(""" 
+                            CREATE TABLE peak_prices (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                tr_code_id INT NOT NULL,
+                                price FLOAT NOT NULL,
+                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id),
+                                UNIQUE KEY unique_peak_price (tr_code_id, price)
+                            )
+                        """)
+
+
+                    # filtered_peaks 테이블 생성
+                    cursor.execute(""" 
+                        SELECT COUNT(*)
+                        FROM information_schema.tables
+                        WHERE table_name = 'filtered_peaks'
+                    """)
+                    if cursor.fetchone()[0] == 0:
+                        cursor.execute(""" 
+                            CREATE TABLE filtered_peaks (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                tr_code_id INT NOT NULL,
+                                date DATE NOT NULL,
+                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id),
+                                UNIQUE KEY unique_filtered_peak (tr_code_id, date)
+                              
+                            )
+                        """)
+
                     # tr_codes 테이블에서 해당 코드의 id 가져오기
                     cursor.execute("SELECT id FROM tr_codes WHERE code = %s", (code,))
                     tr_code_row = cursor.fetchone()
@@ -124,34 +184,76 @@ def Stock_Data_Collection(request):
                         })
                     tr_code_id = tr_code_row[0]
                     
-                    inserted = 0
-                    skipped = 0
+                    # Insert peak_dates
+                    peak_dates_count = len(peak_dates)
+                    for peak_date in peak_dates:
+                        try:
+                            cursor.execute(""" 
+                                INSERT INTO peak_dates (tr_code_id, date)
+                                VALUES (%s, %s)
+                            """, (tr_code_id, peak_date['Date']))
+                        except Exception as e:
+                            if "Duplicate entry" in str(e):
+                                continue  # 중복된 경우 건너뛰기
+
+                    # Insert filtered_peaks
+                    filtered_peaks_count = len(filtered_peaks)
+                    for filtered_peak in filtered_peaks:
+                        try:
+                            cursor.execute(""" 
+                                INSERT INTO filtered_peaks (tr_code_id, date)
+                                VALUES (%s, %s)
+                            """, (tr_code_id, filtered_peak['Date']))
+                        except Exception as e:
+                            if "Duplicate entry" in str(e):
+                                continue  # 중복된 경우 건너뛰기
+
+                    # Insert peak_prices
+                    for peak_price in peak_prices:
+                        try:
+                            cursor.execute(""" 
+                                INSERT INTO peak_prices (tr_code_id, price)
+                                VALUES (%s, %s)
+                            """, (tr_code_id, peak_price['Price']))
+                        except Exception as e:
+                            if "Duplicate entry" in str(e):
+                                continue  # 중복된 경우 건너뛰기
+
+                    # Update tr_codes with counts
+                    cursor.execute("""
+                        UPDATE tr_codes
+                        SET previous_peak_count = current_peak_count,
+                            previous_inflection_count = current_inflection_count,
+                            current_peak_count = %s,
+                            current_inflection_count = %s
+                        WHERE id = %s
+                    """, (peak_dates_count, filtered_peaks_count, tr_code_id))
 
                     for row in stock_data:
-                        # 해당 날짜의 데이터가 있는지 확인
-                        cursor.execute("""
+                        cursor.execute(""" 
                             SELECT 1 FROM stock_data 
                             WHERE tr_code_id = %s AND date = %s
                         """, (tr_code_id, row['Date']))
                         
                         if cursor.fetchone():
-                            # 데이터가 있으면 스킵
-                            skipped += 1
+                            cursor.execute(""" 
+                                UPDATE stock_data 
+                                SET open = %s, high = %s, low = %s, close = %s, volume = %s
+                                WHERE tr_code_id = %s AND date = %s
+                            """, (row['Open'], row['High'], row['Low'], row['Close'], row['Volume'], tr_code_id, row['Date']))
                         else:
-                            # 데이터가 없으면 새로 삽입
-                            cursor.execute("""
+                            cursor.execute(""" 
                                 INSERT INTO stock_data 
                                 (tr_code_id, date, open, high, low, close, volume)
                                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                             """, (tr_code_id, row['Date'], row['Open'], row['High'],
                                  row['Low'], row['Close'], row['Volume']))
-                            inserted += 1
                     
                     connection.commit()
                     
                 return JsonResponse({
                     'status': 'success',
-                    'message': f'Records processed - Inserted: {inserted}, Skipped: {skipped}'
+                    'message': f'Records processed - Peak Dates Count: {peak_dates_count}, Filtered Peaks Count: {filtered_peaks_count}'
                 })
                 
             finally:

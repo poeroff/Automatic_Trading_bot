@@ -2,6 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { getServerSession, Session } from "next-auth";
+import { BrowserRouter } from "react-router-dom";
 
 interface Props {
   children: React.ReactNode;
@@ -10,5 +11,5 @@ interface Props {
 
 export default  function Providers({ children, session }: Props) {
   
-  return <SessionProvider session={session}>{children}</SessionProvider>;
+  return <BrowserRouter><SessionProvider session={session}>{children}</SessionProvider></BrowserRouter>;
 }

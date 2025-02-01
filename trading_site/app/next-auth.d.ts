@@ -1,34 +1,66 @@
+// types/next-auth.d.ts
+import { DefaultSession, DefaultUser } from "next-auth";
 import { JWT } from "next-auth/jwt";
-import { DefaultSession } from "next-auth";
 
-// JWT 타입 확장
-declare module "next-auth/jwt" {
-  interface JWT {
-    id?: string; // 사용자 ID
-    accessToken?: string; // 액세스 토큰
-    profile?: Profile; // 프로필 정보 추가
-  }
-}
-
-// 세션 타입 확장
 declare module "next-auth" {
   interface Session {
     user: {
-      id?: string; // 사용자 ID
-      accessToken?: string; // 액세스 토큰
-      profile?: Profile; // 프로필 정보 추가
+      id: string;  // optional 제거
+      accessToken?: string;
+      author?: string | null;  // null 허용
+      profile?: {
+        id: string;
+        email?: string | null;
+        name?: string | null;
+        image?: string | null;
+        author?: string | null;  // null 허용
+        [key: string]: any;
+      };
     } & DefaultSession["user"];
   }
 
-  // Profile 타입 확장
-  interface Profile {
-    email_verified?: boolean; // Google 이메일 인증 여부
-    kakao_account?: {
-      is_email_verified?: boolean; // Kakao 이메일 인증 여부
-      email?: string; // Kakao 이메일
+  interface User extends DefaultUser {
+    author?: string | null;  // null 허용
+  }
+}
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;  // optional 제거
+      accessToken?: string;
+      author?: string;
+      profile?: {
+        id: string;
+        email?: string | null;
+        name?: string | null;
+        image?: string | null;
+        author?: string | null;
+        [key: string]: any;
+      };
+    } & DefaultSession["user"];
+  }
+
+  interface User extends DefaultUser {
+    author?: string;
+  }
+}
+
+
+
+// types/next-auth.d.ts
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    accessToken?: string;
+    author?: string | null;  // null 허용
+    profile?: {
+      id: string;
+      email?: string | null;
+      name?: string | null;
+      image?: string | null;
+      author?: string | null;  // null 허용
+      [key: string]: any;
     };
-    given_name?: string; // Google 이름
-    family_name?: string; // Google 성
-    picture?: string; // 프로필 사진 URL
   }
 }

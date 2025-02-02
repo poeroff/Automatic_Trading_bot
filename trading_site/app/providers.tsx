@@ -11,5 +11,5 @@ interface Props {
 
 export default  function Providers({ children, session }: Props) {
   
-  return <BrowserRouter><SessionProvider session={session}>{children}</SessionProvider></BrowserRouter>;
+  return <SessionProvider session={session}>{children}</SessionProvider>;
 }

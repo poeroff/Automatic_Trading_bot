@@ -14,7 +14,9 @@ def load_data():
     conn.close()
     
     df["Date"] = pd.to_datetime(df["Date"], format="%Y%m%d")
-    print(df)
+    print(df["Date"])
+
+
     return df
 
 def find_peaks(dataframe, high_column='High', compare_window=23, threshold=0.2):
@@ -85,6 +87,7 @@ def find_peaks_combined(df):
 
 
 def find_previous_peak(df, peak_dates1, peak_prices1, reference_date):
+
     if not isinstance(reference_date, pd.Timestamp):
         reference_date = pd.to_datetime(str(reference_date), format='%Y%m%d')
     
@@ -98,6 +101,7 @@ def find_previous_peak(df, peak_dates1, peak_prices1, reference_date):
     return latest_peak_date, latest_peak_price
 
 def find_closest_inflection_or_peak(filtered_peaks, peak_dates1, peak_prices1, reference_date):
+
     if not isinstance(reference_date, pd.Timestamp):
         reference_date = pd.to_datetime(str(reference_date), format='%Y%m%d')
 
@@ -134,7 +138,9 @@ def find_closest_inflection_or_peak(filtered_peaks, peak_dates1, peak_prices1, r
 
 # 실행
 df = load_data()
+print("df",df)
 peak_dates1, peak_prices1, filtered_peaks = find_peaks_combined(df)
+print("filtered_peaks",filtered_peaks)
 
 
 
@@ -146,6 +152,7 @@ plt.figure(figsize=(15, 10))
 
 for i, reference_date in enumerate(reference_dates):
     previous_peak_date, previous_peak_price = find_previous_peak(df, peak_dates1, peak_prices1, reference_date)
+    
     closest_date, closest_price = find_closest_inflection_or_peak(filtered_peaks, peak_dates1, peak_prices1, reference_date)
 
     if previous_peak_date is None:
@@ -166,7 +173,9 @@ for i, reference_date in enumerate(reference_dates):
         ]
 
     selected_rows = df[df["Date"].isin(pd.to_datetime(selected_dates, format='%Y%m%d'))]
+    print("selected_rows",selected_rows)
     selected_rows = selected_rows.sort_values(by="Date")
+    print("selected_rows",selected_rows)
 
     dates_index = selected_rows.index.tolist()
     highs = selected_rows["High"].values

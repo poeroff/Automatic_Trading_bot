@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button"
 import { useRef } from "react"
 import { fetchStockData } from "@/api/Get"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Post } from "@/api/Post"
+import { Delete } from "@/api/Delete"
 
 // const chartData = [
 //   { date: "2024-01-01", value: 4000 },
@@ -29,57 +32,93 @@ export default function StockDashboard() {
   }
 `;
   const searchRef = useRef<HTMLInputElement>(null)
-  const location = useLocation(); // 현재 URL의 location 객체 가져오기
-  const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [title, setTitle] = useState<string>("")
   const [chartData, setChartData] = useState<{ date: string; value: number }[]>([]); // 초기값을 빈 배열로 설정
-  const [marketCapList, setMarketCapList] = useState<{ id: Number, date: string; }[]>([]);
-  const [volumeList, setVolumeList] = useState<{ id: Number, date: string; }[]>([]);
+  const [marketCapList, setMarketCapList] = useState<{ id: number, date: string; }[]>([]);
+  const [volumeList, setVolumeList] = useState<{ id: number, date: string; }[]>([]);
+  const [customList, setCustomList] = useState<{ id: number, date: string; }[]>([]);
+    const [stockList, setStockList] = useState([
+    "삼성전자",
+    "SK하이닉스",
+    "NAVER",
+    "카카오",
+    "현대차",
+    "LG전자",
+    "기아",
+    "POSCO홀딩스",
+    "삼성바이오로직스",
+    "삼성SDI",
+    "삼성전자1",
+    "SK하이닉스1",
+    "NAVER1",
+    "카카오1",
+    "현대차1",
+    "LG전자1",
+    "기아1",
+    "POSCO홀딩스1",
+    "삼성바이오로직스1",
+    "삼성SDI1",   
+    "삼성전자2",
+    "SK하이닉스2",
+    "NAVER2",
+    "카카오2",
+    "현대차2",
+    "LG전자2",
+    "기아2",
+    "POSCO홀딩스2",
+    "삼성바이오로직스2",
+    "삼성SDI2",
 
-
-  const [customList, setCustomList] = useState([
-    "관심종목1",
-    "관심종목2",
   ])
+  
+
+
+ 
   const [newCustomItem, setNewCustomItem] = useState("")
 
   const handleAddCustomItem = () => {
-    if (newCustomItem) {
-      setCustomList([...customList, newCustomItem])
-      setNewCustomItem("")
-    }
+   
+      if (inputRef.current?.value) {
+        const code = searchParams.get("code");
+        const name = searchParams.get("name");
+        if (code) {
+          const fetchData = async () => {
+            const data = await Post(`http://localhost:4000/stock-data/user-inflection`, Number(inputRef.current?.value),code, undefined)
+
+          };
+          fetchData();
+        } else if (name) {
+          console.log("name")
+          const fetchData = async () => {
+            const data = await Post(`http://localhost:4000/stock-data/user-inflection`, Number(inputRef.current?.value),undefined, name)
+           
+          };
+          fetchData();
+        }
+        inputRef.current.value = "";
+      }
   }
 
-  const handleDeleteCustomItem = (index: number) => {
-    setCustomList(customList.filter((_, i) => i !== index))
+
+  const handleDeleteCustomItem = async(id: number) => {
+    const fetchData = async () => {
+      await Delete(`http://localhost:4000/stock-data/user-inflection`, id)
+    }
+    fetchData();
+    
+
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const value = searchRef.current?.value;
 
-    if (value) {
-      // 숫자인지 확인
-      const isNumeric = !isNaN(Number(value));
 
-      if (isNumeric) {
-        // 숫자일 경우 code로 설정
-        navigate(`/stock?code=${value}`);
-      } else {
-        // 숫자가 아닐 경우 name으로 설정
-        navigate(`/stock?name=${value}`);
-      }
-      if (searchRef.current) {
-        searchRef.current.value = ""; // 입력 필드 초기화
-      }
-    }
-
-  };
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search); // URL의 쿼리 매개변수 가져오기
-    const code = queryParams.get("code");
-    const name = queryParams.get("name");
+    console.log("searchParams", searchParams.get("name"))
+    const code = searchParams.get("code");
+    const name = searchParams.get("name");
 
 
     if (code) {
@@ -97,7 +136,18 @@ export default function StockDashboard() {
             id: peak.id,
             date: peak.date, // value를 date로 설정
           }));
+          const newCustomList = data.userInflections.map((peak: any) => {
+            const dateStr = peak.date.toString(); // peak.date를 문자열로 변환
+            const formattedDate = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`; // YYYY-MM-DD 형식으로 변환
+          
+            return {
+              id: peak.id,
+              date: formattedDate, // 변환된 날짜를 사용
+            };
+          });
 
+
+          setCustomList(newCustomList);
           setVolumeList(newVolumeList);
           setMarketCapList(newMarketCapList);
 
@@ -107,7 +157,6 @@ export default function StockDashboard() {
       };
       fetchData();
     } else if (name) {
-      console.log("name")
       const fetchData = async () => {
         const data = await fetchStockData(`http://localhost:4000/stock-data/stock?name=${name}`)
         if (data && data.stockData) {
@@ -115,10 +164,24 @@ export default function StockDashboard() {
           setTitle(data.trCode.name)
           setChartData(data.stockData.map((item: any) => ({ date: item.date, value: item.close })));
           const newMarketCapList = data.peakDates.map((peak: any) => ({
-            name: "", // name은 비워둡니다.
-            value: peak.date, // value를 date로 설정
+            id: peak.id, // name은 비워둡니다.
+            date: peak.date, // value를 date로 설정
           }));
-
+          const newVolumeList = data.filteredPeaks.map((peak: any) => ({
+            id: peak.id,
+            date: peak.date, // value를 date로 설정
+          }));
+          const newCustomList = data.userInflections.map((peak: any) => {
+            const dateStr = peak.date.toString(); // peak.date를 문자열로 변환
+            const formattedDate = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`; // YYYY-MM-DD 형식으로 변환
+          
+            return {
+              id: peak.id,
+              date: formattedDate, // 변환된 날짜를 사용
+            };
+          });
+          setCustomList(newCustomList);
+          setVolumeList(newVolumeList);
           setMarketCapList(newMarketCapList);
         } else {
           console.error('No stock data found');
@@ -126,7 +189,7 @@ export default function StockDashboard() {
       };
       fetchData();
     }
-  }, [location]); // location이 변경될 때마다 실행
+  }, [searchParams]); // location이 변경될 때마다 실행
 
  // 리스트 아이템 클릭 핸들러 추가
 const handleDateClick = (date: string) => {
@@ -172,43 +235,40 @@ const renderCustomDots = (props: any) => {
     </g>
   );
 };
+const [selectedStock, setSelectedStock] = useState<string | null>(null)
+const handleStockSelect = async (stock: string) => {
+  setSelectedStock(stock)
+  // 여기서 실제 API 호출을 통해 해당 주식의 데이터를 가져와야 합니다.
+  // 예시 코드:
+  // const data = await fetchStockData(`http://localhost:4000/stock-data/stock?code=${stock}`);
+  // setChartData(data.stockData.map((item: any) => ({ date: item.date, value: item.close })));
+}
+const handleCompletionCheck = () => {
+  // 여기에 검사 완료 버튼 클릭 시 수행할 로직을 추가합니다.
+  console.log("검사 완료 버튼이 클릭되었습니다.")
+  // 예: 데이터 저장, 상태 업데이트, API 호출 등
+}
 
+console.log
   return (
     <div className="min-h-screen bg-background">
 
       {/* Header */}
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-center">
-            <div className="w-full max-w-md">
-              <form className="relative" onSubmit={handleSubmit}>
-                <input
-                  type="text"
-                  placeholder="종목명 또는 종목코드를 입력하세요"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  ref={searchRef}
-                />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700">
-                  <svg
-
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                </button>
-              </form>
+        <div className="mb-8 overflow-x-auto">
+            <div className="flex space-x-2 pb-2" style={{ width: "max-content" }}>
+              {stockList.map((stock) => (
+                <Button
+                  key={stock}
+                  onClick={() => handleStockSelect(stock)}
+                  variant={selectedStock === stock ? "default" : "outline"}
+                  className="px-4 py-2 whitespace-nowrap"
+                >
+                  {stock}
+                </Button>
+              ))}
             </div>
           </div>
-        </div>
       </header>
 
       {/* Main Content */}
@@ -319,14 +379,15 @@ const renderCustomDots = (props: any) => {
               <CardTitle>변곡점 설정 목록</CardTitle>
             </CardHeader>
             <CardContent>
+    
               <div className="h-[450px] overflow-y-auto mb-4">
                 {customList.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center py-2 border-b">
-                    <span>{item}</span>
+                  <div key={item.id.toString()} className="flex justify-between items-center py-2 border-b">
+                    <span className="font-bold">{item.date}</span>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDeleteCustomItem(index)}
+                      onClick={() => handleDeleteCustomItem(item.id)}
                       className="h-8 w-8 p-0"
                     >
                       <svg
@@ -351,13 +412,17 @@ const renderCustomDots = (props: any) => {
               <div className="flex gap-2">
                 <Input
                   placeholder="종목명"
-                  value={newCustomItem}
-                  onChange={(e) => setNewCustomItem(e.target.value)}
+                  ref={inputRef}
                 />
                 <Button onClick={handleAddCustomItem}>추가</Button>
               </div>
             </CardContent>
           </Card>
+        </div>
+        <div className="flex justify-center mt-8">
+          <Button onClick={handleCompletionCheck} className="px-8 py-3 text-lg">
+            검사 완료
+          </Button>
         </div>
       </main>
     </div>

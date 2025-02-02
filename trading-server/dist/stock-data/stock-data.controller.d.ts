@@ -6,19 +6,29 @@ export declare class StockDataController {
     constructor(stockDataService: StockDataService);
     create(createStockDatumDto: CreateStockDatumDto): string;
     findAll(): string;
-    findOne(code?: string, name?: string): Promise<string> | Promise<{
+    createUserInflection(body: {
+        date: number;
+        code?: string;
+        name?: string;
+    }): Promise<import("./entities/user-inflection.entity").UserInflection | {
+        message: string;
+    }> | undefined;
+    deleteUserInflection(body: {
+        id: number;
+    }): Promise<import("typeorm").DeleteResult>;
+    findOne(code?: string, name?: string): Promise<{
         message: string;
         trCode?: undefined;
         stockData?: undefined;
         peakDates?: undefined;
-        peakPrices?: undefined;
         filteredPeaks?: undefined;
+        userInflections?: undefined;
     } | {
         trCode: import("./entities/tr-code.entity").TrCode;
         stockData: import("./entities/stock-datum.entity").StockData[];
         peakDates: import("./entities/peak-dates.entity").PeakDate[];
-        peakPrices: import("./entities/PeakPrice.entity").PeakPrice[];
         filteredPeaks: import("./entities/filtered-peaks.entity").FilteredPeak[];
+        userInflections: import("./entities/user-inflection.entity").UserInflection[];
         message?: undefined;
     }> | {
         message: string;

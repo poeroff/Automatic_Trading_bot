@@ -56,8 +56,11 @@ def tr_code_Collection(request):
                             low FLOAT,
                             close FLOAT,
                             volume INT,
+                            avg_daily_volume FLOAT,
                             FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id),
                             UNIQUE KEY unique_stock_date (tr_code_id, date)
+                                   
+
                         )
                     """)
                 
@@ -117,6 +120,9 @@ def Stock_Data_Collection(request):
             peak_dates = data.get('peak_dates')
             filtered_peaks = data.get('filtered_peaks')
             peak_prices = data.get('peak_prices')
+            total_volume = sum(row['Volume'] for row in stock_data)
+            total_weeks = len(stock_data)
+            avg_daily_volume = ((total_volume / total_weeks) / 5) * 1.5
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:
@@ -238,16 +244,17 @@ def Stock_Data_Collection(request):
                         if cursor.fetchone():
                             cursor.execute(""" 
                                 UPDATE stock_data 
-                                SET open = %s, high = %s, low = %s, close = %s, volume = %s
+                                SET open = %s, high = %s, low = %s, close = %s, volume = %s, avg_daily_volume = %s
                                 WHERE tr_code_id = %s AND date = %s
-                            """, (row['Open'], row['High'], row['Low'], row['Close'], row['Volume'], tr_code_id, row['Date']))
+                            """, (row['Open'], row['High'], row['Low'], row['Close'], 
+                                 row['Volume'], avg_daily_volume, tr_code_id, row['Date']))
                         else:
                             cursor.execute(""" 
                                 INSERT INTO stock_data 
-                                (tr_code_id, date, open, high, low, close, volume)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                (tr_code_id, date, open, high, low, close, volume, avg_daily_volume)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                             """, (tr_code_id, row['Date'], row['Open'], row['High'],
-                                 row['Low'], row['Close'], row['Volume']))
+                                 row['Low'], row['Close'], row['Volume'], avg_daily_volume))
                     
                     connection.commit()
                     
@@ -288,15 +295,14 @@ def Get_Stock_Data(request):
                     
                     # stock_data 테이블에서 해당 종목의 데이터 조회
                     cursor.execute("""
-                        SELECT date, open, high, low, close, volume 
+                        SELECT date, open, high, low, close, volume, avg_daily_volume 
                         FROM stock_data 
                         WHERE tr_code_id = %s
                         ORDER BY date
                     """, (tr_code_id,))
                     
-                    columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
+                    columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Avg_Daily_Volume']
                     stock_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                    print(code,stock_data)
                     
                     return JsonResponse({
                         'status': 'success',

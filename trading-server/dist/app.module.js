@@ -20,6 +20,7 @@ const Joi = require("joi");
 const PeakPrice_entity_1 = require("./stock-data/entities/PeakPrice.entity");
 const filtered_peaks_entity_1 = require("./stock-data/entities/filtered-peaks.entity");
 const peak_dates_entity_1 = require("./stock-data/entities/peak-dates.entity");
+const user_inflection_entity_1 = require("./stock-data/entities/user-inflection.entity");
 const typeOrmModuleOptions = {
     useFactory: async (configService) => ({
         namingStrategy: new typeorm_naming_strategies_1.SnakeNamingStrategy(),
@@ -30,7 +31,7 @@ const typeOrmModuleOptions = {
         port: configService.get('DB_PORT'),
         database: configService.get('DB_NAME'),
         charset: configService.get("CHAR_SET"),
-        entities: [stock_datum_entity_1.StockData, tr_code_entity_1.TrCode, peak_dates_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak],
+        entities: [stock_datum_entity_1.StockData, tr_code_entity_1.TrCode, peak_dates_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection],
         synchronize: configService.get('DB_SYNC'),
         logging: true,
         timezone: '+09:00'

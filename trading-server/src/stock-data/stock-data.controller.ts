@@ -16,8 +16,24 @@ export class StockDataController {
   findAll() {
     return this.stockDataService.findAll();
   }
+  @Post("user-inflection")
+  createUserInflection( @Body() body: { date: number, code?: string, name?: string }) {
+    if (body.code) {
+      console.log(body.code)
+      return this.stockDataService.createUserInflectioncode(body.date, body.code); // tr_code로 조회
+    } else if (body.name) {
+      return this.stockDataService.createUserInflectionname(body.date, body.name); // stock_name으로 조회
+    }
+  }
+  @Delete("user-inflection")
+  deleteUserInflection( @Body() body: { id: number }) {
+    return this.stockDataService.deleteUserInflection(body.id);
+  }
+
 
   @Get("stock")
+
+
   findOne(@Query('code') code?: string, @Query('name') name?: string) {
     if (code) {
       console.log(code)
@@ -25,7 +41,6 @@ export class StockDataController {
     } else if (name) {
       return this.stockDataService.findOneByStockName(name); // stock_name으로 조회
     }
-
     return { message: 'No stock code or name provided' };
   }
   @Patch(':id')

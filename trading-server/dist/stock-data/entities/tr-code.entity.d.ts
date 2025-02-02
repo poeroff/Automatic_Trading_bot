@@ -2,6 +2,7 @@ import { StockData } from './stock-datum.entity';
 import { PeakDate } from './peak-dates.entity';
 import { PeakPrice } from './PeakPrice.entity';
 import { FilteredPeak } from './filtered-peaks.entity';
+import { UserInflection } from './user-inflection.entity';
 export declare class TrCode {
     id: number;
     code: string;
@@ -14,4 +15,5 @@ export declare class TrCode {
     peakDates: PeakDate[];
     peakPrices: PeakPrice[];
     filteredPeaks: FilteredPeak[];
+    userInflections: UserInflection[];
 }

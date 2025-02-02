@@ -3,6 +3,7 @@ import { StockData } from './stock-datum.entity';
 import { PeakDate } from './peak-dates.entity';
 import { PeakPrice } from './PeakPrice.entity';
 import { FilteredPeak } from './filtered-peaks.entity';
+import { UserInflection } from './user-inflection.entity';
 
 @Entity('tr_codes') // 테이블 이름을 'tr_codes'로 설정
 export class TrCode {
@@ -38,5 +39,9 @@ export class TrCode {
 
   @OneToMany(() => FilteredPeak, (filteredPeak) => filteredPeak.trCode)
   filteredPeaks: FilteredPeak[];
+
+  @OneToMany(() => UserInflection, (userInflection) => userInflection.trCode)
+  userInflections: UserInflection[];
+
 
 }

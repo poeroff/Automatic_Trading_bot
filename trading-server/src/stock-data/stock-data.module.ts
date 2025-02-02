@@ -7,9 +7,10 @@ import { TrCode } from './entities/tr-code.entity';
 import { PeakDate } from './entities/peak-dates.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
 import { FilteredPeak } from './entities/filtered-peaks.entity';
+import { UserInflection } from './entities/user-inflection.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([StockData,TrCode,PeakDate,PeakPrice,FilteredPeak])],
+  imports: [TypeOrmModule.forFeature([StockData,TrCode,PeakDate,PeakPrice,FilteredPeak,UserInflection])],
   controllers: [StockDataController],
   providers: [StockDataService],
 })

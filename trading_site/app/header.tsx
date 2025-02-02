@@ -5,7 +5,8 @@ import Link from "next/link"
 import { Search, User, Bell, Menu, X, LogOut, CreditCard, UserCircle } from "lucide-react"
 
 import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+
+import { useRouter } from "next/navigation"; 
 
 
 type Notification = {
@@ -28,10 +29,8 @@ type MarketDataGroups = MarketGroup[];
 export default function Header() {
 
   const { data: session , status} = useSession();
-  useEffect(() => {
-    console.log(session);
-  }, [session]);
-  const router = useRouter();
+  const router = useRouter(); 
+
   
   
 

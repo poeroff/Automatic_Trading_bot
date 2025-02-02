@@ -16,12 +16,13 @@ const tr_code_entity_1 = require("./entities/tr-code.entity");
 const peak_dates_entity_1 = require("./entities/peak-dates.entity");
 const PeakPrice_entity_1 = require("./entities/PeakPrice.entity");
 const filtered_peaks_entity_1 = require("./entities/filtered-peaks.entity");
+const user_inflection_entity_1 = require("./entities/user-inflection.entity");
 let StockDataModule = class StockDataModule {
 };
 exports.StockDataModule = StockDataModule;
 exports.StockDataModule = StockDataModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([stock_datum_entity_1.StockData, tr_code_entity_1.TrCode, peak_dates_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([stock_datum_entity_1.StockData, tr_code_entity_1.TrCode, peak_dates_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection])],
         controllers: [stock_data_controller_1.StockDataController],
         providers: [stock_data_service_1.StockDataService],
     })

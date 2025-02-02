@@ -27,6 +27,18 @@ let StockDataController = class StockDataController {
     findAll() {
         return this.stockDataService.findAll();
     }
+    createUserInflection(body) {
+        if (body.code) {
+            console.log(body.code);
+            return this.stockDataService.createUserInflectioncode(body.date, body.code);
+        }
+        else if (body.name) {
+            return this.stockDataService.createUserInflectionname(body.date, body.name);
+        }
+    }
+    deleteUserInflection(body) {
+        return this.stockDataService.deleteUserInflection(body.id);
+    }
     findOne(code, name) {
         if (code) {
             console.log(code);
@@ -58,6 +70,20 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], StockDataController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Post)("user-inflection"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StockDataController.prototype, "createUserInflection", null);
+__decorate([
+    (0, common_1.Delete)("user-inflection"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StockDataController.prototype, "deleteUserInflection", null);
 __decorate([
     (0, common_1.Get)("stock"),
     __param(0, (0, common_1.Query)('code')),

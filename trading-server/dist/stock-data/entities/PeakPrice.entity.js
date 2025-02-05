@@ -20,7 +20,7 @@ __decorate([
     __metadata("design:type", Number)
 ], PeakPrice.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.peakPrices),
+    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.peakPrices, { onDelete: 'CASCADE' }),
     __metadata("design:type", tr_code_entity_1.TrCode)
 ], PeakPrice.prototype, "trCode", void 0);
 __decorate([

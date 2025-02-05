@@ -32,6 +32,10 @@ __decorate([
     __metadata("design:type", String)
 ], TrCode.prototype, "name", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], TrCode.prototype, "certified", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 0 }),
     __metadata("design:type", Number)
 ], TrCode.prototype, "current_inflection_count", void 0);

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import requests
 import asyncio
 import aiohttp
@@ -21,7 +22,7 @@ class Api:
             yield [first] + list(islice(it, size - 1))
 
     def find_peaks(self,dataframe, high_column='High', compare_window=23, threshold=0.2):
-        min_gap = 50
+        min_gap = 101
         
         peaks = []
         prices = dataframe[high_column].values
@@ -54,74 +55,135 @@ class Api:
         
         return peaks
 
-    def find_peaks_combined(self,df):
-        # 1. 주요 고점 찾기
-        peaks1 = self.find_peaks(df, 'High', compare_window=23, threshold=0.2)
-        peak_indices1 = [idx for idx, _ in peaks1]
-
-        # 2. 변곡점을 한 번만 계산하고 저장
-        n = 6
-        initial_peaks = argrelextrema(df["High"].values, np.greater_equal, order=n)[0]
-        initial_peaks_df = df.iloc[initial_peaks][["Date", "High"]]
-        initial_rising_peaks = initial_peaks_df[initial_peaks_df["High"].diff() > 0]
-        
-        # 3. 저장된 변곡점에서 고점 주변 15일 이내의 점들만 제거
-        filtered_peaks = initial_rising_peaks[~initial_rising_peaks.index.map(
-            lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
-        )]
-
-
-        # 1. 주요 고점 찾기
-        peaks1 = self.find_peaks(df, 'High', compare_window=23, threshold=0.2)
-        
-        peak_dates1 = df.iloc[peak_indices1]["Date"]
-        peak_prices = [price for _, price in peaks1]
-        return peak_dates1,peak_prices,filtered_peaks
-
-    async def Stock_Data(self):
-        stock_data_dict = self.kiwoom.All_Stock_Data()  # 종목명과 종목코드 딕셔너리
-        tr_codes = list(stock_data_dict.keys())[:1]  # 예시로 첫 3개 종목 코드만 사용
-        total_batches = (len(tr_codes) + 99) // 100  # 총 배치 수 계산
-        
+    def find_peaks_combined(self, df):
         try:
-            async with aiohttp.ClientSession() as session:
-                # 종목 코드와 종목명을 함께 전송
-                await session.post(
-                    f"{self.base_url}/tr_code_collection/",
-                    json={'tr_codes': [{'code': code, 'name': stock_data_dict[code]} for code in tr_codes]}
-                )
-                
-                # 100개 단위로 tr_code 처리
-                for batch_index, tr_code_batch in enumerate(self.chunks(tr_codes, 100), start=1):
-                    print(f"처리 중인 배치: {batch_index}/{total_batches}")
-                    
+            # DataFrame 복사 및 인덱스 리셋
+            df = df.copy()
+            if df.index.name == 'Date':
+                df = df.reset_index()
+            
+            # 날짜 형식 확인 및 변환
+            if isinstance(df['Date'].iloc[0], str):
+                df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
+            
+            # 1. 주요 고점 찾기
+            peaks1 = self.find_peaks(df, 'High', compare_window=23, threshold=0.2)
+            peak_indices1 = [idx for idx, _ in peaks1]
+            
+            # 2. 변곡점 계산
+            n = 6
+            initial_peaks = argrelextrema(df["High"].values, np.greater_equal, order=n)[0]
+            
+            # initial_peaks_df 생성 시 index 처리 수정
+            initial_peaks_df = df.iloc[initial_peaks].copy()
+            
+            # High 값의 차이 계산을 위한 임시 DataFrame
+            temp_df = initial_peaks_df[['Date', 'High']].copy()
+            temp_df['High_diff'] = temp_df['High'].diff()
+            
+            # 상승하는 고점만 선택
+            initial_rising_peaks = temp_df[temp_df['High_diff'] > 0].copy()
+            
+            if initial_rising_peaks.empty:
+                return [], [], pd.DataFrame(columns=['Date', 'High'])
+            
+            # 3. 고점 주변 15일 이내의 점들 제거
+            mask = ~initial_rising_peaks.index.map(
+                lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
+            )
+            filtered_peaks = initial_rising_peaks[mask].copy()
+            
+            if filtered_peaks.empty:
+                return [], [], pd.DataFrame(columns=['Date', 'High'])
+            
+            # 4. 날짜순 정렬 및 5개월 필터링
+            filtered_peaks = filtered_peaks.sort_values('Date')
+            filtered_peaks = filtered_peaks.reset_index(drop=True)
+            
+            to_keep = []
+            last_kept_date = None
+            
+            for idx, row in filtered_peaks.iterrows():
+                if last_kept_date is None or (row["Date"] - last_kept_date).days > 122:
+                    to_keep.append(idx)
+                    last_kept_date = row["Date"]
+            
+            if not to_keep:
+                print("유효한 변곡점이 없습니다.")
+                return [], [], pd.DataFrame(columns=['Date', 'High'])
+            
+            # 5. 최종 필터링
+            filtered_peaks = filtered_peaks.iloc[to_keep].copy()
+            
+            # 결과 생성
+            peak_dates1 = df.iloc[peak_indices1]["Date"]
+            peak_prices = [price for _, price in peaks1]
+            
+            # 날짜 형식을 문자열로 변환
+            filtered_peaks['Date'] = filtered_peaks['Date'].dt.strftime('%Y-%m-%d')
+            peak_dates1 = peak_dates1.dt.strftime('%Y-%m-%d')
+            
+            return peak_dates1, peak_prices, filtered_peaks
+            
+        except Exception as e:
+            print(f"find_peaks_combined 처리 중 에러 발생: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return [], [], pd.DataFrame(columns=['Date', 'High'])
+    
+    async def Stock_Data(self):
+        async with aiohttp.ClientSession() as session:
+            stock_data = await session.get("http://localhost:4000/stock-data/get_all_codes")
+            stock_data = await stock_data.json()
+
+            # 모든 주식 코드 추출
+            all_codes = [item['code'] for item in stock_data]  # 리스트 형태일 경우
+            # all_codes = [item['code'] for item in stock_data['data']]  # 딕셔너리 형태일 경우
+            total_batches = (len(all_codes) + 9) // 10
+
+            # 100개 단위로 tr_code 처리
+            for batch_index, tr_code_batch in enumerate(self.chunks(all_codes, 10), start=1):
+                print(f"처리 중인 배치: {batch_index}/{total_batches}")
+                try:
                     # 각 배치에 대해 데이터 가져오기
                     all_stock_data = self.kiwoom.get_stock_data_all(tr_code_batch)
-                  
-                    print("수집된 데이터:", list(all_stock_data.keys()))  # 어떤 종목이 수집되었는지 확인
-                    
                     # 각 종목별로 서버에 전송
                     for code in tr_code_batch:
-                        stock_data = all_stock_data.get(code)
-                        if stock_data is not None:
-                            stock_name = stock_data_dict[code]  # 종목명 가져오기
-                            peak_dates1, peak_prices, filtered_peaks = self.find_peaks_combined(stock_data)
-                            await self.process_stock_data(code, stock_data, session, peak_dates1, peak_prices, filtered_peaks, stock_name)
-                        else:
-                            print(f"종목 코드 {code}에 대한 데이터가 없습니다.")
-        except Exception as e:
-            print("전송 에러:", str(e))
+                        try:
+                            stock_data = all_stock_data.get(code)
+                            if stock_data is not None:
+                                try:
+                                    # find_peaks_combined에서 에러가 발생하면 건너뛰기
+                                    peak_dates1, peak_prices, filtered_peaks = self.find_peaks_combined(stock_data)
+                                    await self.process_stock_data(code, stock_data, session, peak_dates1, peak_prices, filtered_peaks)
+                                except Exception as e:
+                                    print(f"종목 {code} find_peaks_combined 처리 중 에러 발생. 건너뛰기: {str(e)}")
+                                    continue
+                            else:
+                                print(f"종목 코드 {code}에 대한 데이터가 없습니다.")
+                        except Exception as e:
+                            print(f"종목 {code} 처리 중 에러 발생. 건너뛰기: {str(e)}")
+                            continue
+                except Exception as e:
+                    print(f"배치 {batch_index} 처리 중 에러 발생. 다음 배치로 진행: {str(e)}")
+                    continue
+
         
-    async def process_stock_data(self, code, stock_data, session, peak_dates,peak_prices,filtered_peaks, stock_name):
+    async def process_stock_data(self, code, stock_data, session, peak_dates, peak_prices, filtered_peaks):
         try:
             # DataFrame을 리스트로 변환
             data_list = stock_data.to_dict('records')
             
-            # peak_dates1과 filtered_peaks를 직렬화 가능한 형태로 변환
-            peak_dates_list = peak_dates.reset_index().to_dict('records')
-            peak_prices_list = [{'Price': price} for price in peak_prices]  # 리스트를 딕셔너리 형태로 변환
-            filtered_peaks_list = filtered_peaks.reset_index().to_dict('records')
+            # peak_dates가 DataFrame이 아닐 경우 처리
+            if isinstance(peak_dates, pd.Series):
+                peak_dates_list = peak_dates.reset_index().to_dict('records')
+            else:
+                peak_dates_list = []  # 빈 리스트로 초기화
             
+            peak_prices_list = [{'Price': price} for price in peak_prices]  # 리스트를 딕셔너리 형태로 변환
+            filtered_peaks_list = filtered_peaks.reset_index().to_dict('records') if not filtered_peaks.empty else []  # 빈 리스트로 초기화
+            
+       
             async with session.post(
                 f"{self.base_url}/stock_data_collection/",
                 json={

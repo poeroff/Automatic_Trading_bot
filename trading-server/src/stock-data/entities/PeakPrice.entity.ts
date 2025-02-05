@@ -6,7 +6,7 @@ export class PeakPrice {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => TrCode, (trCode) => trCode.peakPrices)
+  @ManyToOne(() => TrCode, (trCode) => trCode.peakPrices, { onDelete: 'CASCADE' })
   trCode: TrCode; // TrCode와의 관계
 
   @Column({ type: 'float' })

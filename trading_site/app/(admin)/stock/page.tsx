@@ -6,23 +6,54 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useRef } from "react"
-import { fetchStockData } from "@/api/Get"
-import { useLocation, useNavigate } from "react-router-dom"
+import { Get } from "@/services/Get"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Post } from "@/api/Post"
-import { Delete } from "@/api/Delete"
+import { Post } from "@/services/Post"
+import { Delete } from "@/services/Delete"
 
-// const chartData = [
-//   { date: "2024-01-01", value: 4000 },
-//   { date: "2024-01-02", value: 3000 },
-//   { date: "2024-01-03", value: 2000 },
-//   { date: "2024-01-04", value: 2780 },
-//   { date: "2024-01-05", value: 1890 },
-//   { date: "2024-01-06", value: 2390 },
-//   { date: "2024-01-07", value: 3490 },
-// ]
+
+
+
 
 export default function StockDashboard() {
+
+// CSS 스타일
+  const spinnerStyle: React.CSSProperties = {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh', // 전체 화면을 차지하도록 설정
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // 배경색 설정
+    position: 'fixed', // 'fixed'로 설정
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999, // 다른 요소 위에 표시
+  };
+
+  // CSS 애니메이션 추가
+  const styles = `
+  .loader {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  `;
+
+  // 스타일을 문서에 추가
+  const styleSheet = document.createElement("style");
+  styleSheet.type = "text/css";
+  styleSheet.innerText = styles;
+  document.head.appendChild(styleSheet);
 
   const pulseAnimation = `
   @keyframes pulse {
@@ -41,90 +72,77 @@ export default function StockDashboard() {
   const [marketCapList, setMarketCapList] = useState<{ id: number, date: string; }[]>([]);
   const [volumeList, setVolumeList] = useState<{ id: number, date: string; }[]>([]);
   const [customList, setCustomList] = useState<{ id: number, date: string; }[]>([]);
-    const [stockList, setStockList] = useState([
-    "삼성전자",
-    "SK하이닉스",
-    "NAVER",
-    "카카오",
-    "현대차",
-    "LG전자",
-    "기아",
-    "POSCO홀딩스",
-    "삼성바이오로직스",
-    "삼성SDI",
-    "삼성전자1",
-    "SK하이닉스1",
-    "NAVER1",
-    "카카오1",
-    "현대차1",
-    "LG전자1",
-    "기아1",
-    "POSCO홀딩스1",
-    "삼성바이오로직스1",
-    "삼성SDI1",   
-    "삼성전자2",
-    "SK하이닉스2",
-    "NAVER2",
-    "카카오2",
-    "현대차2",
-    "LG전자2",
-    "기아2",
-    "POSCO홀딩스2",
-    "삼성바이오로직스2",
-    "삼성SDI2",
+  const [ErrorMessage, setErrorMessage] = useState<string>()
+  const [stockList, setStockList] = useState<{ id: number, code: string, name:string }[]>([]);
+  const [loading, setLoading] = useState(false); // 로딩 상태 추가
 
-  ])
   
+  // 날짜 유효성 검사 함수
+  const isValidDate = (dateString: string) => {
+      const year = parseInt(dateString.substring(0, 4), 10);
+      const month = parseInt(dateString.substring(4, 6), 10);
+      const day = parseInt(dateString.substring(6, 8), 10);
+  
+      // 월이 1~12 사이인지 확인
+      if (month < 1 || month > 12) return false;
+  
+      // 각 월에 따른 일 수 확인
+      const daysInMonth = [31, (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      return day > 0 && day <= daysInMonth[month - 1];
+  };
+  //사용자 변곡점 설정  추가 목록 함수수
+   const handleAddCustomItem = () => {
+    if (customList.length > 1  ) {
+      setErrorMessage("* 3개 이상의 변곡점을 추가할 수 없습니다.")
+      return;
+    }
 
-
- 
-  const [newCustomItem, setNewCustomItem] = useState("")
-
-  const handleAddCustomItem = () => {
-   
+    if (!isValidDate(inputRef.current?.value || '')) {
+      setErrorMessage('* 올바른 날짜 형식(YYYYMMDD)을 입력하세요.');
+      return; // 에러 발생 시 함수 종료
+    }
+  
+    else {
       if (inputRef.current?.value) {
         const code = searchParams.get("code");
         const name = searchParams.get("name");
         if (code) {
           const fetchData = async () => {
-            const data = await Post(`http://localhost:4000/stock-data/user-inflection`, Number(inputRef.current?.value),code, undefined)
+            await Post(`http://localhost:4000/stock-data/user-inflection`, Number(inputRef.current?.value), code, undefined)
 
           };
           fetchData();
         } else if (name) {
-          console.log("name")
+
           const fetchData = async () => {
-            const data = await Post(`http://localhost:4000/stock-data/user-inflection`, Number(inputRef.current?.value),undefined, name)
-           
+           await Post(`http://localhost:4000/stock-data/user-inflection`, Number(inputRef.current?.value), undefined, name)
+
           };
           fetchData();
         }
         inputRef.current.value = "";
       }
+    }
+
   }
 
-
-  const handleDeleteCustomItem = async(id: number) => {
+  //사용자 변곡점 설정 목록 삭제 함수
+  const handleDeleteCustomItem = async (id: number) => {
     const fetchData = async () => {
       await Delete(`http://localhost:4000/stock-data/user-inflection`, id)
     }
     fetchData();
-    
-
   }
 
 
-
+  // 주식,고점,변곡점,변곡점 설정정 데이터 가져오기
   useEffect(() => {
-    console.log("searchParams", searchParams.get("name"))
     const code = searchParams.get("code");
     const name = searchParams.get("name");
-
-
     if (code) {
-
       const fetchData = async () => {
-        const data = await fetchStockData(`http://localhost:4000/stock-data/stock?code=${code}`)
+        const data = await Get(`http://localhost:4000/stock-data/stock?code=${code}`)
+        const falseCertified = await Get(`http://localhost:4000/stock-data/false-certified`)
         if (data && data.stockData) {
           setTitle(data.trCode.name)
           setChartData(data.stockData.map((item: any) => ({ date: item.date, value: item.high })));
@@ -139,14 +157,13 @@ export default function StockDashboard() {
           const newCustomList = data.userInflections.map((peak: any) => {
             const dateStr = peak.date.toString(); // peak.date를 문자열로 변환
             const formattedDate = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`; // YYYY-MM-DD 형식으로 변환
-          
+
             return {
               id: peak.id,
               date: formattedDate, // 변환된 날짜를 사용
             };
           });
-
-
+          setStockList(falseCertified)
           setCustomList(newCustomList);
           setVolumeList(newVolumeList);
           setMarketCapList(newMarketCapList);
@@ -158,9 +175,9 @@ export default function StockDashboard() {
       fetchData();
     } else if (name) {
       const fetchData = async () => {
-        const data = await fetchStockData(`http://localhost:4000/stock-data/stock?name=${name}`)
+        const data = await Get(`http://localhost:4000/stock-data/stock?name=${name}`)
+        const falseCertified = await Get(`http://localhost:4000/stock-data/false-certified`)
         if (data && data.stockData) {
-
           setTitle(data.trCode.name)
           setChartData(data.stockData.map((item: any) => ({ date: item.date, value: item.close })));
           const newMarketCapList = data.peakDates.map((peak: any) => ({
@@ -174,12 +191,13 @@ export default function StockDashboard() {
           const newCustomList = data.userInflections.map((peak: any) => {
             const dateStr = peak.date.toString(); // peak.date를 문자열로 변환
             const formattedDate = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`; // YYYY-MM-DD 형식으로 변환
-          
+
             return {
               id: peak.id,
               date: formattedDate, // 변환된 날짜를 사용
             };
           });
+          setStockList(falseCertified)
           setCustomList(newCustomList);
           setVolumeList(newVolumeList);
           setMarketCapList(newMarketCapList);
@@ -191,84 +209,113 @@ export default function StockDashboard() {
     }
   }, [searchParams]); // location이 변경될 때마다 실행
 
- // 리스트 아이템 클릭 핸들러 추가
-const handleDateClick = (date: string) => {
-  setSelectedDate(date);
-  // 2초 후에 선택 상태 해제
-  setTimeout(() => setSelectedDate(null), 2000);
-};
+  // 리스트 아이템 클릭 핸들러 추가
+  const handleDateClick = (date: string) => {
+    setSelectedDate(date);
+    // 2초 후에 선택 상태 해제
+    setTimeout(() => setSelectedDate(null), 2000);
+  };
 
-// renderCustomDots 함수 수정
-const renderCustomDots = (props: any) => {
-  const { cx, cy, payload } = props;
-  const date = payload.date;
-  const isSelected = date === selectedDate;
+  // renderCustomDots 함수 수정
+  const renderCustomDots = (props: any) => {
+    const { cx, cy, payload } = props;
+    const date = payload.date;
+    const isSelected = date === selectedDate;
 
-  return (
-    <g key={`dots-${date}`}>
-      {marketCapList.some((item) => item.date === date) && (
-        <circle
-          key={`peak-${date}`}
-          cx={cx}
-          cy={cy}
-          r={isSelected ? 6 : 4}
-          fill="red"
-          style={{
-            transition: "r 0.3s ease-in-out",
-            animation: isSelected ? "pulse 1s infinite" : "none"
-          }}
-        />
-      )}
-      {volumeList.some((item) => item.date === date) && (
-        <circle
-          key={`volume-${date}`}
-          cx={cx}
-          cy={cy}
-          r={isSelected ? 6 : 4}
-          fill="blue"
-          style={{
-            transition: "r 0.3s ease-in-out",
-            animation: isSelected ? "pulse 1s infinite" : "none"
-          }}
-        />
-      )}
-    </g>
-  );
-};
-const [selectedStock, setSelectedStock] = useState<string | null>(null)
-const handleStockSelect = async (stock: string) => {
-  setSelectedStock(stock)
-  // 여기서 실제 API 호출을 통해 해당 주식의 데이터를 가져와야 합니다.
-  // 예시 코드:
-  // const data = await fetchStockData(`http://localhost:4000/stock-data/stock?code=${stock}`);
-  // setChartData(data.stockData.map((item: any) => ({ date: item.date, value: item.close })));
-}
-const handleCompletionCheck = () => {
-  // 여기에 검사 완료 버튼 클릭 시 수행할 로직을 추가합니다.
-  console.log("검사 완료 버튼이 클릭되었습니다.")
-  // 예: 데이터 저장, 상태 업데이트, API 호출 등
-}
+    return (
+      <g key={`dots-${date}`}>
+        {marketCapList.some((item) => item.date === date) && (
+          <circle
+            key={`peak-${date}`}
+            cx={cx}
+            cy={cy}
+            r={isSelected ? 6 : 4}
+            fill="red"
+            style={{
+              transition: "r 0.3s ease-in-out",
+              animation: isSelected ? "pulse 1s infinite" : "none"
+            }}
+          />
+        )}
+        {volumeList.some((item) => item.date === date) && (
+          <circle
+            key={`volume-${date}`}
+            cx={cx}
+            cy={cy}
+            r={isSelected ? 6 : 4}
+            fill="blue"
+            style={{
+              transition: "r 0.3s ease-in-out",
+              animation: isSelected ? "pulse 1s infinite" : "none"
+            }}
+          />
+        )}
+      </g>
+    );
+  };
+  const [selectedStock, setSelectedStock] = useState<string | null>(null)
 
-console.log
+  const handleCompletionCheck = () => {
+    const code = searchParams.get("code");
+    const name = searchParams.get("name");
+
+    const fetchData = async (url: string) => {
+      setLoading(true); // 로딩 시작
+      const response = await Get(url);
+      setLoading(false); // 로딩 종료
+      return response;
+    };
+
+    const processData = async () => {
+      if (code) {
+        await fetchData(`http://localhost:4000/stock-data/certified?code=${code}`);
+        const falseCertified = await fetchData(`http://localhost:4000/stock-data/false-certified`);
+        if (falseCertified.length > 0) {
+          router.push(`/stock?code=${falseCertified[1].code}`);
+        }
+      } else if (name) {
+        await fetchData(`http://localhost:4000/stock-data/certified?name=${name}`);
+        const falseCertified = await fetchData(`http://localhost:4000/stock-data/false-certified`);
+        if (falseCertified.length > 0) {
+          router.push(`/stock?code=${falseCertified[1].code}`);
+        }
+      }
+    };
+
+    processData();
+  };
+
+  const LoadingSpinner: React.FC = () => {
+    return (
+      <div style={spinnerStyle}>
+        <div className="loader"></div>
+      </div>
+    );
+  };
+
+   
+
+
+
+
   return (
     <div className="min-h-screen bg-background">
-
-      {/* Header */}
+     {loading ?  <LoadingSpinner /> :  <>     
       <header className="border-b">
         <div className="mb-8 overflow-x-auto">
-            <div className="flex space-x-2 pb-2" style={{ width: "max-content" }}>
-              {stockList.map((stock) => (
-                <Button
-                  key={stock}
-                  onClick={() => handleStockSelect(stock)}
-                  variant={selectedStock === stock ? "default" : "outline"}
-                  className="px-4 py-2 whitespace-nowrap"
-                >
-                  {stock}
-                </Button>
-              ))}
-            </div>
+          <div className="flex space-x-2 pb-2" style={{ width: "max-content" }}>
+            {stockList.map((stock) => (
+              <Button
+                key={stock.id}
+                onClick={() => router.push(`/stock?code=${stock.code}`)}
+                variant={selectedStock === stock.name ? "default" : "outline"}
+                className="px-4 py-2 whitespace-nowrap"
+              >
+                {stock.name}
+              </Button>
+            ))}
           </div>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -379,7 +426,7 @@ console.log
               <CardTitle>변곡점 설정 목록</CardTitle>
             </CardHeader>
             <CardContent>
-    
+
               <div className="h-[450px] overflow-y-auto mb-4">
                 {customList.map((item, index) => (
                   <div key={item.id.toString()} className="flex justify-between items-center py-2 border-b">
@@ -409,10 +456,16 @@ console.log
                   </div>
                 ))}
               </div>
+              {ErrorMessage && (
+                <span className="text-red-600 font-bold text-sm">
+                    {ErrorMessage}
+                </span>
+              )}
               <div className="flex gap-2">
                 <Input
-                  placeholder="종목명"
+                  placeholder="날짜(YYYYMMDD) 입력"
                   ref={inputRef}
+                  type="number"
                 />
                 <Button onClick={handleAddCustomItem}>추가</Button>
               </div>
@@ -424,7 +477,7 @@ console.log
             검사 완료
           </Button>
         </div>
-      </main>
+      </main></>}
     </div>
   )
 }

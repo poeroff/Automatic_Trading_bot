@@ -16,7 +16,28 @@ export declare class StockDataService {
     private userInflectionRepository;
     constructor(stockDataRepository: Repository<StockData>, trCodeRepository: Repository<TrCode>, peakDateRepository: Repository<PeakDate>, peakPriceRepository: Repository<PeakPrice>, filteredPeakRepository: Repository<FilteredPeak>, userInflectionRepository: Repository<UserInflection>);
     create(createStockDatumDto: CreateStockDatumDto): string;
-    findAll(): string;
+    getAllCodes(): Promise<TrCode[]>;
+    gettrueCodes(): Promise<TrCode[]>;
+    getStockData(code: string): Promise<{
+        status: string;
+        message: string;
+        data?: undefined;
+    } | {
+        data: {
+            Date: Date;
+            Open: number;
+            High: number;
+            Low: number;
+            Close: number;
+            Volume: number;
+            Avg_Daily_Volume: number;
+        }[];
+        status?: undefined;
+        message?: undefined;
+    }>;
+    getUserInflection(code: string): Promise<UserInflection[] | {
+        message: string;
+    }>;
     createUserInflectioncode(date: number, code: string): Promise<UserInflection | {
         message: string;
     }>;
@@ -54,6 +75,13 @@ export declare class StockDataService {
         userInflections: UserInflection[];
         message?: undefined;
     }>;
+    updateCertifiedTrCode(code: string): Promise<TrCode | {
+        message: string;
+    }>;
+    updateCertifiedStockName(name: string): Promise<TrCode | {
+        message: string;
+    }>;
+    getFalseCertified(): Promise<TrCode[]>;
     update(id: number, updateStockDatumDto: UpdateStockDatumDto): string;
     remove(id: number): string;
 }

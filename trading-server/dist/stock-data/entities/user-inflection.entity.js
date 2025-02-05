@@ -20,7 +20,7 @@ __decorate([
     __metadata("design:type", Number)
 ], UserInflection.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.userInflections),
+    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.userInflections, { onDelete: 'CASCADE' }),
     __metadata("design:type", tr_code_entity_1.TrCode)
 ], UserInflection.prototype, "trCode", void 0);
 __decorate([

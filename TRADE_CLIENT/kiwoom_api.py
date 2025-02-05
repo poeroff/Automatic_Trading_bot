@@ -35,18 +35,19 @@ class KiwoomAPI:
             exclude_keywords = [
                 'ETF', 'ETN', '선물', 
                 'KODEX', 'TIGER', 'KBSTAR',
-                'SOL', 'ACE',
+                'SOL', 'ACE',"VITA",
                 'HANARO', 'KOSEF', 'KINDEX', 
                 'ARIRANG', 'SMART', 'FOCUS',
                 'TIMEFOLIO', 'WOORI',
                 '우B', '우C', 
                 '레버리지', '인버스',
-                'KoAct', '채권', "스팩","PLUS"
+                'KoAct', '채권', "스팩","PLUS",
+                "RISE","KIWOOM","BNK","WON",
+                "마이다스","에셋플러스","KCGI","리츠","액티브"
             ]
             
             # 단순히 in 연산자로 체크
             if not any(keyword in stock_name for keyword in exclude_keywords) and not re.search(r'\d', stock_name):
-                print(f"종목명: {stock_name}")  # 디버깅용 출력
                 stock_codes[code] = stock_name  # 종목코드와 종목명을 딕셔너리에 저장
 
         return stock_codes  # 종목코드와 종목명을 포함한 딕셔너리 반환
@@ -178,7 +179,7 @@ class KiwoomAPI:
     
         return df
     
-    def get_stock_data_all(self, Tr_code): 
+    def get_stock_data_all(self, Tr_code):
         set_d = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
 
         all_stock_data = {}

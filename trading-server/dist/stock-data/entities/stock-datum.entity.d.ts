@@ -8,4 +8,5 @@ export declare class StockData {
     low: number;
     close: number;
     volume: number;
+    avg_daily_volume: number;
 }

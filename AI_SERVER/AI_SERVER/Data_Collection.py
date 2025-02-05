@@ -28,38 +28,11 @@ def tr_code_Collection(request):
                             id INT AUTO_INCREMENT PRIMARY KEY,
                             code VARCHAR(10) NOT NULL,
                             name VARCHAR(100) NOT NULL, 
+                            certified boolean DEFAULT false,
                             current_inflection_count INT DEFAULT 0,  
                             previous_inflection_count INT DEFAULT 0, 
                             previous_peak_count INT DEFAULT 0, 
-                            current_peak_count INT DEFAULT 0  
-                        )
-                    """)
-                
-                # stock_data 테이블 존재 여부 확인
-                cursor.execute("""
-                    SELECT COUNT(*)
-                    FROM information_schema.tables 
-                    WHERE table_schema = 'test' 
-                    AND table_name = 'stock_data'
-                """)
-                stock_data_exists = cursor.fetchone()[0] == 1
-                
-                if not stock_data_exists:
-                    # stock_data 테이블 생성
-                    cursor.execute("""
-                        CREATE TABLE stock_data (
-                            id INT AUTO_INCREMENT PRIMARY KEY,
-                            tr_code_id INT NOT NULL,
-                            date DATE NOT NULL,
-                            open FLOAT,
-                            high FLOAT,
-                            low FLOAT,
-                            close FLOAT,
-                            volume INT,
-                            avg_daily_volume FLOAT,
-                            FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id),
-                            UNIQUE KEY unique_stock_date (tr_code_id, date)
-                                   
+                            current_peak_count INT DEFAULT 0
 
                         )
                     """)
@@ -68,24 +41,16 @@ def tr_code_Collection(request):
                 cursor.execute("SELECT code FROM tr_codes")
                 existing_codes = set(row[0] for row in cursor.fetchall())
                 new_codes = {item['code']: item['name'] for item in tr_codes}  # 종목명과 함께 저장
-                
-                # 삭제해야 할 코드 (DB에는 있지만 tr_codes에는 없는 것)
                 codes_to_delete = existing_codes - new_codes.keys()
+                # (tr_codes에는 없지만 DB에는 있는 것)
                 if codes_to_delete:
-                    # 자식 테이블 데이터 삭제
                     cursor.execute(
-                        "DELETE FROM stock_data WHERE tr_code_id IN (SELECT id FROM tr_codes WHERE code IN (%s))" % 
-                        ','.join(['%s'] * len(codes_to_delete)),
+                        "DELETE FROM tr_codes WHERE code IN (%s)" % ','.join(['%s'] * len(codes_to_delete)),
                         tuple(codes_to_delete)
                     )
-                    # 부모 테이블 데이터 삭제
-                    cursor.execute(
-                        "DELETE FROM tr_codes WHERE code IN (%s)" % 
-                        ','.join(['%s'] * len(codes_to_delete)),
-                        tuple(codes_to_delete)
-                    )
+                
                     
-                # 추가해야 할 코드 (tr_codes에는 있지만 DB에는 없는 것)
+                #  (tr_codes에는 있지만 DB에는 없는 것)
                 codes_to_add = set(new_codes.keys()) - existing_codes
                 for code in codes_to_add:
                     cursor.execute(
@@ -122,10 +87,44 @@ def Stock_Data_Collection(request):
             peak_prices = data.get('peak_prices')
             total_volume = sum(row['Volume'] for row in stock_data)
             total_weeks = len(stock_data)
-            avg_daily_volume = ((total_volume / total_weeks) / 5) * 1.5
+            avg_daily_volume = ((total_volume / total_weeks) / 5) * 1.2
+            print(code)
+            print(peak_dates)
+            print(filtered_peaks)
+            print(peak_prices)
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:
+
+
+                    # stock_data 테이블 존재 여부 확인
+                    cursor.execute("""
+                        SELECT COUNT(*)
+                        FROM information_schema.tables 
+                        WHERE table_schema = 'test' 
+                        AND table_name = 'stock_data'
+                    """)
+                    stock_data_exists = cursor.fetchone()[0] == 1
+                    
+                    if not stock_data_exists:
+                        # stock_data 테이블 생성
+                        cursor.execute("""
+                            CREATE TABLE stock_data (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                tr_code_id INT NOT NULL,
+                                date DATE NOT NULL,
+                                open FLOAT,
+                                high FLOAT,
+                                low FLOAT,
+                                close FLOAT,
+                                volume BIGINT,
+                                avg_daily_volume FLOAT,
+                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id) ON DELETE CASCADE,
+                                UNIQUE KEY unique_stock_date (tr_code_id, date)
+
+                            )
+                        """)
+
                     # peak_dates 테이블 생성
                     cursor.execute(""" 
                         SELECT COUNT(*)
@@ -138,13 +137,12 @@ def Stock_Data_Collection(request):
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 tr_code_id INT NOT NULL,
                                 date DATE NOT NULL,
-                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id),
+                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id) ON DELETE CASCADE,
                                 UNIQUE KEY unique_peak_date (tr_code_id, date)
                            )
                         """)
 
 
-                  
                     cursor.execute(""" 
                         SELECT COUNT(*)
                         FROM information_schema.tables
@@ -156,7 +154,7 @@ def Stock_Data_Collection(request):
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 tr_code_id INT NOT NULL,
                                 price FLOAT NOT NULL,
-                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id),
+                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id) ON DELETE CASCADE,
                                 UNIQUE KEY unique_peak_price (tr_code_id, price)
                             )
                         """)
@@ -174,7 +172,7 @@ def Stock_Data_Collection(request):
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 tr_code_id INT NOT NULL,
                                 date DATE NOT NULL,
-                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id),
+                                FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id) ON DELETE CASCADE,
                                 UNIQUE KEY unique_filtered_peak (tr_code_id, date)
                               
                             )
@@ -190,40 +188,65 @@ def Stock_Data_Collection(request):
                         })
                     tr_code_id = tr_code_row[0]
                     
-                    # Insert peak_dates
-                    peak_dates_count = len(peak_dates)
-                    for peak_date in peak_dates:
-                        try:
-                            cursor.execute(""" 
-                                INSERT INTO peak_dates (tr_code_id, date)
-                                VALUES (%s, %s)
+                    # peak_dates_count와 filtered_peaks_count 초기화
+                    peak_dates_count = 0
+                    filtered_peaks_count = 0
+
+                    if peak_dates:
+                        peak_dates_count = len(peak_dates)
+                        for peak_date in peak_dates:
+                            # 중복 확인 쿼리 추가
+                            cursor.execute("""
+                                SELECT COUNT(*) FROM peak_dates 
+                                WHERE tr_code_id = %s AND date = %s
                             """, (tr_code_id, peak_date['Date']))
-                        except Exception as e:
-                            if "Duplicate entry" in str(e):
-                                continue  # 중복된 경우 건너뛰기
+                            exists = cursor.fetchone()[0] > 0  # 중복 여부 확인
 
-                    # Insert filtered_peaks
-                    filtered_peaks_count = len(filtered_peaks)
-                    for filtered_peak in filtered_peaks:
-                        try:
-                            cursor.execute(""" 
-                                INSERT INTO filtered_peaks (tr_code_id, date)
-                                VALUES (%s, %s)
+                            if not exists:  # 중복이 없을 경우에만 삽입
+                                try:
+                                    cursor.execute(""" 
+                                        INSERT INTO peak_dates (tr_code_id, date)
+                                        VALUES (%s, %s)
+                                    """, (tr_code_id, peak_date['Date']))
+                                except Exception as e:
+                                    print(f"Error inserting peak date: {str(e)}")  # 에러 로그 출력
+
+                    if filtered_peaks:
+                        filtered_peaks_count = len(filtered_peaks)
+                        for filtered_peak in filtered_peaks:
+                            # 중복 확인 쿼리 추가
+                            cursor.execute("""
+                                SELECT COUNT(*) FROM filtered_peaks 
+                                WHERE tr_code_id = %s AND date = %s
                             """, (tr_code_id, filtered_peak['Date']))
-                        except Exception as e:
-                            if "Duplicate entry" in str(e):
-                                continue  # 중복된 경우 건너뛰기
+                            exists = cursor.fetchone()[0] > 0  # 중복 여부 확인
 
-                    # Insert peak_prices
-                    for peak_price in peak_prices:
-                        try:
-                            cursor.execute(""" 
-                                INSERT INTO peak_prices (tr_code_id, price)
-                                VALUES (%s, %s)
+                            if not exists:  # 중복이 없을 경우에만 삽입
+                                try:
+                                    cursor.execute(""" 
+                                        INSERT INTO filtered_peaks (tr_code_id, date)
+                                        VALUES (%s, %s)
+                                    """, (tr_code_id, filtered_peak['Date']))
+                                except Exception as e:
+                                    print(f"Error inserting filtered peak: {str(e)}")  # 에러 로그 출력
+
+                    if peak_prices:
+                        for peak_price in peak_prices:
+                            # 중복 확인 쿼리 추가
+                            cursor.execute("""
+                                SELECT COUNT(*) FROM peak_prices 
+                                WHERE tr_code_id = %s AND price = %s
                             """, (tr_code_id, peak_price['Price']))
-                        except Exception as e:
-                            if "Duplicate entry" in str(e):
-                                continue  # 중복된 경우 건너뛰기
+                            exists = cursor.fetchone()[0] > 0  # 중복 여부 확인
+
+                            if not exists:  # 중복이 없을 경우에만 삽입
+                                try:
+                                    cursor.execute(""" 
+                                        INSERT INTO peak_prices (tr_code_id, price)
+                                        VALUES (%s, %s)
+                                    """, (tr_code_id, peak_price['Price']))
+                                except Exception as e:
+                                    print(f"Error inserting peak price: {str(e)}")  # 에러 로그 출력
 
                     # Update tr_codes with counts
                     cursor.execute("""
@@ -235,26 +258,38 @@ def Stock_Data_Collection(request):
                         WHERE id = %s
                     """, (peak_dates_count, filtered_peaks_count, tr_code_id))
 
+                    # current_peak_count와 current_inflection_count 값을 불러오기
+                    cursor.execute("SELECT current_peak_count, current_inflection_count, previous_peak_count, previous_inflection_count FROM tr_codes WHERE id = %s", (tr_code_id,))
+                    current_counts = cursor.fetchone()
+                    current_peak_count = current_counts[0] if current_counts else 0
+                    current_inflection_count = current_counts[1] if current_counts else 0
+                    previous_peak_count = current_counts[2] if current_counts else 0
+                    previous_inflection_count = current_counts[3] if current_counts else 0
+                    # certified 값을 업데이트
+                    if(previous_peak_count != 0 and previous_inflection_count != 0):
+                        if(current_peak_count - previous_peak_count) != 0 or (current_inflection_count - previous_inflection_count) != 0:
+                            cursor.execute("""
+                                UPDATE tr_codes
+                                SET certified = false
+                                WHERE id = %s
+                            """, (tr_code_id,))
+
                     for row in stock_data:
-                        cursor.execute(""" 
-                            SELECT 1 FROM stock_data 
+                        # 중복 확인 쿼리
+                        cursor.execute("""
+                            SELECT COUNT(*) FROM stock_data 
                             WHERE tr_code_id = %s AND date = %s
                         """, (tr_code_id, row['Date']))
                         
-                        if cursor.fetchone():
-                            cursor.execute(""" 
-                                UPDATE stock_data 
-                                SET open = %s, high = %s, low = %s, close = %s, volume = %s, avg_daily_volume = %s
-                                WHERE tr_code_id = %s AND date = %s
-                            """, (row['Open'], row['High'], row['Low'], row['Close'], 
-                                 row['Volume'], avg_daily_volume, tr_code_id, row['Date']))
-                        else:
+                        exists = cursor.fetchone()[0] > 0  # 중복 여부 확인
+
+                        if not exists:  # 중복이 없을 경우에만 삽입
                             cursor.execute(""" 
                                 INSERT INTO stock_data 
                                 (tr_code_id, date, open, high, low, close, volume, avg_daily_volume)
                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                             """, (tr_code_id, row['Date'], row['Open'], row['High'],
-                                 row['Low'], row['Close'], row['Volume'], avg_daily_volume))
+                                  row['Low'], row['Close'], row['Volume'], avg_daily_volume))
                     
                     connection.commit()
                     
@@ -273,73 +308,73 @@ def Stock_Data_Collection(request):
             'message': str(e)
         })
 
-@csrf_exempt
-def Get_Stock_Data(request):
-    try:
-        if request.method == 'POST':
-            data = json.loads(request.body)
-            code = data.get('code')
+# @csrf_exempt
+# def Get_Stock_Data(request):
+#     try:
+#         if request.method == 'POST':
+#             data = json.loads(request.body)
+#             code = data.get('code')
             
-            connection = get_db_connection()
-            try:
-                with connection.cursor() as cursor:
-                    # tr_codes 테이블에서 해당 코드의 id 가져오기
-                    cursor.execute("SELECT id FROM tr_codes WHERE code = %s", (code,))
-                    tr_code_row = cursor.fetchone()
-                    if not tr_code_row:
-                        return JsonResponse({
-                            'status': 'error',
-                            'message': f'Code {code} not found in tr_codes table'
-                        })
-                    tr_code_id = tr_code_row[0]
+#             connection = get_db_connection()
+#             try:
+#                 with connection.cursor() as cursor:
+#                     # tr_codes 테이블에서 해당 코드의 id 가져오기
+#                     cursor.execute("SELECT id FROM tr_codes WHERE code = %s", (code,))
+#                     tr_code_row = cursor.fetchone()
+#                     if not tr_code_row:
+#                         return JsonResponse({
+#                             'status': 'error',
+#                             'message': f'Code {code} not found in tr_codes table'
+#                         })
+#                     tr_code_id = tr_code_row[0]
                     
-                    # stock_data 테이블에서 해당 종목의 데이터 조회
-                    cursor.execute("""
-                        SELECT date, open, high, low, close, volume, avg_daily_volume 
-                        FROM stock_data 
-                        WHERE tr_code_id = %s
-                        ORDER BY date
-                    """, (tr_code_id,))
+#                     # stock_data 테이블에서 해당 종목의 데이터 조회
+#                     cursor.execute("""
+#                         SELECT date, open, high, low, close, volume, avg_daily_volume 
+#                         FROM stock_data 
+#                         WHERE tr_code_id = %s
+#                         ORDER BY date
+#                     """, (tr_code_id,))
                     
-                    columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Avg_Daily_Volume']
-                    stock_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+#                     columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Avg_Daily_Volume']
+#                     stock_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
                     
-                    return JsonResponse({
-                        'status': 'success',
-                        'code': code,
-                        'data': stock_data
-                    })
+#                     return JsonResponse({
+#                         'status': 'success',
+#                         'code': code,
+#                         'data': stock_data
+#                     })
                     
-            finally:
-                connection.close()
+#             finally:
+#                 connection.close()
                 
-    except Exception as e:
-        print("에러 발생:", str(e))
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        })
+#     except Exception as e:
+#         print("에러 발생:", str(e))
+#         return JsonResponse({
+#             'status': 'error',
+#             'message': str(e)
+#         })
 
-@csrf_exempt
-def Get_All_Codes(request):
-    try:
-        connection = get_db_connection()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT code FROM tr_codes")
-                codes = [row[0] for row in cursor.fetchall()]
+# @csrf_exempt
+# def Get_All_Codes(request):
+#     try:
+#         connection = get_db_connection()
+#         try:
+#             with connection.cursor() as cursor:
+#                 cursor.execute("SELECT code FROM tr_codes WHERE certified = true")
+#                 codes = [row[0] for row in cursor.fetchall()]
                 
-                return JsonResponse({
-                    'status': 'success',
-                    'codes': codes
-                })
+#                 return JsonResponse({
+#                     'status': 'success',
+#                     'codes': codes
+#                 })
                 
-        finally:
-            connection.close()
+#         finally:
+#             connection.close()
                 
-    except Exception as e:
-        print("에러 발생:", str(e))
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        })
+#     except Exception as e:
+#         print("에러 발생:", str(e))
+#         return JsonResponse({
+#             'status': 'error',
+#             'message': str(e)
+#         })

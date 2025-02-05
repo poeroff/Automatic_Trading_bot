@@ -7,4 +7,6 @@ class Auth:
     def Kiwoom_Login(self):
         self.kiwoom = Kiwoom()  # Kiwoom 객체 생성
         self.kiwoom.CommConnect(block=True)  # 로그인 수행
+        
+        
         return self.kiwoom

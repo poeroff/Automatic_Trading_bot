@@ -6,7 +6,7 @@ export class FilteredPeak {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => TrCode, (trCode) => trCode.filteredPeaks)
+  @ManyToOne(() => TrCode, (trCode) => trCode.filteredPeaks, { onDelete: 'CASCADE' })
   trCode: TrCode; // TrCode와의 관계
 
   @Column({ type: 'date' })

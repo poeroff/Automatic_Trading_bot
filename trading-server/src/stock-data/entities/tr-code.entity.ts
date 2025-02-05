@@ -16,6 +16,9 @@ export class TrCode {
   @Column({ type: 'varchar', length: 100 })
   name: string; // 종목 이름
 
+  @Column({ type: 'boolean', default: false })
+  certified: boolean; // 인증 여부
+
   @Column({ type: 'int', default: 0 })
   current_inflection_count: number; // 현재 변곡점 수
 

@@ -6,7 +6,7 @@ export class StockData {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => TrCode, (trCode) => trCode.stockData, { eager: true })
+  @ManyToOne(() => TrCode, (trCode) => trCode.stockData, { eager: true , onDelete: 'CASCADE'})
   @JoinColumn({ name: 'tr_code_id' }) // This is the foreign key
   trCode: TrCode;
 
@@ -25,6 +25,9 @@ export class StockData {
   @Column({ type: 'float' })
   close: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'bigint' })
   volume: number;
+
+  @Column({ type: 'float' })
+  avg_daily_volume: number;
 }

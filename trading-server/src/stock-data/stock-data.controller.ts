@@ -12,10 +12,30 @@ export class StockDataController {
     return this.stockDataService.create(createStockDatumDto);
   }
 
-  @Get()
-  findAll() {
-    return this.stockDataService.findAll();
+  @Get("get_all_codes")
+  getAllCodes() {
+    return this.stockDataService.getAllCodes();
   }
+/*  */
+  @Get("get_true_codes")
+  gettrueCodes() {
+    return this.stockDataService.gettrueCodes();
+  }
+
+
+  @Post("get_stock_data")
+  getStockData(@Body() body: { code: string }) {
+    return this.stockDataService.getStockData(body.code);
+  }
+
+
+
+
+  @Get("get_user_inflection")
+  getUserInflection(@Body() body: { code: string }) {
+    return this.stockDataService.getUserInflection(body.code);
+  }
+  //사용자 변곡점 설정 추가 함수
   @Post("user-inflection")
   createUserInflection( @Body() body: { date: number, code?: string, name?: string }) {
     if (body.code) {
@@ -31,18 +51,35 @@ export class StockDataController {
   }
 
 
+  //주식,고점,변곡점,변곡점 설정 데이터 가져오기
   @Get("stock")
-
-
   findOne(@Query('code') code?: string, @Query('name') name?: string) {
     if (code) {
-      console.log(code)
       return this.stockDataService.findOneByTrCode(code); // tr_code로 조회
     } else if (name) {
       return this.stockDataService.findOneByStockName(name); // stock_name으로 조회
     }
     return { message: 'No stock code or name provided' };
   }
+
+  //인증 여부 업데이트트
+  @Get("certified")
+  updateCertified(@Query('code') code?: string, @Query('name') name?: string) {
+    if (code) {
+      return this.stockDataService.updateCertifiedTrCode(code); // tr_code로 조회
+    } else if (name) {
+      return this.stockDataService.updateCertifiedStockName(name); // stock_name으로 조회
+    }
+  }
+
+  //인증이 안된 종목 조회
+  @Get("false-certified")
+  getFalseCertified() {
+    return this.stockDataService.getFalseCertified();
+  }
+
+
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateStockDatumDto: UpdateStockDatumDto) {
     return this.stockDataService.update(+id, updateStockDatumDto);

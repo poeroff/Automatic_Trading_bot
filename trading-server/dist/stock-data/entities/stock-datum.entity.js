@@ -20,7 +20,7 @@ __decorate([
     __metadata("design:type", Number)
 ], StockData.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.stockData, { eager: true }),
+    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.stockData, { eager: true, onDelete: 'CASCADE' }),
     (0, typeorm_1.JoinColumn)({ name: 'tr_code_id' }),
     __metadata("design:type", tr_code_entity_1.TrCode)
 ], StockData.prototype, "trCode", void 0);
@@ -45,9 +45,13 @@ __decorate([
     __metadata("design:type", Number)
 ], StockData.prototype, "close", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'int' }),
+    (0, typeorm_1.Column)({ type: 'bigint' }),
     __metadata("design:type", Number)
 ], StockData.prototype, "volume", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'float' }),
+    __metadata("design:type", Number)
+], StockData.prototype, "avg_daily_volume", void 0);
 exports.StockData = StockData = __decorate([
     (0, typeorm_1.Entity)('stock_data')
 ], StockData);

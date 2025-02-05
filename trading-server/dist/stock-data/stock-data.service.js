@@ -34,12 +34,43 @@ let StockDataService = class StockDataService {
     create(createStockDatumDto) {
         return 'This action adds a new stockDatum';
     }
-    findAll() {
-        return `This action returns all stockData`;
+    async getAllCodes() {
+        return await this.trCodeRepository.find();
+    }
+    async gettrueCodes() {
+        const trCodes = await this.trCodeRepository.find({ where: {}, relations: ["userInflections"] });
+        const results = trCodes.filter(trCode => trCode.userInflections.length > 0);
+        return results;
+    }
+    async getStockData(code) {
+        console.log(code);
+        const stockData = await this.stockDataRepository.find({
+            where: { trCode: { code: code } },
+            order: { date: 'ASC' },
+        });
+        if (!stockData || stockData.length === 0) {
+            return { status: 'error', message: `Code ${code} not found in stock_data table` };
+        }
+        const formattedData = stockData.map(data => ({
+            Date: data.date,
+            Open: data.open,
+            High: data.high,
+            Low: data.low,
+            Close: data.close,
+            Volume: data.volume,
+            Avg_Daily_Volume: data.avg_daily_volume,
+        }));
+        console.log(formattedData);
+        return { data: formattedData };
+    }
+    async getUserInflection(code) {
+        const trCode = await this.trCodeRepository.findOne({ where: { code: code } });
+        if (!trCode) {
+            return { message: 'No stock code or name provided' };
+        }
+        return await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
     }
     async createUserInflectioncode(date, code) {
-        console.log("date", date);
-        console.log("code", code);
         const trCode = await this.trCodeRepository.findOne({ where: { code: code } });
         if (!trCode) {
             return { message: 'No stock code or name provided' };
@@ -80,6 +111,27 @@ let StockDataService = class StockDataService {
         const userInflections = await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
         return { trCode, stockData, peakDates, filteredPeaks, userInflections };
     }
+    async updateCertifiedTrCode(code) {
+        const trCode = await this.trCodeRepository.findOne({ where: { code: code } });
+        if (!trCode) {
+            return { message: 'No stock code or name provided' };
+        }
+        trCode.certified = true;
+        return await this.trCodeRepository.save(trCode);
+    }
+    async updateCertifiedStockName(name) {
+        const trCode = await this.trCodeRepository.findOne({ where: { name: name } });
+        if (!trCode) {
+            return { message: 'No stock code or name provided' };
+        }
+        trCode.certified = true;
+        return await this.trCodeRepository.save(trCode);
+    }
+    async getFalseCertified() {
+        const uncertifiedTrCodes = await this.trCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
+        const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length > 0 && trCode.filteredPeaks.length > 0);
+        return results;
+    }
     update(id, updateStockDatumDto) {
         return `This action updates a #${id} stockDatum`;
     }
@@ -96,6 +148,11 @@ exports.StockDataService = StockDataService = __decorate([
     __param(3, (0, typeorm_1.InjectRepository)(PeakPrice_entity_1.PeakPrice)),
     __param(4, (0, typeorm_1.InjectRepository)(filtered_peaks_entity_1.FilteredPeak)),
     __param(5, (0, typeorm_1.InjectRepository)(user_inflection_entity_1.UserInflection)),
-    __metadata("design:paramtypes", [typeorm_2.Repository, typeorm_2.Repository, typeorm_2.Repository, typeorm_2.Repository, typeorm_2.Repository, typeorm_2.Repository])
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository])
 ], StockDataService);
 //# sourceMappingURL=stock-data.service.js.map

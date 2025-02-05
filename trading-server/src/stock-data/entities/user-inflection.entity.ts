@@ -6,7 +6,7 @@ export class UserInflection {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => TrCode, (trCode) => trCode.userInflections)
+  @ManyToOne(() => TrCode, (trCode) => trCode.userInflections, { onDelete: 'CASCADE' })
 
   trCode: TrCode; // TrCode와의 관계
 

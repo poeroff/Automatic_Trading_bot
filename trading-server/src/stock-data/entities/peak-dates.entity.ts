@@ -6,7 +6,7 @@ export class PeakDate {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => TrCode, (trCode) => trCode.peakDates)
+  @ManyToOne(() => TrCode, (trCode) => trCode.peakDates, { onDelete: 'CASCADE' })
   trCode: TrCode; // TrCode와의 관계
 
   @Column({ type: 'date' })

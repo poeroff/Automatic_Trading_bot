@@ -217,8 +217,7 @@ def analyze_stock_data():
     waves = analyze_waves(df, peaks)
     filtered_waves, filtered_peaks = filter_waves(waves, peaks)
 
-   
-    
+
     # 필터링된 데이터로 정보 출력
     print("\n=== 주요 고점 정보 ===")
     for i, (idx, price) in enumerate(filtered_peaks, 1):
@@ -227,8 +226,6 @@ def analyze_stock_data():
     
     # 필터링된 데이터로 시각화
     plot_waves(df, filtered_peaks, filtered_waves)
-
-
 
 
 

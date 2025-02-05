@@ -1,0 +1,16 @@
+services:
+  trading_site:
+    container_name: trading_site
+    build:
+      context: ./trading_site
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./trading_site:/app
+      - /app/node_modules
+    env_file:
+      - ./trading_site/.env
+    stdin_open: true  #-it(tty 포함)
+    tty: true
+

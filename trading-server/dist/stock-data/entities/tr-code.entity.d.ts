@@ -7,6 +7,7 @@ export declare class TrCode {
     id: number;
     code: string;
     name: string;
+    certified: boolean;
     current_inflection_count: number;
     previous_inflection_count: number;
     previous_peak_count: number;

@@ -20,7 +20,7 @@ __decorate([
     __metadata("design:type", Number)
 ], FilteredPeak.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.filteredPeaks),
+    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.filteredPeaks, { onDelete: 'CASCADE' }),
     __metadata("design:type", tr_code_entity_1.TrCode)
 ], FilteredPeak.prototype, "trCode", void 0);
 __decorate([

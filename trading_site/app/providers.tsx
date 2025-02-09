@@ -1,15 +1,17 @@
-"use client";
+"use client"; // ✅ 클라이언트 컴포넌트로 강제
 
 import { SessionProvider } from "next-auth/react";
-import { getServerSession, Session } from "next-auth";
-import { BrowserRouter } from "react-router-dom";
+import { RecoilRoot } from "recoil";
 
 interface Props {
   children: React.ReactNode;
-  session: Session | null;
+  session: any;
 }
 
-export default  function Providers({ children, session }: Props) {
-  
-  return <SessionProvider session={session}>{children}</SessionProvider>;
+export default function Providers({ children, session }: Props) {
+  return (
+    <SessionProvider session={session}>
+      <RecoilRoot>{children}</RecoilRoot>
+    </SessionProvider>
+  );
 }

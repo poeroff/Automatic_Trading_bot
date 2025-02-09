@@ -30,7 +30,7 @@ export class StockDataService {
   }
 
   async gettrueCodes() {
-    const trCodes = await this.trCodeRepository.find({ where: {}, relations: ["userInflections"] });
+    const trCodes = await this.trCodeRepository.find({ where: {certified : true}, relations: ["userInflections"] });
     const results = trCodes.filter(trCode => trCode.userInflections.length > 0);
     return results;
   }
@@ -71,25 +71,25 @@ export class StockDataService {
       return { message: 'No stock code or name provided' };
     }
 
-    return await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
+    return await this.userInflectionRepository.find({ where: { trCode: { certified : true, id: trCode.id } } });
   }
 
   //사용자 변곡점 설정 추가 함수(tr_code로 조회)
-  async createUserInflectioncode(date: number, code: string) {
+  async createUserInflectioncode(date: number, code: string, highPoint?: number | null) {
     const trCode = await this.trCodeRepository.findOne({ where: { code: code } });
     if (!trCode) {
       return { message: 'No stock code or name provided' };
     }
-    const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date });
+    const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate : highPoint ?? null });
     return await this.userInflectionRepository.save(userInflection);
   }
   //사용자 변곡점 설정 추가 함수(stock_name으로 조회)
-  async createUserInflectionname(date: number, name: string) {
+  async createUserInflectionname(date: number, name: string ,highPoint?: number | null) {
     const trCode = await this.trCodeRepository.findOne({ where: { name: name } });
     if (!trCode) {
       return { message: 'No stock code or name provided' };
     }
-    const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date });
+    const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate : highPoint ?? null });
     return await this.userInflectionRepository.save(userInflection);
   }
   //사용자 변곡점 설정 삭제 함수

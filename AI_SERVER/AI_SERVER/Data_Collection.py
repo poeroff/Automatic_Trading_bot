@@ -88,10 +88,6 @@ def Stock_Data_Collection(request):
             total_volume = sum(row['Volume'] for row in stock_data)
             total_weeks = len(stock_data)
             avg_daily_volume = ((total_volume / total_weeks) / 5) * 1.2
-            print(code)
-            print(peak_dates)
-            print(filtered_peaks)
-            print(peak_prices)
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:
@@ -193,6 +189,7 @@ def Stock_Data_Collection(request):
                     filtered_peaks_count = 0
 
                     if peak_dates:
+                        cursor.execute("DELETE FROM peak_dates WHERE tr_code_id = %s", (tr_code_id,))
                         peak_dates_count = len(peak_dates)
                         for peak_date in peak_dates:
                             # 중복 확인 쿼리 추가
@@ -212,6 +209,7 @@ def Stock_Data_Collection(request):
                                     print(f"Error inserting peak date: {str(e)}")  # 에러 로그 출력
 
                     if filtered_peaks:
+                        cursor.execute("DELETE FROM filtered_peaks WHERE tr_code_id = %s", (tr_code_id,))
                         filtered_peaks_count = len(filtered_peaks)
                         for filtered_peak in filtered_peaks:
                             # 중복 확인 쿼리 추가
@@ -231,6 +229,7 @@ def Stock_Data_Collection(request):
                                     print(f"Error inserting filtered peak: {str(e)}")  # 에러 로그 출력
 
                     if peak_prices:
+                        cursor.execute("DELETE FROM peak_prices WHERE tr_code_id = %s", (tr_code_id,))
                         for peak_price in peak_prices:
                             # 중복 확인 쿼리 추가
                             cursor.execute("""

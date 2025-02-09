@@ -24,6 +24,10 @@ __decorate([
     __metadata("design:type", tr_code_entity_1.TrCode)
 ], UserInflection.prototype, "trCode", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'bigint', nullable: true }),
+    __metadata("design:type", Object)
+], UserInflection.prototype, "highdate", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'bigint' }),
     __metadata("design:type", Number)
 ], UserInflection.prototype, "date", void 0);

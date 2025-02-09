@@ -38,10 +38,10 @@ export declare class StockDataService {
     getUserInflection(code: string): Promise<UserInflection[] | {
         message: string;
     }>;
-    createUserInflectioncode(date: number, code: string): Promise<UserInflection | {
+    createUserInflectioncode(date: number, code: string, highPoint?: number | null): Promise<UserInflection | {
         message: string;
     }>;
-    createUserInflectionname(date: number, name: string): Promise<UserInflection | {
+    createUserInflectionname(date: number, name: string, highPoint?: number | null): Promise<UserInflection | {
         message: string;
     }>;
     deleteUserInflection(id: number): Promise<import("typeorm").DeleteResult>;

@@ -7,8 +7,10 @@ export class UserInflection {
   id: number;
 
   @ManyToOne(() => TrCode, (trCode) => trCode.userInflections, { onDelete: 'CASCADE' })
-
   trCode: TrCode; // TrCode와의 관계
+
+  @Column({ type: 'bigint' , nullable : true}) // 'bigint'로 변경
+  highdate: number | null; 
 
   @Column({ type: 'bigint' }) // 'bigint'로 변경
   date: number; 

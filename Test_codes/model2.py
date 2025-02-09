@@ -8,19 +8,18 @@ from scipy.signal import argrelextrema
 
 
 def load_data():
-    conn = sqlite3.connect('stock_000020.db')
+    conn = sqlite3.connect('stock_003490.db')
     query = "SELECT * FROM stock_data"
     df = pd.read_sql(query, conn)
     conn.close()
     
     df["Date"] = pd.to_datetime(df["Date"], format="%Y%m%d")
-    print(df["Date"])
 
 
     return df
 
 def find_peaks(dataframe, high_column='High', compare_window=23, threshold=0.2):
-    min_gap = 50
+    min_gap = 101
     
     peaks = []
     prices = dataframe[high_column].values
@@ -50,35 +49,53 @@ def find_peaks(dataframe, high_column='High', compare_window=23, threshold=0.2):
                     peaks.append((i, current_price))
                     last_peak_idx = i
                     last_peak_price = current_price
+   
     
     return peaks
 
+# 중복 제거 함수
+def remove_duplicates(initial_peaks, peak_indices1):
+    seen = set(peak_indices1)
+    return [x for x in initial_peaks if x not in seen or seen.remove(x)]
+
+
 def find_peaks_combined(df):
-    # 1. 주요 고점 찾기
-    peaks1 = find_peaks(df, 'High', compare_window=23, threshold=0.2)
-    peak_indices1 = [idx for idx, _ in peaks1]
+     # 1. 주요 고점 찾기
+        peaks1 = find_peaks(df, 'High', compare_window=23, threshold=0.2)
+        peak_indices1 = [idx for idx, _ in peaks1]
+        peak_dates1 = df.iloc[peak_indices1]["Date"]
+        peak_prices1 = [price for _, price in peaks1]
+  
 
-    # 2. 변곡점을 한 번만 계산하고 저장
-    n = 6
-    initial_peaks = argrelextrema(df["High"].values, np.greater_equal, order=n)[0]
-    initial_peaks_df = df.iloc[initial_peaks][["Date", "High"]]
-    initial_rising_peaks = initial_peaks_df[initial_peaks_df["High"].diff() > 0]
-    
-    # 3. 저장된 변곡점에서 고점 주변 15일 이내의 점들만 제거
-    filtered_peaks = initial_rising_peaks[~initial_rising_peaks.index.map(
-        lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
-    )]
+        # 2. 변곡점을 한 번만 계산하고 저장
+        n = 6
+        initial_peaks = argrelextrema(df["High"].values, np.greater_equal, order=n)[0]
+        unique_initial_peaks = remove_duplicates(initial_peaks, peak_indices1)
 
+        initial_peaks_df = df.iloc[unique_initial_peaks][["Date", "High"]]
+        initial_rising_peaks = initial_peaks_df[initial_peaks_df["High"].diff() > 0]
+     
+        
+        # 3. 저장된 변곡점에서 고점 주변 15일 이내의 점들만 제거
+        filtered_peaks = initial_rising_peaks[~initial_rising_peaks.index.map(
+            lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
+        )]
+        filtered_peaks_dates = filtered_peaks["Date"].dt.to_pydatetime()  # 변곡점 날짜를 datetime으로 변환
+        to_remove = set()  # 제거할 변곡점 인덱스 집합
 
-    # 1. 주요 고점 찾기
-    peaks1 = find_peaks(df, 'High', compare_window=23, threshold=0.2)
-    
-    # 2. 이전 고점보다 낮은 고점 제거
-    peak_dates1 = df.iloc[peak_indices1]["Date"]
-    peak_prices1 = [price for _, price in peaks1]
-    
-    
-    return peak_dates1, peak_prices1, filtered_peaks
+        for i, date in enumerate(filtered_peaks_dates):
+            # 현재 변곡점 이후 3개월 이내의 변곡점 찾기
+            three_months_later = date + pd.DateOffset(months=4)
+            for j in range(i + 1, len(filtered_peaks_dates)):
+                if filtered_peaks_dates[j] <= three_months_later:
+                    to_remove.add(j)  # 3개월 이내의 변곡점 인덱스를 추가
+
+        # 제거할 변곡점을 제외한 filtered_peaks 생성
+        filtered_peaks = filtered_peaks.drop(filtered_peaks.index[list(to_remove)])
+        
+        
+        
+        return peak_dates1, peak_prices1, filtered_peaks
 
 
 
@@ -138,15 +155,15 @@ def find_closest_inflection_or_peak(filtered_peaks, peak_dates1, peak_prices1, r
 
 # 실행
 df = load_data()
-print("df",df)
+
 peak_dates1, peak_prices1, filtered_peaks = find_peaks_combined(df)
-print("filtered_peaks",filtered_peaks)
+
 
 
 
 
 # 여러 개의 기준 날짜
-reference_dates = [20230904]
+reference_dates = [20211213]
 
 plt.figure(figsize=(15, 10))
 
@@ -173,9 +190,7 @@ for i, reference_date in enumerate(reference_dates):
         ]
 
     selected_rows = df[df["Date"].isin(pd.to_datetime(selected_dates, format='%Y%m%d'))]
-    print("selected_rows",selected_rows)
     selected_rows = selected_rows.sort_values(by="Date")
-    print("selected_rows",selected_rows)
 
     dates_index = selected_rows.index.tolist()
     highs = selected_rows["High"].values

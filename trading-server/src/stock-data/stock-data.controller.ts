@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, BadRequestException } from '@nestjs/common';
 import { StockDataService } from './stock-data.service';
 import { CreateStockDatumDto } from './dto/create-stock-datum.dto';
 import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
@@ -37,14 +37,20 @@ export class StockDataController {
   }
   //사용자 변곡점 설정 추가 함수
   @Post("user-inflection")
-  createUserInflection( @Body() body: { date: number, code?: string, name?: string }) {
+  createUserInflection(
+    @Body() body: { date: number; highPoint?: number | null; code?: string; name?: string }) {
+    console.log("요청 데이터:", body);
+  
+    if (!body.code && !body.name) {
+      throw new BadRequestException("code 또는 name 값이 필요합니다.");
+    }
     if (body.code) {
-      console.log(body.code)
-      return this.stockDataService.createUserInflectioncode(body.date, body.code); // tr_code로 조회
+      return this.stockDataService.createUserInflectioncode(body.date, body.code, body.highPoint); 
     } else if (body.name) {
-      return this.stockDataService.createUserInflectionname(body.date, body.name); // stock_name으로 조회
+      return this.stockDataService.createUserInflectionname(body.date, body.name, body.highPoint);
     }
   }
+  
   @Delete("user-inflection")
   deleteUserInflection( @Body() body: { id: number }) {
     return this.stockDataService.deleteUserInflection(body.id);

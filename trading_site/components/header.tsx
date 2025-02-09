@@ -183,7 +183,7 @@ export default function Header() {
             <Link href="/etf" className="text-gray-600 hover:text-blue-600">
               뉴스스
             </Link>
-           <Link href="/stock?code=000020" className="text-gray-600 hover:text-blue-600">
+           <Link href="/stock" className="text-gray-600 hover:text-blue-600">
               종목 관리(admin)
             </Link>
           </nav>

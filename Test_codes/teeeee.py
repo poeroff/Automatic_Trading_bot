@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 
 def load_data():
-    conn = sqlite3.connect('stock_005930.db')
+    conn = sqlite3.connect('stock_012690.db')
     query = "SELECT * FROM stock_data"
     df = pd.read_sql(query, conn)
     conn.close()
@@ -16,7 +16,6 @@ def load_data():
     return df
 
 def find_peaks(dataframe, high_column='High', compare_window=23, threshold=0.2):
-   
     min_gap = 101
     
     peaks = []
@@ -47,61 +46,75 @@ def find_peaks(dataframe, high_column='High', compare_window=23, threshold=0.2):
                     peaks.append((i, current_price))
                     last_peak_idx = i
                     last_peak_price = current_price
+    print(peaks)
+    if(peaks[0]):
+        find_peaks = [peaks[0]]
     
-    return peaks
+        for i in range(1, len(peaks) - 1):
+            current_peak = peaks[i]
+            next_peak = peaks[i + 1]
+      
+        
+            if current_peak[1] < next_peak[1]:
 
-def find_peaks_combined( df):
+                find_peaks.append(peaks[i+1])
+
+        return find_peaks
+    return []
+
+
+# 중복 제거 함수
+def remove_duplicates(initial_peaks, peak_indices1):
+    seen = set(peak_indices1)
+    return [x for x in initial_peaks if x not in seen or seen.remove(x)]
+
+def find_peaks_combined(df):
     # 1. 주요 고점 찾기
     peaks1 = find_peaks(df, 'High', compare_window=23, threshold=0.2)
     peak_indices1 = [idx for idx, _ in peaks1]
+    peak_dates1 = df.iloc[peak_indices1]["Date"]
+    peak_prices1 = [price for _, price in peaks1]
 
-    # 2. 변곡점을 한 번만 계산하고 저장
+    # 2. 변곡점 찾기 (order=n)
     n = 6
     initial_peaks = argrelextrema(df["High"].values, np.greater_equal, order=n)[0]
-    initial_peaks_df = df.iloc[initial_peaks][["Date", "High"]].copy()  # 명시적 복사
+    unique_initial_peaks = remove_duplicates(initial_peaks, peak_indices1)
+
+    initial_peaks_df = df.iloc[unique_initial_peaks][["Date", "High"]]
     initial_rising_peaks = initial_peaks_df[initial_peaks_df["High"].diff() > 0]
-    
-    # 3. 저장된 변곡점에서 고점 주변 13일 이내의 점들만 제거
-    mask = ~initial_rising_peaks.index.map(
+
+    # 3. 저장된 변곡점에서 고점 주변 15일 이내 제거
+    filtered_peaks = initial_rising_peaks[~initial_rising_peaks.index.map(
         lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
-    )
-    filtered_peaks = initial_rising_peaks[mask].copy()  # 명시적 복사
+    )]
+    
+    # 변곡점 날짜를 datetime 변환
+    filtered_peaks.loc[:, "Date"] = pd.to_datetime(filtered_peaks["Date"])
+    filtered_peaks = filtered_peaks.sort_values("Date")  # 날짜 순 정렬
 
-    # 4. 날짜 처리를 위한 데이터프레임 준비
-    if not pd.api.types.is_datetime64_any_dtype(filtered_peaks['Date']):
-        try:
-            filtered_peaks = filtered_peaks.assign(
-                Date=pd.to_datetime(filtered_peaks['Date'])
-            )
-        except:
-            print("날짜 변환 실패")
-            return peak_dates1, peak_prices, filtered_peaks
+    final_filtered_peaks_peaks = []  # 최종 변곡점을 저장할 리스트
+    i = 0
+    
+    while i < len(filtered_peaks):
+        current_date = filtered_peaks.iloc[i]["Date"]
+        current_high = filtered_peaks.iloc[i]["High"]
+        three_months_later = current_date + pd.DateOffset(months=4)
 
-    # 5. 변곡점 하나가 출현한 후 5개월 동안 출현한 변곡점 제거
-    filtered_peaks = filtered_peaks.sort_values("Date").reset_index(drop=False)
-    
-    to_keep = []
-    last_kept_date = None
-    
-    for idx, row in filtered_peaks.iterrows():
-        if last_kept_date is None or (row["Date"] - last_kept_date).days > 150:
-            to_keep.append(idx)
-            last_kept_date = row["Date"]
-    
-    # 최종 필터링 및 날짜 형식 변환
-    filtered_peaks = filtered_peaks.iloc[to_keep].copy()  # 명시적 복사
-    
-    # 날짜를 문자열로 변환 (SettingWithCopyWarning 방지)
-    if isinstance(filtered_peaks['Date'].iloc[0], pd.Timestamp):
-        filtered_peaks = filtered_peaks.assign(
-            Date=filtered_peaks['Date'].dt.strftime('%Y-%m-%d')
-        )
+        candidates = filtered_peaks[(filtered_peaks["Date"] > current_date) & 
+                                    (filtered_peaks["Date"] <= three_months_later)]
+        
+        if not candidates.empty:
+            max_peak = candidates.loc[candidates["High"].idxmax()]
+            if max_peak["High"] > current_high:
+                final_filtered_peaks_peaks.append({"Date": max_peak["Date"], "High": max_peak["High"]})
+                i = filtered_peaks.index.get_loc(max_peak.name) + 1
+                continue
 
-    # 최종 결과 반환
-    peak_dates1 = df.iloc[peak_indices1]["Date"]
-    peak_prices = [price for _, price in peaks1]
-    
-    return peak_dates1, peak_prices, filtered_peaks
+        final_filtered_peaks_peaks.append({"Date": filtered_peaks.iloc[i]["Date"], "High": filtered_peaks.iloc[i]["High"]})
+        i += 1
+
+    final_peaks_df = pd.DataFrame(final_filtered_peaks_peaks)
+    return peak_dates1, peak_prices1, final_peaks_df
 
 def plot_combined_peaks(df, peak_dates1, peak_prices1, filtered_peaks):
     plt.figure(figsize=(15, 8))

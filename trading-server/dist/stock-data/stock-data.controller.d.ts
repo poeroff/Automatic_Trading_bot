@@ -33,6 +33,7 @@ export declare class StockDataController {
     }>;
     createUserInflection(body: {
         date: number;
+        highPoint?: number | null;
         code?: string;
         name?: string;
     }): Promise<import("./entities/user-inflection.entity").UserInflection | {

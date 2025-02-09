@@ -38,7 +38,7 @@ let StockDataService = class StockDataService {
         return await this.trCodeRepository.find();
     }
     async gettrueCodes() {
-        const trCodes = await this.trCodeRepository.find({ where: {}, relations: ["userInflections"] });
+        const trCodes = await this.trCodeRepository.find({ where: { certified: true }, relations: ["userInflections"] });
         const results = trCodes.filter(trCode => trCode.userInflections.length > 0);
         return results;
     }
@@ -68,22 +68,22 @@ let StockDataService = class StockDataService {
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
-        return await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
+        return await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } });
     }
-    async createUserInflectioncode(date, code) {
+    async createUserInflectioncode(date, code, highPoint) {
         const trCode = await this.trCodeRepository.findOne({ where: { code: code } });
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
-        const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date });
+        const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate: highPoint ?? null });
         return await this.userInflectionRepository.save(userInflection);
     }
-    async createUserInflectionname(date, name) {
+    async createUserInflectionname(date, name, highPoint) {
         const trCode = await this.trCodeRepository.findOne({ where: { name: name } });
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
-        const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date });
+        const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate: highPoint ?? null });
         return await this.userInflectionRepository.save(userInflection);
     }
     async deleteUserInflection(id) {

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 
 def load_data():
-    conn = sqlite3.connect('stock_012690.db')
+    conn = sqlite3.connect('stock_083790.db')
     query = "SELECT * FROM stock_data"
     df = pd.read_sql(query, conn)
     conn.close()
@@ -46,21 +46,18 @@ def find_peaks(dataframe, high_column='High', compare_window=23, threshold=0.2):
                     peaks.append((i, current_price))
                     last_peak_idx = i
                     last_peak_price = current_price
-    print(peaks)
-    if(peaks[0]):
+
+    find_peaks=[]
+    if peaks:
         find_peaks = [peaks[0]]
-    
-        for i in range(1, len(peaks) - 1):
+        for i in range(0, len(peaks) - 1):
             current_peak = peaks[i]
             next_peak = peaks[i + 1]
-      
-        
             if current_peak[1] < next_peak[1]:
-
                 find_peaks.append(peaks[i+1])
 
-        return find_peaks
-    return []
+   
+    return find_peaks or peaks  # peaks가 비어있으면 빈 리스트 반환
 
 
 # 중복 제거 함수

@@ -1,14 +1,19 @@
 "use client"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, memo } from "react"
 
 import { Button } from "@/components/ui/button"
 
 import { Get } from "@/services/Get"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import React from "react"
 
 
-function StockListPage(){
+interface StockAnalysisPointsProps {
+  code: string | null;
+  name: string | null;
+}
+
+const StockListPage = ({ code , name } : StockAnalysisPointsProps) => {
     const [stockList, setStockList] = useState<{ id: number, code: string, name:string }[]>([]);
 
     useEffect(() => {
@@ -17,13 +22,13 @@ function StockListPage(){
         setStockList(falseCertified);
       };
       fetchData()
-    },[])
+    },[code, name])
 
     const router = useRouter();
     return  <header className="border-b">
     <div className="mb-8 overflow-x-auto">
       <div className="flex space-x-2 pb-2" style={{ width: "max-content" }}>
-        {stockList.map((stock) => (
+        {stockList && stockList.map((stock) => (
           <Button
             key={stock.id}
             onClick={() => router.push(`/stock?code=${stock.code}`)}
@@ -38,4 +43,4 @@ function StockListPage(){
   </header>
 }
 
-export default React.memo(StockListPage);
+export default memo(StockListPage);

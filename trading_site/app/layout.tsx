@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import Providers from "./providers"; // ✅ 클라이언트 컴포넌트
+import { SessionProvider } from "./providers";
 import Header from "../components/header";
 import "./globals.css";
+import { useEffect } from "react";
+import { authOptions } from "./authOptions";
+import { useRecoilState } from "recoil";
 
 
 
@@ -15,15 +18,16 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(); // ✅ 서버 컴포넌트
+  const session = await getServerSession(authOptions); // ✅ 서버 컴포넌트
+  // getSessionServer(session?.user.name || "None",session?.user.email || "None",session?.user.author || "None");
 
   return (
     <html lang="en">
       <body>
-        <Providers session={session}>
+        <SessionProvider session={session}>
           <Header />
           {children}
-        </Providers>
+        </SessionProvider>
       </body>
     </html>
   );

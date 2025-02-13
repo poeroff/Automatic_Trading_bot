@@ -1,13 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Search, User, Bell, Menu, X, LogOut, CreditCard, UserCircle } from "lucide-react"
-
-import { signOut, useSession } from "next-auth/react";
-
-import { useRouter } from "next/navigation"; 
-
+import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { useSessionContext } from "@/app/providers"
+import DropdownMenu from "@/components/DropdownMenu"
 
 type Notification = {
   id: number
@@ -16,26 +15,23 @@ type Notification = {
 }
 
 type MarketItem = {
-  name: string;
-  value: string;
-  change: string;
-  isPositive: string;
+  name: string
+  value: string
+  change: string
+  isPositive: string
 }
 
-type MarketGroup = MarketItem[];
-type MarketDataGroups = MarketGroup[];
-
+type MarketGroup = MarketItem[]
+type MarketDataGroups = MarketGroup[]
 
 export default function Header() {
-
-  const { data: session , status} = useSession();
-  const router = useRouter(); 
-
-  
-  
-
-  const [marketGroups, setMarketGroups] = useState<MarketDataGroups>([]);
-  const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
+  const { session, updateSession } = useSessionContext()
+  const MemoSession = useMemo(() => {
+    return session
+  }, [session])
+  const router = useRouter()
+  const [marketGroups, setMarketGroups] = useState<MarketDataGroups>([])
+  const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
   const [isSearchVisible, setIsSearchVisible] = useState(false)
   const [isNotificationsVisible, setIsNotificationsVisible] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
@@ -45,8 +41,6 @@ export default function Header() {
     { id: 2, message: "관심 종목 '삼성전자'의 주가가 5% 상승했습니다.", isRead: false },
     { id: 3, message: "새로운 시장 분석 리포트가 도착했습니다.", isRead: true },
   ])
- 
-
 
 
   const transformData = (data: any) => {
@@ -56,54 +50,54 @@ export default function Header() {
         name: "KOSPI",
         value: data.Kospi.value,
         change: data.Kospi.change,
-        isPositive: data.Kospi.isPositive
+        isPositive: data.Kospi.isPositive,
       },
       {
         name: "KOSDAQ",
         value: data.Kosdaq.value,
         change: data.Kosdaq.change,
-        isPositive: data.Kosdaq.isPositive
+        isPositive: data.Kosdaq.isPositive,
       },
       {
         name: "KOSPI200",
         value: data.Kospi200.value,
         change: data.Kospi200.change,
-        isPositive: data.Kospi200.isPositive
+        isPositive: data.Kospi200.isPositive,
       },
-    ];
- 
+    ]
+
     // 두 번째 그룹 (다른 종목들)
     const group2 = [
       {
         name: "USD/KRW(원)",
         value: data.USD.value,
         change: data.USD.change,
-        isPositive: data.USD.blind
+        isPositive: data.USD.blind,
       },
       {
         name: "JPY(100엔)",
         value: data.JPY.value,
         change: data.JPY.change,
-        isPositive: data.JPY.blind
+        isPositive: data.JPY.blind,
       },
       {
         name: "GOLD(달러)",
         value: data.GOLD.value,
         change: data.GOLD.change,
-        isPositive: data.GOLD.blind
+        isPositive: data.GOLD.blind,
       },
       // 여기에 추가 종목들 넣기
-    ];
+    ]
     console.log(group1, group2)
-    setMarketGroups([group1, group2]);
-  };
+    setMarketGroups([group1, group2])
+  }
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentGroupIndex(prev => (prev + 1) % 2);
-    }, 10000);
+      setCurrentGroupIndex((prev) => (prev + 1) % 2)
+    }, 10000)
 
-    return () => clearInterval(timer);
-  }, []);
+    return () => clearInterval(timer)
+  }, [])
 
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible)
@@ -113,28 +107,21 @@ export default function Header() {
       setIsProfileMenuVisible(false)
     }
 
-   
     setIsNotificationsVisible(!isNotificationsVisible)
-
   }
   const toggleProfileMenu = () => {
-    
     if (isNotificationsVisible) {
       setIsNotificationsVisible(false)
     }
 
-    if (!session) {
-      router.push("/signin");
-    }
-    else{
+    if (!MemoSession) {
+      router.push("/signin")
+    } else {
       setIsProfileMenuVisible(!isProfileMenuVisible)
     }
- 
   }
 
   const unreadCount = notifications.filter((n) => !n.isRead).length
-
-
 
   // useEffect(() => {
   //   const ws = new WebSocket('ws://localhost:8765');
@@ -166,38 +153,54 @@ export default function Header() {
 
 
 
+
+  const stockItems = [
+    { label: "국내 주식", href: "/stocks/domestic" },
+    { label: "해외 주식", href: "/stocks/international" },
+    { label: "주식 스크리너", href: "/stocks/screener" },
+  ]
+
+  const newsItems = [
+    { label: "주요 뉴스", href: "/news/main" },
+    { label: "시장 분석", href: "/news/analysis" },
+    { label: "기업 뉴스", href: "/news/corporate" },
+  ]
+
   return (
     <header className="bg-white">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-
+          {/* Current Time Display */}
+      
 
           {/* Main Navigation - Hidden on mobile */}
-          <nav className="hidden md:flex space-x-4">
-            <Link href="/" className="text-gray-600 hover:text-blue-600">
+          <nav className="hidden md:flex space-x-6">
+            <Link href="/" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
               시장동향
             </Link>
-            <Link href="/stocks" className="text-gray-600 hover:text-blue-600">
-              주식
-            </Link>
-            <Link href="/etf" className="text-gray-600 hover:text-blue-600">
-              뉴스스
-            </Link>
-           <Link href="/stock" className="text-gray-600 hover:text-blue-600">
-              종목 관리(admin)
-            </Link>
+            <DropdownMenu label="주식" items={stockItems} />
+            <DropdownMenu label="뉴스" items={newsItems} />
+            {MemoSession?.user.author === "admin" && (
+              <Link href="/stock" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                종목 관리
+              </Link>
+            )}
           </nav>
+
+          {/* Market Data Display */}
           <div className="hidden md:flex space-x-4 text-sm">
             {marketGroups[currentGroupIndex]?.map((item, index) => (
               <span key={item.name} className={index > 0 ? "ml-4" : ""}>
                 {item.name}{" "}
-                <span className={item.isPositive?.includes('+') || item.isPositive === "상승" ? "text-red-500" : "text-blue-500"}>
-                  {item.value} {item.isPositive?.includes('+') || item.isPositive === "상승" ? "+" : "-"}{item.change}
-                  {(item.isPositive !== "상승" && item.isPositive !== "하락") && (
-                    <span>({item.isPositive})</span>
-                  )}
+                <span
+                  className={
+                    item.isPositive?.includes("+") || item.isPositive === "상승" ? "text-red-500" : "text-blue-500"
+                  }
+                >
+                  {item.value} {item.isPositive?.includes("+") || item.isPositive === "상승" ? "+" : "-"}
+                  {item.change}
+                  {item.isPositive !== "상승" && item.isPositive !== "하락" && <span>({item.isPositive})</span>}
                 </span>
-
               </span>
             ))}
           </div>
@@ -254,16 +257,28 @@ export default function Header() {
               </button>
               {isProfileMenuVisible && (
                 <div className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-40 bg-white rounded-md shadow-lg py-1 z-10">
-                  
-                  <Link href="/profile" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setIsProfileMenuVisible(false)}>
+                  <Link
+                    href="/profile"
+                    className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsProfileMenuVisible(false)}
+                  >
                     <UserCircle className="h-4 w-4 mr-2" />
                     프로필 보기
                   </Link>
-                  <Link href="/account" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setIsProfileMenuVisible(false)}>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    내 계좌 보기
+                  <Link
+                    href="/account"
+                    className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsProfileMenuVisible(false)}
+                  >
+                    <CreditCard className="h-4 w-4 mr-2" />내 계좌 보기
                   </Link>
-                  <button onClick={() => {signOut({ callbackUrl: '/' }); setIsProfileMenuVisible(false)}} className="flex justify-center items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" >
+                  <button
+                    onClick={() => {
+                      signOut({ callbackUrl: "/" })
+                      setIsProfileMenuVisible(false)
+                    }}
+                    className="flex justify-center items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     로그아웃
                   </button>
@@ -277,7 +292,6 @@ export default function Header() {
           </div>
         </div>
       </div>
-     
     </header>
   )
 }

@@ -21,7 +21,7 @@ export default function SignupPage() {
     try {
       const result =  signIn('email', {
         email: email,
-        redirect: false,
+
       });
       
     

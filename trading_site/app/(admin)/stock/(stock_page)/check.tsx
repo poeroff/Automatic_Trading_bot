@@ -1,8 +1,8 @@
 "use client"
-import { useCallback, useState, useMemo, useTransition } from "react";
+import { useCallback, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Get } from "@/services/Get";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface StockAnalysisPointsProps {
   code: string | null;
@@ -10,7 +10,7 @@ interface StockAnalysisPointsProps {
 }
 
 
-export default function CheckPage({ code , name } : StockAnalysisPointsProps) {
+const CheckPage = ({ code , name } : StockAnalysisPointsProps) =>{
   const router = useRouter();
   const [isPending, startTransition] = useTransition(); // 🔥 비동기 상태 업데이트 최적화
 
@@ -40,3 +40,5 @@ export default function CheckPage({ code , name } : StockAnalysisPointsProps) {
     </div>
   );
 }
+
+export default CheckPage

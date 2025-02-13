@@ -1,3 +1,4 @@
+'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMemo, useCallback } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -16,7 +17,7 @@ interface ChartPageProps {
   selectedDate: string | null;
 }
 
-export default function ChartPage({ marketCapList, volumeList, chartData, name, code, selectedDate }: ChartPageProps) {
+const ChartPage = ({ marketCapList, volumeList, chartData, name, code, selectedDate }: ChartPageProps) => {
   // ✅ useMemo를 사용해 customDots 미리 계산하여 최적화
   const customDots = useMemo(() => {
     return chartData.map(({ date }) => ({
@@ -125,3 +126,4 @@ export default function ChartPage({ marketCapList, volumeList, chartData, name, 
     </Card>
   );
 }
+export default ChartPage

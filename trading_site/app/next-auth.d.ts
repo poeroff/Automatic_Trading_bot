@@ -1,65 +1,41 @@
 // types/next-auth.d.ts
-import { DefaultSession, DefaultUser } from "next-auth";
+
 import { JWT } from "next-auth/jwt";
+import {sess} from "next-auth/sess"
+import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
 
+// 🔹 User 타입 확장 (accessToken 추가)
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string;  // optional 제거
-      accessToken?: string;
-      author?: string | null;  // null 허용
-      profile?: {
-        id: string;
-        email?: string | null;
-        name?: string | null;
-        image?: string | null;
-        author?: string | null;  // null 허용
-        [key: string]: any;
-      };
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      author?: string | null;
+      accessToken?: string | null;  // ✅ 추가
     } & DefaultSession["user"];
   }
 
   interface User extends DefaultUser {
-    author?: string | null;  // null 허용
-  }
-}
-
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;  // optional 제거
-      accessToken?: string;
-      author?: string;
-      profile?: {
-        id: string;
-        email?: string | null;
-        name?: string | null;
-        image?: string | null;
-        author?: string | null;
-        [key: string]: any;
-      };
-    } & DefaultSession["user"];
-  }
-
-  interface User extends DefaultUser {
-    author?: string;
+    author?: string | null;
+    accessToken?: string;  // ✅ 추가
   }
 }
 
 
-
-// types/next-auth.d.ts
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    accessToken?: string;
-    author?: string | null;  // null 허용
+    accessToken?: string | null;
+    author?: string | null; // null 허용
+    name?: string | null; // name 추가
     profile?: {
       id: string;
       email?: string | null;
       name?: string | null;
       image?: string | null;
-      author?: string | null;  // null 허용
+      author?: string | null; // null 허용
       [key: string]: any;
     };
   }

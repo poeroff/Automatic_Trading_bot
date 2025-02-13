@@ -210,19 +210,17 @@ class Api:
                         last_peak_idx = i
                         last_peak_price = current_price
         find_peaks = []
-        if(peaks[0]):
+        if peaks:
+            find_peaks = [peaks[0]]
             for i in range(0, len(peaks) - 1):
                 current_peak = peaks[i]
                 next_peak = peaks[i + 1]
                 if current_peak[1] < next_peak[1]:
                     find_peaks.append(peaks[i+1])
-                if(i == 0):
-                    if(current_peak[1] > next_peak[1]):
-                        find_peaks = [peaks[0]]
+           
 
       
-            return find_peaks
-        return []
+        return find_peaks or peaks  # peaks가 비어있으면 빈 리스트 반환
         
 
 
@@ -264,9 +262,9 @@ class Api:
             if initial_rising_peaks.empty:
                 return [], [], pd.DataFrame(columns=['Date', 'High'])
             
-            # 3. 고점 주변 15일 이내의 점들 제거
+            # 3. 고점 주변 3개월 이내의 점들 제거
             mask = ~initial_rising_peaks.index.map(
-                lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
+                lambda x: any(abs(x - peak_idx) <= 12 for peak_idx in peak_indices1)
             )
             filtered_peaks = initial_rising_peaks[mask].copy()
             
@@ -280,7 +278,7 @@ class Api:
             while i < len(filtered_peaks):
                 current_date = filtered_peaks.iloc[i]["Date"]
                 current_high = filtered_peaks.iloc[i]["High"]
-                three_months_later = current_date + pd.DateOffset(months=4)
+                three_months_later = current_date + pd.DateOffset(months=3)
 
                 candidates = filtered_peaks[(filtered_peaks["Date"] > current_date) & 
                                             (filtered_peaks["Date"] <= three_months_later)]
@@ -312,54 +310,47 @@ class Api:
     
     async def Stock_Data(self):
         async with aiohttp.ClientSession() as session:
-            tr_codes = self.All_Stock_Data()
-    
-            stock_data_list = []
-            for code, stock_name in tr_codes.items():
-                stock_data_list.append({'code': code, 'name': stock_name})
-            
-            if stock_data_list:
-                try:
-                    response = requests.post(
-                        "http://localhost:8000/tr_code_collection/",
-                        json={'tr_codes': stock_data_list}
-                    )
-                    print(f"서버 응답: {response.json()}")
-                except Exception as e:
-                    print(f"서버 통신 오류: {str(e)}")
-            
+            try:
+                response = requests.get("http://localhost:4000/stock-data/get_all_codes")
+                data = response.json()
+                    #all_codes=["475580","475660","475960","476060","478560","482630"] # 리스트 형태일 경우
+                all_codes = [item['code'] for item in data]
+                print(len(all_codes))
+                total_batches = (len(all_codes) + 9) // 10
+
+                # 100개 단위로 tr_code 처리
+                for batch_index, tr_code_batch in enumerate(self.chunks(all_codes, 10), start=1):
+                    print(f"처리 중인 배치: {batch_index}/{total_batches}")
+                    try:
+                        # 각 배치에 대해 데이터 가져오기
+                        all_stock_data = self.get_stock_data_all(tr_code_batch)
+                        # 각 종목별로 서버에 전송
+                        for code in tr_code_batch:
+                            try:
+                                stock_data = all_stock_data.get(code)
+                                if stock_data is not None:
+                                    try:
+                                        # find_peaks_combined에서 에러가 발생하면 건너뛰기
+                                        peak_dates1, peak_prices, filtered_peaks = self.find_peaks_combined(stock_data)
+                                        await self.process_stock_data(code, stock_data, session, peak_dates1, peak_prices, filtered_peaks)
+                                    except Exception as e:
+                                        print(f"종목 {code} find_peaks_combined 처리 중 에러 발생. 건너뛰기: {str(e)}")
+                                        continue
+                                else:
+                                    print(f"종목 코드 {code}에 대한 데이터가 없습니다.")
+                            except Exception as e:
+                                print(f"종목 {code} 처리 중 에러 발생. 건너뛰기: {str(e)}")
+                                continue
+                    except Exception as e:
+                        print(f"배치 {batch_index} 처리 중 에러 발생. 다음 배치로 진행: {str(e)}")
+                        continue
+
+            except Exception as e:
+                print(f"서버 통신 오류: {str(e)}")
+        
             # 모든 주식 코드 추출
-            # all_codes = ["001560"]  # 리스트 형태일 경우
-            all_codes = [item['code'] for item in stock_data_list[:1]]
-            total_batches = (len(all_codes) + 9) // 10
 
-            # 100개 단위로 tr_code 처리
-            for batch_index, tr_code_batch in enumerate(self.chunks(all_codes, 10), start=1):
-                print(f"처리 중인 배치: {batch_index}/{total_batches}")
-                try:
-                    # 각 배치에 대해 데이터 가져오기
-                    all_stock_data = self.get_stock_data_all(tr_code_batch)
-                    # 각 종목별로 서버에 전송
-                    for code in tr_code_batch:
-                        try:
-                            stock_data = all_stock_data.get(code)
-                            if stock_data is not None:
-                                try:
-                                    # find_peaks_combined에서 에러가 발생하면 건너뛰기
-                                    peak_dates1, peak_prices, filtered_peaks = self.find_peaks_combined(stock_data)
-                                    await self.process_stock_data(code, stock_data, session, peak_dates1, peak_prices, filtered_peaks)
-                                except Exception as e:
-                                    print(f"종목 {code} find_peaks_combined 처리 중 에러 발생. 건너뛰기: {str(e)}")
-                                    continue
-                            else:
-                                print(f"종목 코드 {code}에 대한 데이터가 없습니다.")
-                        except Exception as e:
-                            print(f"종목 {code} 처리 중 에러 발생. 건너뛰기: {str(e)}")
-                            continue
-                except Exception as e:
-                    print(f"배치 {batch_index} 처리 중 에러 발생. 다음 배치로 진행: {str(e)}")
-                    continue
-
+           
         
     async def process_stock_data(self, code, stock_data, session, peak_dates, peak_prices, filtered_peaks):
         try:

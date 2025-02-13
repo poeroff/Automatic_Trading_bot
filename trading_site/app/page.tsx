@@ -1,14 +1,24 @@
 
 import { getServerSession } from "next-auth";
-import Image from "next/image";
+import { authOptions } from "@/app/authOptions"; // authOptions 경로 확인
+import { useRecoilState } from "recoil";
+import { useEffect } from "react";
+
 
 export default async function Home() {
-  const session = await getServerSession();
+
+
+
+  
+  
+
+
+
   return (
     <div>
 
-      {session?.user?.name ? <div>Welcome, {session?.user?.name}</div> : <div>Not logged in</div>}
-    </div>
+{/*       {session?.user?.name ? <div>Welcome, {session?.user?.name}</div> : <div>Not logged in</div>}
+ */}    </div>
     
   );
 }

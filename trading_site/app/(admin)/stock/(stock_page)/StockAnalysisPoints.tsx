@@ -46,7 +46,7 @@ interface StockAnalysisPointsProps {
   name: string | null;
 }
 
-export default function StockAnalysisPoints({ code , name } : StockAnalysisPointsProps) {
+const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
   const highpoint = useRef<HTMLInputElement>(null)
   const inflectionpointRef = useRef<HTMLInputElement>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -55,14 +55,13 @@ export default function StockAnalysisPoints({ code , name } : StockAnalysisPoint
   const [marketCapList, setMarketCapList] = useState<{ id: number, date: string; }[]>([]);
   const [volumeList, setVolumeList] = useState<{ id: number, date: string; }[]>([]);
   const [customList, setCustomList] = useState<{ id: number; date: string; highdate: string | null;}[]>([]);  
-  const [ErrorMessage, setErrorMessage] = useState<string>()
+  const [ErrorMessage, setErrorMessage] = useState<string | null>()
   const [isPending, startTransition] = useTransition();
 
   // 주식,고점,변곡점,변곡점 설정정 데이터 가져오기
   const fetchStockData = useCallback(async (codeParam?: string, nameParam?: string) => {
     const url = codeParam ? `http://localhost:4000/stock-data/stock?code=${codeParam}` : `http://localhost:4000/stock-data/stock?name=${nameParam}`;
     const data = await Get(url);
-    console.log("data" , data)
     if (data?.stockData) {
       startTransition(() => {
         setTitle({name : data.trCode.name, code : data.trCode.code});
@@ -111,6 +110,7 @@ export default function StockAnalysisPoints({ code , name } : StockAnalysisPoint
 
 
   useEffect(() => {
+    setErrorMessage(null)
     if (code || name) {
       fetchStockData(code ?? undefined, name ?? undefined);
     }
@@ -315,4 +315,7 @@ export default function StockAnalysisPoints({ code , name } : StockAnalysisPoint
     </Card>
   </div></>
 }
+
+
+export default StockAnalysisPoints
 

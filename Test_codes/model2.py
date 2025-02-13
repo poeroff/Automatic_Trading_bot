@@ -78,7 +78,7 @@ def find_peaks_combined(df):
         
         # 3. 저장된 변곡점에서 고점 주변 15일 이내의 점들만 제거
         filtered_peaks = initial_rising_peaks[~initial_rising_peaks.index.map(
-            lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
+            lambda x: any(abs(x - peak_idx) <= 4 for peak_idx in peak_indices1)
         )]
         filtered_peaks_dates = filtered_peaks["Date"].dt.to_pydatetime()  # 변곡점 날짜를 datetime으로 변환
         to_remove = set()  # 제거할 변곡점 인덱스 집합

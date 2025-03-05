@@ -14,4 +14,7 @@ export class UserInflection {
 
   @Column({ type: 'bigint' }) // 'bigint'로 변경
   date: number; 
+
+  @Column({ type: 'bigint' }) // 'bigint'로 변경
+  price: number; 
 }

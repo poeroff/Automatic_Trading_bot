@@ -9,6 +9,9 @@ export class FilteredPeak {
   @ManyToOne(() => TrCode, (trCode) => trCode.filteredPeaks, { onDelete: 'CASCADE' })
   trCode: TrCode; // TrCode와의 관계
 
+  @Column({type:"float"})
+  price : number
+
   @Column({ type: 'date' })
   date: Date; // 날짜
 }

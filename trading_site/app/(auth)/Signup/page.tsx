@@ -21,8 +21,8 @@ export default function SignupPage() {
     try {
       const result =  signIn('email', {
         email: email,
-
       });
+      console.log(result)
       
     
     } catch (error) {

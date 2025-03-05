@@ -10,6 +10,9 @@ from datetime import datetime, timedelta
 from itertools import islice
 from scipy.signal import argrelextrema
 
+# 모든 행과 열을 출력하도록 설정
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 
 class Api:
     def __init__(self,kiwoom):
@@ -95,7 +98,7 @@ class Api:
                     "opt10082",
                     종목코드=code,
                     기준일자=set_d,
-                    수정주가구분=1,
+                    수정주가구분=3,
                     output="주식주봉차트조회",
                     next=0
             )
@@ -108,14 +111,13 @@ class Api:
 
             df_list.append(df_firstblock)
    
-
             # 연속 조회
             while self.kiwoom.tr_remained:
                 df_nextblock = self.kiwoom.block_request(
                     "opt10082",
                     종목코드=code,
                     기준일자=set_d,
-                    수정주가구분=1,
+                    수정주가구분=3,
                     output="주식주봉차트조회",
                     next=2
                 )
@@ -125,7 +127,9 @@ class Api:
                 if len(df_nextblock) == 0:
                     break
 
+                print(f"연속 조회 데이터: {df_nextblock}")  # 연속 조회 데이터 출력
                 df_list.append(df_nextblock)
+                
                
 
             # 각 종목별 데이터프레임 처리
@@ -239,10 +243,9 @@ class Api:
             # 1. 주요 고점 찾기
             peaks1 = self.find_peaks(df, 'High', compare_window=23, threshold=0.2)
             peak_indices1 = [idx for idx, _ in peaks1]
-            peak_dates1 = df.iloc[peak_indices1]["Date"]
-         
+            peak_dates1 = df.iloc[peak_indices1][["Date", "High"]]  # ✅ 컬럼 리스트로 묶기
             peak_prices = [price for _, price in peaks1]
-        
+         
             
             # 2. 변곡점 계산
             n = 6
@@ -264,48 +267,99 @@ class Api:
             
             # 3. 고점 주변 3개월 이내의 점들 제거
             mask = ~initial_rising_peaks.index.map(
-                lambda x: any(abs(x - peak_idx) <= 12 for peak_idx in peak_indices1)
+                lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
             )
             filtered_peaks = initial_rising_peaks[mask].copy()
             
             if filtered_peaks.empty:
                 return [], [], pd.DataFrame(columns=['Date', 'High'])
             
-            # 새로운 필터링 로직 추가
-            final_filtered_peaks = []
-            i = 0
+            # # 새로운 필터링 로직 추가
+            # filtered_peaks_dates = filtered_peaks["Date"].dt.to_pydatetime()  # 변곡점 날짜를 datetime으로 변환
+            # to_remove = set()
 
-            while i < len(filtered_peaks):
-                current_date = filtered_peaks.iloc[i]["Date"]
-                current_high = filtered_peaks.iloc[i]["High"]
-                three_months_later = current_date + pd.DateOffset(months=3)
 
-                candidates = filtered_peaks[(filtered_peaks["Date"] > current_date) & 
-                                            (filtered_peaks["Date"] <= three_months_later)]
-                
+            # for i, date in enumerate(filtered_peaks_dates):
+            # # 현재 변곡점 이후 3개월 이내의 변곡점 찾기
+            #     three_months_later = date + pd.DateOffset(months=4)
+            #     for j in range(i + 1, len(filtered_peaks_dates)):
+            #         if filtered_peaks_dates[j] <= three_months_later:
+            #             to_remove.add(j)  # 3개월 이내의 변곡점 인덱스를 추가
+
+            # # 제거할 변곡점을 제외한 filtered_peaks 생성
+            # filtered_peaks = filtered_peaks.drop(filtered_peaks.index[list(to_remove)])
+            final_filtered_peaks = []  # 최종 변곡점을 저장할 리스트
+            remaining_peaks = filtered_peaks.copy()
+            while not remaining_peaks.empty:
+                current_date = remaining_peaks.iloc[0]["Date"]
+                four_months_before = current_date - pd.DateOffset(months=4)
+                four_months_after = current_date + pd.DateOffset(months=4)
+
+                # 4개월 내 변곡점 찾기
+                candidates = remaining_peaks[
+                    (remaining_peaks["Date"] >= four_months_before) & 
+                    (remaining_peaks["Date"] <= four_months_after)
+                ]
+
                 if not candidates.empty:
+                    # 최고점 찾기
                     max_peak = candidates.loc[candidates["High"].idxmax()]
-                    if max_peak["High"] > current_high:
-                        final_filtered_peaks.append({"Date": max_peak["Date"], "High": max_peak["High"]})
-                        i = filtered_peaks.index.get_loc(max_peak.name) + 1
-                        continue
+                    final_filtered_peaks.append({"Date": max_peak["Date"], "High": max_peak["High"]})
 
-                final_filtered_peaks.append({"Date": filtered_peaks.iloc[i]["Date"], "High": filtered_peaks.iloc[i]["High"]})
-                i += 1
+                    # 해당 범위(±4개월) 내 변곡점 제거
+                    remaining_peaks = remaining_peaks[
+                        (remaining_peaks["Date"] < max_peak["Date"] - pd.DateOffset(months=4)) | 
+                        (remaining_peaks["Date"] > max_peak["Date"] + pd.DateOffset(months=4))
+                    ]
+                else:
+                    break  # 후보가 없으면 종료
 
+            # 리스트를 DataFrame으로 변환
             final_peaks_df = pd.DataFrame(final_filtered_peaks)
-
-            # 날짜 형식을 문자열로 변환
-            final_peaks_df['Date'] = final_peaks_df['Date'].dt.strftime('%Y-%m-%d')
-            peak_dates1 = peak_dates1.dt.strftime('%Y-%m-%d')
+            
+            # 날짜를 문자열 형식(YYYY-MM-DD)으로 변환
+            final_peaks_df["Date"] = final_peaks_df["Date"].dt.strftime("%Y-%m-%d")
+            peak_dates1["Date"] = peak_dates1["Date"].dt.strftime("%Y-%m-%d")
 
             return peak_dates1, peak_prices, final_peaks_df
+
             
         except Exception as e:
             print(f"find_peaks_combined 처리 중 에러 발생: {str(e)}")
             import traceback
-            print(traceback.format_exc())
+          
             return [], [], pd.DataFrame(columns=['Date', 'High'])
+        
+    def filter_peaks(self, filtered_peaks):
+        final_filtered_peaks = []  # 최종 변곡점을 저장할 리스트
+        remaining_peaks = filtered_peaks.copy()  # 변곡점 리스트 복사본 유지
+
+        while not remaining_peaks.empty:
+            current_date = remaining_peaks.iloc[0]["Date"]
+            four_months_before = current_date - pd.DateOffset(months=4)
+            four_months_after = current_date + pd.DateOffset(months=4)
+
+            # 앞뒤 4개월 내 변곡점 찾기
+            candidates = remaining_peaks[
+                (remaining_peaks["Date"] >= four_months_before) & 
+                (remaining_peaks["Date"] <= four_months_after)
+            ]
+
+            if not candidates.empty:
+                # 해당 구간에서 최고점 찾기
+                max_peak = candidates.loc[candidates["High"].idxmax()]
+
+                # 최고점을 리스트에 추가
+                final_filtered_peaks.append({"Date": max_peak["Date"], "High": max_peak["High"]})
+
+                # 선택된 최고점의 ±4개월 내 변곡점 제거 (즉, 해당 범위 내 변곡점들은 다시 비교되지 않도록 함)
+                remaining_peaks = remaining_peaks[
+                    (remaining_peaks["Date"] < max_peak["Date"] - pd.DateOffset(months=4)) | 
+                    (remaining_peaks["Date"] > max_peak["Date"] + pd.DateOffset(months=4))
+                ]
+            else:
+                # 후보가 없으면 종료
+                break
         
     
     async def Stock_Data(self):
@@ -313,9 +367,9 @@ class Api:
             try:
                 response = requests.get("http://localhost:4000/stock-data/get_all_codes")
                 data = response.json()
-                    #all_codes=["475580","475660","475960","476060","478560","482630"] # 리스트 형태일 경우
-                all_codes = [item['code'] for item in data]
-                print(len(all_codes))
+                all_codes=["002790"] # 리스트 형태일 경우
+                #all_codes = [item['code'] for item in data]
+             
                 total_batches = (len(all_codes) + 9) // 10
 
                 # 100개 단위로 tr_code 처리
@@ -356,15 +410,12 @@ class Api:
         try:
             # DataFrame을 리스트로 변환
             data_list = stock_data.to_dict('records')
-            
             # peak_dates가 DataFrame이 아닐 경우 처리
-            if isinstance(peak_dates, pd.Series):
-                peak_dates_list = peak_dates.reset_index().to_dict('records')
-            else:
-                peak_dates_list = []  # 빈 리스트로 초기화
-            
+         
+         
             peak_prices_list = [{'Price': price} for price in peak_prices]  # 리스트를 딕셔너리 형태로 변환
             filtered_peaks_list = filtered_peaks.reset_index().to_dict('records') if not filtered_peaks.empty else []  # 빈 리스트로 초기화
+            peak_dates_list = peak_dates.reset_index().to_dict('records') if not filtered_peaks.empty else []  # 빈 리스트로 초기화
             
        
             async with session.post("http://127.0.0.1:8000/stock_data_collection/",

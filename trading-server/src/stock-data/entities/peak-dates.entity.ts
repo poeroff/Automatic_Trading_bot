@@ -9,6 +9,9 @@ export class PeakDate {
   @ManyToOne(() => TrCode, (trCode) => trCode.peakDates, { onDelete: 'CASCADE' })
   trCode: TrCode; // TrCode와의 관계
 
+  @Column({type:"float"})
+  price : number
+
   @Column({ type: 'date' })
   date: Date; // 날짜
 }

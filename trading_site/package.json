@@ -29,6 +29,7 @@
     "react-router-dom": "^7.1.5",
     "recharts": "^2.15.1",
     "recoil": "^0.7.7",
+    "socket.io-client": "^4.8.1",
     "supports-color": "^10.0.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^3.3.0",
@@ -42,5 +43,9 @@
     "@types/react-dom": "^19",
     "prisma": "^6.2.1",
     "typescript": "^5"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.9",
+    "utf-8-validate": "^6.0.5"
   }
 }

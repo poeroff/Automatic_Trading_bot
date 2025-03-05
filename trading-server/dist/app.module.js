@@ -21,6 +21,12 @@ const PeakPrice_entity_1 = require("./stock-data/entities/PeakPrice.entity");
 const filtered_peaks_entity_1 = require("./stock-data/entities/filtered-peaks.entity");
 const peak_dates_entity_1 = require("./stock-data/entities/peak-dates.entity");
 const user_inflection_entity_1 = require("./stock-data/entities/user-inflection.entity");
+const schedular_module_1 = require("./schedular/schedular.module");
+const nestjs_session_1 = require("nestjs-session");
+const live_index_module_1 = require("./live_index/live_index.module");
+const gateway_module_1 = require("./gateway/gateway.module");
+const microservices_1 = require("@nestjs/microservices");
+const redis_module_1 = require("./redis/redis.module");
 const typeOrmModuleOptions = {
     useFactory: async (configService) => ({
         namingStrategy: new typeorm_naming_strategies_1.SnakeNamingStrategy(),
@@ -43,7 +49,13 @@ let AppModule = class AppModule {
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule.forRoot({
+        imports: [microservices_1.ClientsModule.register([
+                {
+                    name: 'REDIS_CLIENT',
+                    transport: microservices_1.Transport.REDIS,
+                    options: { host: 'localhost', port: 6379 },
+                },
+            ]), config_1.ConfigModule.forRoot({
                 isGlobal: true,
                 validationSchema: Joi.object({
                     DB_USERNAME: Joi.string().required(),
@@ -54,7 +66,16 @@ exports.AppModule = AppModule = __decorate([
                     CHAR_SET: Joi.string().required(),
                     DB_SYNC: Joi.boolean().required(),
                 }),
-            }), stock_data_module_1.StockDataModule, typeorm_1.TypeOrmModule.forRootAsync(typeOrmModuleOptions)],
+            }),
+            nestjs_session_1.SessionModule.forRoot({
+                session: {
+                    secret: 'mySecretKey',
+                    resave: false,
+                    saveUninitialized: false,
+                    cookie: { maxAge: 1000 * 60 * 60 * 24 },
+                },
+            }),
+            stock_data_module_1.StockDataModule, typeorm_1.TypeOrmModule.forRootAsync(typeOrmModuleOptions), schedular_module_1.SchedularModule, live_index_module_1.LiveIndexModule, gateway_module_1.GatewayModule, redis_module_1.RedisModule],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })

@@ -147,16 +147,19 @@ class FivoTrade:
                 async with session.get("http://localhost:4000/stock-data/get_true_codes") as response:
                     if response.status == 200:
                         data = await response.json()
-                   
-                        all_codes = [item['code'] for item in data] # 전체 종목 코드
+                    
+                        all_codes =["002790"]
+                        #all_codes = [item['code'] for item in data] # 전체 종목 코드
                     else:
                         raise Exception(f"API 호출 실패: {response.status}")
                     
             # 2. 종목 분석 수행
             for code in all_codes:
+            
                 await self.analyze_stock(code)
             # 성공한 종목 코드에 대해서만 실시간 등록 수행
             try:
+               
                 all_codes = list(self.trend_lines_by_code.keys())  # 모든 종목 코드 가져오기
                 total_codes = len(all_codes)
 
@@ -226,54 +229,62 @@ class FivoTrade:
                     peak_dates1, peak_prices1, filtered_peaks = self.find_peaks_combined(data)
                     async with session.get("http://localhost:4000/stock-data/get_user_inflection",json={'code': code}) as response:
                         date = await response.json()
-                     
+                        print(date)
+                    
                       
-                        reference_dates = [int(item['date']) for item in date]
+                        # 날짜와 가격을 함께 저장
+                        reference_dates_with_prices = [(int(item['date']), int(item['price'])) for item in date]
+                        print(reference_dates_with_prices)
+                        
                     
                                         
                         # highdate가 존재하는 경우, peak_dates1에서 같은 값 찾기
     
                         for item in date:
+                           
                             highdate = item.get("highdate")  # highdate가 없으면 None 반환
-                        
+                      
                             if highdate:  # highdate 값이 존재할 때만 처리
+                                # highdate를 변환하여 새로운 변수에 저장
                                 highdate_dt = pd.to_datetime(highdate, format="%Y%m%d")  # YYYYMMDD → YYYY-MM-DD 변환
-                            
-                                # peak_dates1에서 highdate와 같은 값 찾기 (datetime 형식 리스트)
-                                found_dates = [d for d in peak_dates1 if d == highdate_dt]
 
-                                if found_dates:
-                                    match.extend(found_dates)  # 찾은 날짜 추가
-                                else:
-                                    match.append(None)  # 매칭되는 날짜가 없으면 None 추가
+                                # 변환된 날짜를 YYYY-MM-DD 형식의 문자열로 변환하여 match에 추가
+                                match.append(highdate_dt.strftime("%Y-%m-%d"))
+                         
                             else:
                                 match.append(None)  # highdate 자체가 없으면 None 추가
 
-                    for i, reference_date in enumerate(reference_dates):
-                     
-                        if(match[i] != None):
-                            previous_peak_date = match[i]
+                    for i, reference_date in enumerate(reference_dates_with_prices):
+                        if match[i] is not None:
+                            # match[i]가 문자열일 경우 datetime으로 변환
+                            if isinstance(match[i], str):
+                                previous_peak_date = pd.to_datetime(match[i])
+                            else:
+                                previous_peak_date = match[i]
                         else:
-                            previous_peak_date, previous_peak_price = self.find_previous_peak(data, pd.to_datetime(peak_dates1), peak_prices1, reference_date)
-                      
-                        closest_date, closest_price = self.find_closest_inflection_or_peak(filtered_peaks,pd.to_datetime(peak_dates1), peak_prices1, reference_date)
+                            previous_peak_date, previous_peak_price = self.find_previous_peak(
+                                data, pd.to_datetime(peak_dates1["Date"]), peak_prices1, reference_date[0]
+                            )
                         
-                 
-                    
+                        closest_date, closest_price = self.find_closest_inflection_or_peak(
+                            filtered_peaks, peak_dates1, peak_prices1, reference_date[0], reference_date[1]
+                        )
+              
+                     
+
                         if previous_peak_date is None:
-                            print(f"Skipping reference date {reference_date} due to missing previous peak")
                             continue
 
                         if closest_date is None:
                             # 첫 번째와 두 번째 날짜만 사용
                             selected_dates = [
                                 int(previous_peak_date.strftime('%Y%m%d')),
-                                reference_date
+                                reference_date[0]
                             ]
                         else:
                             selected_dates = [
                                 int(previous_peak_date.strftime('%Y%m%d')),
-                                reference_date,
+                                reference_date[0],
                                 int(closest_date.strftime('%Y%m%d'))
                             ]
                     
@@ -281,6 +292,7 @@ class FivoTrade:
                        
         
                         selected_rows = selected_rows.sort_values(by="Date")
+                        print("selected_rows",selected_rows)
                     
 
                         dates_index = selected_rows.index.tolist()
@@ -288,6 +300,7 @@ class FivoTrade:
 
                         latest_index = data.index[-1]
                         x_vals = np.linspace(dates_index[0], latest_index, 200)
+                     
                         slope = (highs[1] - highs[0]) / (dates_index[1] - dates_index[0])
                         base_trend = slope * (x_vals - dates_index[0]) + highs[0]
                         fib_channel_info.append(int(base_trend[-1]))  # Base Trend 가격 추가
@@ -320,6 +333,7 @@ class FivoTrade:
             
     
     def find_previous_peak(self, df, peak_dates1, peak_prices1, reference_date):
+ 
     
         if not isinstance(reference_date, pd.Timestamp):
             reference_date = pd.to_datetime(str(reference_date), format='%Y%m%d')
@@ -330,45 +344,49 @@ class FivoTrade:
             return None, None
     
         latest_peak_date, latest_peak_price = max(previous_peaks, key=lambda x: x[0])
+   
         
         return latest_peak_date, latest_peak_price
 
-    def find_closest_inflection_or_peak(self,filtered_peaks, peak_dates1, peak_prices1, reference_date):
-   
+    def find_closest_inflection_or_peak(self, filtered_peaks, peak_dates1, peak_prices1, reference_date, reference_price):  
+
+        # reference_date를 Timestamp로 변환
         if not isinstance(reference_date, pd.Timestamp):
             reference_date = pd.to_datetime(str(reference_date), format='%Y%m%d')
-           
-        future_inflections = filtered_peaks[filtered_peaks['Date'] > reference_date]
-     
-      
 
-        # reference_date 이후의 주요 고점 필터링
-        future_peaks = peak_dates1[peak_dates1 > reference_date]
-      
-        # 가장 가까운 변곡점 찾기
+        # filtered_peaks에서 조건에 맞는 데이터 필터링
+        future_inflections = filtered_peaks[
+            (filtered_peaks['Date'] > reference_date) & 
+            (filtered_peaks['High'] > reference_price)
+        ]
+
+        # peak_dates1에서 조건에 맞는 데이터 필터링
+        future_peaks = peak_dates1[
+            (peak_dates1['Date'] > reference_date) & 
+            (peak_dates1['High'] > reference_price)
+        ]
+
+        # 가장 가까운 변곡점과 고점 찾기
         closest_inflection = future_inflections.iloc[0] if not future_inflections.empty else None
-
-        # 가장 가까운 주요 고점 찾기
         closest_peak = future_peaks.iloc[0] if not future_peaks.empty else None
 
-        # peak_prices1을 Series로 변환 (이게 핵심 해결 방법)
-        peak_prices_series = pd.Series(peak_prices1, index=peak_dates1)
-
-        # 두 개 중 reference_date와 가장 가까운 것 선택
+        # 두 날짜 중 reference_date와 가장 가까운 것 선택
         if closest_inflection is not None and closest_peak is not None:
-            if abs(closest_inflection['Date'] - reference_date) < abs(closest_peak - reference_date):
+            inflection_diff = abs(closest_inflection['Date'] - reference_date)
+            peak_diff = abs(closest_peak['Date'] - reference_date)
+            
+            if inflection_diff < peak_diff:
                 return closest_inflection['Date'], closest_inflection['High']
             else:
-                return closest_peak, peak_prices_series.loc[closest_peak]
+                return closest_peak['Date'], closest_peak['High']
 
         elif closest_inflection is not None:
             return closest_inflection['Date'], closest_inflection['High']
 
         elif closest_peak is not None:
-            return closest_peak, peak_prices_series.loc[closest_peak]
+            return closest_peak['Date'], closest_peak['High']
 
         return None, None
-
     # 중복 제거 함수
     def remove_duplicates(self,initial_peaks, peak_indices1):
             seen = set(peak_indices1)
@@ -378,7 +396,7 @@ class FivoTrade:
         # 1. 주요 고점 찾기
         peaks1 = self.find_peaks(df, 'High', compare_window=23, threshold=0.2)
         peak_indices1 = [idx for idx, _ in peaks1]
-        peak_dates1 = df.iloc[peak_indices1]["Date"]
+        peak_dates1 = df.iloc[peak_indices1][["Date", "High"]]
         peak_prices1 = [price for _, price in peaks1]
 
         # 2. 변곡점을 한 번만 계산하고 저장
@@ -404,6 +422,9 @@ class FivoTrade:
 
         # 제거할 변곡점을 제외한 filtered_peaks 생성
         filtered_peaks = filtered_peaks.drop(filtered_peaks.index[list(to_remove)])
+
+   
+
 
         
         return peak_dates1, peak_prices1, filtered_peaks
@@ -459,14 +480,12 @@ class FivoTrade:
                 
                 current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))  # 현재가
                 current_volume = abs(int(self.kiwoom.GetCommRealData(code, 13)))  # 거래량
-                print("current_price",current_price)
-                print("current_volume",current_volume)
+      
 
                 if code in self.trend_lines_by_code:
                     adjusted_prices = self.trend_lines_by_code[code]["adjusted_prices"]
                     avg_daily_volume = self.trend_lines_by_code[code]["avg_daily_volume"]
-                    print("adjusted_prices", adjusted_prices)
-                    print("avg_daily_volume", avg_daily_volume)
+              
 
                     # current_price가 adjusted_prices의 값 중 하나와 일치하는지 확인
                     chunk_size = 5  # 5개씩 나누기

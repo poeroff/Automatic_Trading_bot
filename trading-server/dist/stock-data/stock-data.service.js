@@ -64,10 +64,12 @@ let StockDataService = class StockDataService {
         return { data: formattedData };
     }
     async getUserInflection(code) {
+        console.log(code);
         const trCode = await this.trCodeRepository.findOne({ where: { code: code } });
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
+        console.log(await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } }));
         return await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } });
     }
     async createUserInflectioncode(date, code, highPoint) {
@@ -75,8 +77,21 @@ let StockDataService = class StockDataService {
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
-        const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate: highPoint ?? null });
-        return await this.userInflectionRepository.save(userInflection);
+        const dateString = date.toString();
+        const formattedDate = `${dateString.slice(0, 4)}-${dateString.slice(4, 6)}-${dateString.slice(6, 8)}`;
+        const queryDate = new Date(formattedDate);
+        queryDate.setHours(0, 0, 0, 0);
+        const reference_date = await this.stockDataRepository.findOne({
+            where: {
+                trCode: { id: trCode.id },
+                date: queryDate
+            }
+        });
+        if (reference_date) {
+            const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate: highPoint ?? null, price: reference_date?.high });
+            return await this.userInflectionRepository.save(userInflection);
+        }
+        throw new common_1.NotFoundException('Reference date not found');
     }
     async createUserInflectionname(date, name, highPoint) {
         const trCode = await this.trCodeRepository.findOne({ where: { name: name } });

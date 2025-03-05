@@ -4,4 +4,5 @@ export declare class UserInflection {
     trCode: TrCode;
     highdate: number | null;
     date: number;
+    price: number;
 }

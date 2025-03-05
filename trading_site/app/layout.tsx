@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { SessionProvider } from "./providers";
+import { SessionProviderAuth } from "./providers";
 import Header from "../components/header";
 import "./globals.css";
 import { useEffect } from "react";
@@ -24,10 +24,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <SessionProvider session={session}>
+        <SessionProviderAuth session={session}>
           <Header />
           {children}
-        </SessionProvider>
+        </SessionProviderAuth>
       </body>
     </html>
   );

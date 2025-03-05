@@ -24,6 +24,10 @@ __decorate([
     __metadata("design:type", tr_code_entity_1.TrCode)
 ], PeakDate.prototype, "trCode", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: "float" }),
+    __metadata("design:type", Number)
+], PeakDate.prototype, "price", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'date' }),
     __metadata("design:type", Date)
 ], PeakDate.prototype, "date", void 0);

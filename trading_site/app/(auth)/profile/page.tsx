@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
+  console.log(session, status)
   const router = useRouter();
 
   useEffect(() => {
@@ -22,5 +23,6 @@ export default function ProfilePage() {
     return null; // 리디렉트가 진행 중이므로 아무것도 렌더링하지 않음
   }
 
-  return <div>Profile</div>;
+  return <div>
+    {session.user.author === "admin" && <div>LOGIN</div>}Profile</div>;
 }

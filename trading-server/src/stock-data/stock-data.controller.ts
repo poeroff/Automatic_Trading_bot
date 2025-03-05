@@ -29,21 +29,16 @@ export class StockDataController {
   }
 
 
-
-
   @Get("get_user_inflection")
   getUserInflection(@Body() body: { code: string }) {
     return this.stockDataService.getUserInflection(body.code);
   }
+
   //사용자 변곡점 설정 추가 함수
   @Post("user-inflection")
   createUserInflection(
     @Body() body: { date: number; highPoint?: number | null; code?: string; name?: string }) {
-    console.log("요청 데이터:", body);
   
-    if (!body.code && !body.name) {
-      throw new BadRequestException("code 또는 name 값이 필요합니다.");
-    }
     if (body.code) {
       return this.stockDataService.createUserInflectioncode(body.date, body.code, body.highPoint); 
     } else if (body.name) {

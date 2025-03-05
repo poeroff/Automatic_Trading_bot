@@ -37,10 +37,6 @@ let StockDataController = class StockDataController {
         return this.stockDataService.getUserInflection(body.code);
     }
     createUserInflection(body) {
-        console.log("요청 데이터:", body);
-        if (!body.code && !body.name) {
-            throw new common_1.BadRequestException("code 또는 name 값이 필요합니다.");
-        }
         if (body.code) {
             return this.stockDataService.createUserInflectioncode(body.date, body.code, body.highPoint);
         }

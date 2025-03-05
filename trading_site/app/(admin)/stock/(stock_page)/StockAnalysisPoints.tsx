@@ -109,6 +109,8 @@ const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
 
 
 
+
+
   useEffect(() => {
     setErrorMessage(null)
     if (code || name) {
@@ -158,11 +160,12 @@ const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
     
       if (code) payload.code = code;
       if (name) payload.name = name;
-      await axios.post("http://localhost:4000/stock-data/user-inflection", payload);
+      const result = await axios.post("http://localhost:4000/stock-data/user-inflection", payload);
+      console.log(result)
       // 데이터 리프레시
       fetchStockData(code ?? undefined, name ?? undefined);
     } catch (error) {
-      setErrorMessage('* 저장 중 오류가 발생했습니다.');
+      setErrorMessage('* 저장 중 오류가 발생.(DB에 일치하는 값이 없습니다, 인터넷 문제)');
     }
   }, [code, name, customList.length, fetchStockData]);
 
@@ -192,7 +195,7 @@ const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
   }, [inflectionpointRef.current?.value]);
 
 
-  return <> <ChartPage marketCapList={marketCapList} volumeList={volumeList} chartData={chartData} name={title.name} code = {title.code} selectedDate={selectedDate}></ChartPage><div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  return <> <ChartPage marketCapList={marketCapList} volumeList={volumeList} chartData={chartData} name={title.name} code = {title.code} selectedDate={selectedDate} customList={customList}></ChartPage><div className="grid grid-cols-1 md:grid-cols-3 gap-6">
     <Card>
       <CardHeader>
         <CardTitle>고점(빨간색)</CardTitle>

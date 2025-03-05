@@ -11,24 +11,47 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const common_1 = require("@nestjs/common");
-const app_service_1 = require("./app.service");
+const microservices_1 = require("@nestjs/microservices");
+const ioredis_1 = require("ioredis");
 let AppController = class AppController {
-    constructor(appService) {
-        this.appService = appService;
+    constructor() {
+        this.redisClient = new ioredis_1.default({
+            host: 'localhost',
+            port: 6379,
+        });
     }
-    getHello() {
-        return this.appService.getHello();
+    async handleSetKey(data) {
+        console.log(`📩 Received set_key event: ${data.key} = ${data.value}, TTL: ${data.ttl || 'No Expiry'}`);
+        if (data.ttl && data.ttl > 0) {
+            await this.redisClient.setex(data.key, data.ttl, data.value);
+            console.log(`✅ Saved in Redis: ${data.key} (Expires in ${data.ttl} seconds)`);
+        }
+        else {
+            await this.redisClient.set(data.key, data.value);
+            console.log(`✅ Saved in Redis: ${data.key} (No Expiry)`);
+        }
+    }
+    async handleGetKey(key) {
+        console.log(`🔍 Received get_key request for key: ${key}`);
+        const value = await this.redisClient.get(key);
+        console.log(`📦 Retrieved from Redis: ${value}`);
+        return value;
     }
 };
 exports.AppController = AppController;
 __decorate([
-    (0, common_1.Get)(),
+    (0, microservices_1.EventPattern)('set_key'),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", String)
-], AppController.prototype, "getHello", null);
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "handleSetKey", null);
+__decorate([
+    (0, microservices_1.MessagePattern)('get_key'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "handleGetKey", null);
 exports.AppController = AppController = __decorate([
-    (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [app_service_1.AppService])
+    (0, common_1.Controller)()
 ], AppController);
 //# sourceMappingURL=app.controller.js.map

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 
 def load_data():
-    conn = sqlite3.connect('stock_083790.db')
+    conn = sqlite3.connect('stock_083420.db')
     query = "SELECT * FROM stock_data"
     df = pd.read_sql(query, conn)
     conn.close()
@@ -46,7 +46,6 @@ def find_peaks(dataframe, high_column='High', compare_window=23, threshold=0.2):
                     peaks.append((i, current_price))
                     last_peak_idx = i
                     last_peak_price = current_price
-
     find_peaks=[]
     if peaks:
         find_peaks = [peaks[0]]
@@ -65,13 +64,46 @@ def remove_duplicates(initial_peaks, peak_indices1):
     seen = set(peak_indices1)
     return [x for x in initial_peaks if x not in seen or seen.remove(x)]
 
+def find_improved_peaks(self, df, high_column='High', window=20):
+        """
+        개선된 변곡점 찾기 알고리즘
+        """
+        prices = df[high_column].values
+        peaks = []
+        
+        # 이동평균 계산
+        ma = np.convolve(prices, np.ones(window)/window, mode='valid')
+        ma = np.pad(ma, (window-1, 0), mode='edge')  # 패딩 추가
+        
+        # 기울기 계산
+        gradient = np.gradient(ma)
+        
+        for i in range(window, len(prices)-window):
+            # 기울기 변화 확인
+            if gradient[i-1] > 0 and gradient[i+1] < 0:
+                # 주변 윈도우에서 최대값인지 확인
+                if prices[i] == max(prices[i-window:i+window]):
+                    peaks.append(i)
+        
+        return peaks
+
 def find_peaks_combined(df):
     # 1. 주요 고점 찾기
     peaks1 = find_peaks(df, 'High', compare_window=23, threshold=0.2)
     peak_indices1 = [idx for idx, _ in peaks1]
     peak_dates1 = df.iloc[peak_indices1]["Date"]
     peak_prices1 = [price for _, price in peaks1]
+    # df["High_diff1"] = np.gradient(df["High"].values)
 
+    # # 2차 미분 (가속도)
+    # df["High_diff2"] = np.gradient(df["High_diff1"].values)
+
+    # # 변곡점 찾기 (2차 미분이 0을 지나면서 부호가 바뀌는 지점)
+    # df["Sign"] = np.sign(df["High_diff2"])  # 부호 계산
+    # df["Sign_change"] = (df["Sign"].diff() > 0)
+
+    # # 변곡점 인덱스 추출
+    # initial_peaks = df[df["Sign_change"]].index.to_numpy()
     # 2. 변곡점 찾기 (order=n)
     n = 6
     initial_peaks = argrelextrema(df["High"].values, np.greater_equal, order=n)[0]

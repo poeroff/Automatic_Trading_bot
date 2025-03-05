@@ -1,6 +1,9 @@
-import { AppService } from './app.service';
 export declare class AppController {
-    private readonly appService;
-    constructor(appService: AppService);
-    getHello(): string;
+    private redisClient;
+    handleSetKey(data: {
+        key: string;
+        value: string;
+        ttl?: number;
+    }): Promise<void>;
+    handleGetKey(key: string): Promise<string | null>;
 }

@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useSessionContext } from "@/app/providers"
 import DropdownMenu from "@/components/DropdownMenu"
+import { io } from "socket.io-client";
 
 type Notification = {
   id: number
@@ -16,9 +17,10 @@ type Notification = {
 
 type MarketItem = {
   name: string
-  value: string
-  change: string
-  isPositive: string
+  value: number
+  change: number
+  percentage : number
+
 }
 
 type MarketGroup = MarketItem[]
@@ -42,55 +44,81 @@ export default function Header() {
     { id: 3, message: "새로운 시장 분석 리포트가 도착했습니다.", isRead: true },
   ])
 
+  const socket = io("http://localhost:81"); // ✅ NestJS WebSocket 서버 주소 (Socket.IO 사용)
+
+  useEffect(() => {
+  
+    socket.emit("getKospiIndex"); // ✅ WebSocket 이벤트 요청
+    
+    // socket.on("connect", () => {
+    //   console.log("✅ WebSocket 연결됨!");
+  
+    // });
+
+    socket.on("IndexData", (data) => {
+       console.log("📊 코스피 지수 데이터 받음:", data);
+       transformData(data)
+
+     
+    });
+
+    // socket.on("disconnect", () => {
+    //   console.log("❌ WebSocket 연결 종료");
+    // });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
 
   const transformData = (data: any) => {
-    // 첫 번째 그룹
-    const group1 = [
-      {
-        name: "KOSPI",
-        value: data.Kospi.value,
-        change: data.Kospi.change,
-        isPositive: data.Kospi.isPositive,
-      },
-      {
-        name: "KOSDAQ",
-        value: data.Kosdaq.value,
-        change: data.Kosdaq.change,
-        isPositive: data.Kosdaq.isPositive,
-      },
-      {
-        name: "KOSPI200",
-        value: data.Kospi200.value,
-        change: data.Kospi200.change,
-        isPositive: data.Kospi200.isPositive,
-      },
-    ]
-
-    // 두 번째 그룹 (다른 종목들)
-    const group2 = [
-      {
-        name: "USD/KRW(원)",
-        value: data.USD.value,
-        change: data.USD.change,
-        isPositive: data.USD.blind,
-      },
-      {
-        name: "JPY(100엔)",
-        value: data.JPY.value,
-        change: data.JPY.change,
-        isPositive: data.JPY.blind,
-      },
-      {
-        name: "GOLD(달러)",
-        value: data.GOLD.value,
-        change: data.GOLD.change,
-        isPositive: data.GOLD.blind,
-      },
-      // 여기에 추가 종목들 넣기
-    ]
-    console.log(group1, group2)
-    setMarketGroups([group1, group2])
+    if (data) {
+      const group1 = [
+        {
+          name: "KOSPI",
+          value: Number(data.bstp_nmix_prpr),
+          change: Number(data.bstp_nmix_prdy_vrss),
+          percentage: Number(data.bstp_nmix_prdy_ctrt),
+        },
+        {
+          name: "KOSDAQ",
+          value: Number(data.bstp_nmix_prpr),
+          change: Number(data.bstp_nmix_prdy_vrss),
+          percentage: Number(data.bstp_nmix_prdy_ctrt),
+        },
+        {
+          name: "S&P 500",
+          value: Number(data.bstp_nmix_prpr),
+          change: Number(data.bstp_nmix_prdy_vrss),
+          percentage: Number(data.bstp_nmix_prdy_ctrt),
+        },
+      ]
+  
+      const group2 = [
+        {
+          name: "USD/KRW(원)",
+          value: Number(data.bstp_nmix_prpr),
+          change: Number(data.bstp_nmix_prdy_vrss),
+          percentage: Number(data.bstp_nmix_prdy_ctrt),
+        },
+        {
+          name: "EUR/USD",
+          value: Number(data.bstp_nmix_prpr),
+          change: Number(data.bstp_nmix_prdy_vrss),
+          percentage: Number(data.bstp_nmix_prdy_ctrt),
+        },
+        {
+          name: "BTC/USD",
+          value: Number(data.bstp_nmix_prpr),
+          change: Number(data.bstp_nmix_prdy_vrss),
+          percentage: Number(data.bstp_nmix_prdy_ctrt),
+        },
+      ]
+      setMarketGroups(() => [group1, group2]); // ✅ 기존 데이터를 지우고 새로운 데이터로 업데이트
+    }
   }
+  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentGroupIndex((prev) => (prev + 1) % 2)
@@ -122,36 +150,6 @@ export default function Header() {
   }
 
   const unreadCount = notifications.filter((n) => !n.isRead).length
-
-  // useEffect(() => {
-  //   const ws = new WebSocket('ws://localhost:8765');
-
-  //   ws.onopen = () => {
-  //     console.log('WebSocket 연결됨');
-
-  //   };
-
-  //   ws.onmessage = (event) => {
-  //     const data = JSON.parse(event.data);
-  //     console.log(data)
-  //     transformData(data)
-  //     //setMarketData(data);
-  //   };
-
-  //   ws.onerror = (error) => {
-  //     console.error('WebSocket 에러:', error);
-  //   };
-
-  //   ws.onclose = () => {
-  //     console.log('WebSocket 연결 종료');
-  //   };
-
-  //   return () => {
-  //     ws.close();
-  //   };
-  // }, []);
-
-
 
 
   const stockItems = [
@@ -188,22 +186,18 @@ export default function Header() {
           </nav>
 
           {/* Market Data Display */}
-          <div className="hidden md:flex space-x-4 text-sm">
+          {marketGroups && <div className="hidden md:flex space-x-4 text-sm">
             {marketGroups[currentGroupIndex]?.map((item, index) => (
               <span key={item.name} className={index > 0 ? "ml-4" : ""}>
                 {item.name}{" "}
-                <span
-                  className={
-                    item.isPositive?.includes("+") || item.isPositive === "상승" ? "text-red-500" : "text-blue-500"
-                  }
-                >
-                  {item.value} {item.isPositive?.includes("+") || item.isPositive === "상승" ? "+" : "-"}
-                  {item.change}
-                  {item.isPositive !== "상승" && item.isPositive !== "하락" && <span>({item.isPositive})</span>}
+                <span className={item.change > 0 ? " text-red-700" : " text-blue-700"}>
+                  {item.value}{" "}{" "}
+                  {item.change}({item.percentage}%)
+                  
                 </span>
               </span>
             ))}
-          </div>
+          </div>} 
 
           {/* Search and User Actions */}
           <div className="flex items-center space-x-4">

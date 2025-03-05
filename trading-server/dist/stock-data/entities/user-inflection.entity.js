@@ -31,6 +31,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'bigint' }),
     __metadata("design:type", Number)
 ], UserInflection.prototype, "date", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'bigint' }),
+    __metadata("design:type", Number)
+], UserInflection.prototype, "price", void 0);
 exports.UserInflection = UserInflection = __decorate([
     (0, typeorm_1.Entity)('user_inflection')
 ], UserInflection);

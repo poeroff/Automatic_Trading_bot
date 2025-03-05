@@ -5,7 +5,10 @@ import KakaoProvider from "next-auth/providers/kakao";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 import CredentialsProvider from "next-auth/providers/credentials";
+import NaverProvider from "next-auth/providers/naver";
+
 import jwt from "jsonwebtoken"; // JWT 모듈 추가
+
 
 interface PrismaUser {
   id: string;
@@ -33,6 +36,10 @@ export const authOptions: NextAuthOptions = {
         },
       },
       from: process.env.EMAIL_FROM,
+    }),
+    NaverProvider({
+      clientId: process.env.NAVER_CLIENT_ID!,
+      clientSecret: process.env.NAVER_CLIENT_SECRET!,
     }),
     KakaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID!,
@@ -64,7 +71,8 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials?.email },
         });
         if (user) {
-          user.author = user.author || "default";
+          user.author = user.author || "user";
+
           return user;
         }
         return null;
@@ -77,28 +85,62 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/signin",
     signOut: "/signout",
-    error: "/error",
+    error: "/error/auth",
     verifyRequest: "/verify-request",
   },
 
   callbacks: {
     async signIn({ user, account }) {
-      const existingUser = (await prisma.user.findFirst({
+      if (!user.email) return false;
+
+      const existingUser = await prisma.user.findUnique({
         where: { email: user.email },
         include: { accounts: true },
-      })) as PrismaUser | null;
-
+      });
+  
       if (existingUser) {
-        user.author = existingUser.author || "default";
-
-        return true;
+        const user_account = await prisma.account.findUnique({
+          where: {
+            userId : existingUser.id,
+            provider_providerAccountId: {
+              provider: account?.provider!,
+              providerAccountId: account?.providerAccountId!,
+            },
+          },
+        });
+        if(user_account){
+           return true
+        }
+        throw new Error("EXISTING_USER");
       }
-      return false;
+
+      if (!existingUser) {
+        await prisma.user.create({
+          data: {
+            email: user.email,
+            name: user.name || "Unknown",
+            author: "user",
+            accounts: {
+              create: {
+                provider: account?.provider!,
+                providerAccountId: account?.providerAccountId!,
+                type: account?.type || "default",
+                access_token: account?.access_token || null,
+                refresh_token: account?.refresh_token || null,
+                expires_at: account?.expires_at || null,
+                token_type: account?.token_type || null,
+                scope: account?.scope || null,
+                id_token: account?.id_token || null,
+                session_state: account?.session_state || null,
+              },
+            },
+          },
+        });
+      }
+      return true;
     },
 
     async jwt({ token, user, account }) {
-
-
       if (user) {
         token.id = user.id;
         token.author = user.author || "default";

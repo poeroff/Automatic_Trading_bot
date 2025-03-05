@@ -65,7 +65,7 @@ def find_peaks_combined(df):
         peak_indices1 = [idx for idx, _ in peaks1]
         peak_dates1 = df.iloc[peak_indices1]["Date"]
         peak_prices1 = [price for _, price in peaks1]
-  
+        
 
         # 2. 변곡점을 한 번만 계산하고 저장
         n = 6
@@ -78,7 +78,7 @@ def find_peaks_combined(df):
         
         # 3. 저장된 변곡점에서 고점 주변 15일 이내의 점들만 제거
         filtered_peaks = initial_rising_peaks[~initial_rising_peaks.index.map(
-            lambda x: any(abs(x - peak_idx) <= 4 for peak_idx in peak_indices1)
+            lambda x: any(abs(x - peak_idx) <= 13 for peak_idx in peak_indices1)
         )]
         filtered_peaks_dates = filtered_peaks["Date"].dt.to_pydatetime()  # 변곡점 날짜를 datetime으로 변환
         to_remove = set()  # 제거할 변곡점 인덱스 집합
@@ -207,7 +207,7 @@ for i, reference_date in enumerate(reference_dates):
     plt.plot(x_vals, base_trend, '-', label=f"Base Trend {i+1}")
 
     if closest_date is not None:
-        fib_levels = [1, 2, 3, 4]
+        fib_levels = [-1, 1, 2, 3, 4]
         time_diff = dates_index[2] - dates_index[0]
         price_at_third = slope * (dates_index[2] - dates_index[0]) + highs[0]
         channel_height = highs[2] - price_at_third

@@ -11,13 +11,16 @@ interface ListItem {
 interface ChartPageProps {
   marketCapList: ListItem[];
   volumeList: ListItem[];
+  customList : ListItem[];
   chartData: { date: string; value: number }[];
   name: string | null;
   code: string | null;
   selectedDate: string | null;
 }
 
-const ChartPage = ({ marketCapList, volumeList, chartData, name, code, selectedDate }: ChartPageProps) => {
+const ChartPage = ({ marketCapList, volumeList, chartData, name, code, selectedDate,customList }: ChartPageProps) => {
+  console.log(customList)
+
   // ✅ useMemo를 사용해 customDots 미리 계산하여 최적화
   const customDots = useMemo(() => {
     return chartData.map(({ date }) => ({
@@ -25,6 +28,7 @@ const ChartPage = ({ marketCapList, volumeList, chartData, name, code, selectedD
       isSelected: date === selectedDate,
       isPeak: marketCapList.some((item) => item.date === date),
       isVolume: volumeList.some((item) => item.date === date),
+      isCustom: customList.some((item) => item.date === date),
     }));
   }, [chartData, selectedDate, marketCapList, volumeList]);
 
@@ -35,7 +39,7 @@ const ChartPage = ({ marketCapList, volumeList, chartData, name, code, selectedD
       const dotInfo = customDots.find((dot) => dot.date === payload.date);
       if (!dotInfo) return <></>;
 
-      const { isSelected, isPeak, isVolume } = dotInfo;
+      const { isSelected, isPeak, isVolume, isCustom } = dotInfo;
 
       return (
         <g key={`dots-${payload.date}`}>
@@ -45,6 +49,18 @@ const ChartPage = ({ marketCapList, volumeList, chartData, name, code, selectedD
               cy={cy}
               r={isSelected ? 6 : 4}
               fill="red"
+              style={{
+                transition: "r 0.3s ease-in-out",
+                animation: isSelected ? "pulse 1s infinite" : "none",
+              }}
+            />
+          )}
+          {isCustom && (
+            <circle
+              cx={cx}
+              cy={cy}
+              r={isSelected ? 6 : 4}
+              fill="green"
               style={{
                 transition: "r 0.3s ease-in-out",
                 animation: isSelected ? "pulse 1s infinite" : "none",

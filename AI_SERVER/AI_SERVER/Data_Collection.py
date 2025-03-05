@@ -132,6 +132,7 @@ def Stock_Data_Collection(request):
                             CREATE TABLE peak_dates (
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 tr_code_id INT NOT NULL,
+                                price FLOAT NOT NULL,
                                 date DATE NOT NULL,
                                 FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id) ON DELETE CASCADE,
                                 UNIQUE KEY unique_peak_date (tr_code_id, date)
@@ -168,6 +169,7 @@ def Stock_Data_Collection(request):
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 tr_code_id INT NOT NULL,
                                 date DATE NOT NULL,
+                                price FLOAT NOT NULL,
                                 FOREIGN KEY (tr_code_id) REFERENCES tr_codes(id) ON DELETE CASCADE,
                                 UNIQUE KEY unique_filtered_peak (tr_code_id, date)
                               
@@ -187,6 +189,8 @@ def Stock_Data_Collection(request):
                     # peak_dates_count와 filtered_peaks_count 초기화
                     peak_dates_count = 0
                     filtered_peaks_count = 0
+                
+
 
                     if peak_dates:
                         cursor.execute("DELETE FROM peak_dates WHERE tr_code_id = %s", (tr_code_id,))
@@ -202,9 +206,9 @@ def Stock_Data_Collection(request):
                             if not exists:  # 중복이 없을 경우에만 삽입
                                 try:
                                     cursor.execute(""" 
-                                        INSERT INTO peak_dates (tr_code_id, date)
-                                        VALUES (%s, %s)
-                                    """, (tr_code_id, peak_date['Date']))
+                                        INSERT INTO peak_dates (tr_code_id, date,price)
+                                        VALUES (%s, %s,%s)
+                                    """, (tr_code_id, peak_date['Date'],peak_date['High']))
                                 except Exception as e:
                                     print(f"Error inserting peak date: {str(e)}")  # 에러 로그 출력
 
@@ -222,9 +226,9 @@ def Stock_Data_Collection(request):
                             if not exists:  # 중복이 없을 경우에만 삽입
                                 try:
                                     cursor.execute(""" 
-                                        INSERT INTO filtered_peaks (tr_code_id, date)
-                                        VALUES (%s, %s)
-                                    """, (tr_code_id, filtered_peak['Date']))
+                                        INSERT INTO filtered_peaks (tr_code_id, date,price)
+                                        VALUES (%s, %s, %s)
+                                    """, (tr_code_id, filtered_peak['Date'],filtered_peak['High']))
                                 except Exception as e:
                                     print(f"Error inserting filtered peak: {str(e)}")  # 에러 로그 출력
 

@@ -4,5 +4,6 @@ export declare class EventsGateway {
     private readonly liveIndexService;
     server: Server;
     constructor(liveIndexService: LiveIndexService);
-    handleKospiIndexRequest(): Promise<void>;
+    Korea_main_stock_marketIndex(): Promise<void>;
+    onModuleInit(): void;
 }

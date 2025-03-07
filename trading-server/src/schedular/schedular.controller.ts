@@ -45,7 +45,7 @@ export class SchedularController {
   }
 
   //AccessToken 발급
-  @Cron('0 17 21 * * *')
+  @Cron('0 12 15 * * *')
   //@Cron('0 0 * * * *')
   CreateAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"

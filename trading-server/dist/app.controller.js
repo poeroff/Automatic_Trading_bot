@@ -21,20 +21,15 @@ let AppController = class AppController {
         });
     }
     async handleSetKey(data) {
-        console.log(`📩 Received set_key event: ${data.key} = ${data.value}, TTL: ${data.ttl || 'No Expiry'}`);
         if (data.ttl && data.ttl > 0) {
             await this.redisClient.setex(data.key, data.ttl, data.value);
-            console.log(`✅ Saved in Redis: ${data.key} (Expires in ${data.ttl} seconds)`);
         }
         else {
             await this.redisClient.set(data.key, data.value);
-            console.log(`✅ Saved in Redis: ${data.key} (No Expiry)`);
         }
     }
     async handleGetKey(key) {
-        console.log(`🔍 Received get_key request for key: ${key}`);
         const value = await this.redisClient.get(key);
-        console.log(`📦 Retrieved from Redis: ${value}`);
         return value;
     }
 };

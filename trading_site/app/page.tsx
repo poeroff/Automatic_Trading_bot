@@ -16,9 +16,9 @@ export default async function Home() {
 
   return (
     <div>
+      asdasdsa
 
-{/*       {session?.user?.name ? <div>Welcome, {session?.user?.name}</div> : <div>Not logged in</div>}
- */}    </div>
+     </div>
     
   );
 }

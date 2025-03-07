@@ -17,15 +17,19 @@ let EventsGateway = class EventsGateway {
     constructor(liveIndexService) {
         this.liveIndexService = liveIndexService;
     }
-    async handleKospiIndexRequest() {
-        console.log(`📩 WebSocket 요청 수신: Controller의 KospiIndex 실행`);
+    async Korea_main_stock_marketIndex() {
         try {
-            const response = await this.liveIndexService.KospiIndex();
+            const response = await this.liveIndexService.Korea_main_stock_marketIndex();
             this.server.emit('IndexData', response);
         }
         catch (error) {
             console.error(`🚨 KospiIndex 실행 중 오류 발생:`, error);
         }
+    }
+    onModuleInit() {
+        setInterval(async () => {
+            await this.Korea_main_stock_marketIndex();
+        }, 30000);
     }
 };
 exports.EventsGateway = EventsGateway;
@@ -34,11 +38,11 @@ __decorate([
     __metadata("design:type", socket_io_1.Server)
 ], EventsGateway.prototype, "server", void 0);
 __decorate([
-    (0, websockets_1.SubscribeMessage)('getKospiIndex'),
+    (0, websockets_1.SubscribeMessage)('Korea_main_stock_marketIndex'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], EventsGateway.prototype, "handleKospiIndexRequest", null);
+], EventsGateway.prototype, "Korea_main_stock_marketIndex", null);
 exports.EventsGateway = EventsGateway = __decorate([
     (0, websockets_1.WebSocketGateway)(81, { cors: true }),
     __metadata("design:paramtypes", [live_index_service_1.LiveIndexService])

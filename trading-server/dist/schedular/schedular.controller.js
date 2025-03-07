@@ -115,7 +115,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "CreateAuthHashKey", null);
 __decorate([
-    (0, schedule_1.Cron)('0 17 21 * * *'),
+    (0, schedule_1.Cron)('0 12 15 * * *'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)

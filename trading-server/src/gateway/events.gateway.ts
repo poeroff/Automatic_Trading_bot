@@ -12,14 +12,12 @@ export class EventsGateway  {
 
 
 
-  // 📌 클라이언트에서 "getKospiIndex" 이벤트 요청 시 Controller의 KospiIndex 실행
-  @SubscribeMessage('getKospiIndex')
-  async handleKospiIndexRequest() {
-    console.log(`📩 WebSocket 요청 수신: Controller의 KospiIndex 실행`);
-
+  // 📌 클라이언트에서 "Korea_main_stock_marketIndex" 이벤트 요청 시 Controller의 Korea_main_stock_marketIndex 실행
+  @SubscribeMessage('Korea_main_stock_marketIndex')
+  async Korea_main_stock_marketIndex() {
     try {
       // ✅ Controller의 KospiIndex() 실행 (HTTP 요청 없이 직접 호출)
-      const response = await this.liveIndexService.KospiIndex();
+      const response = await this.liveIndexService.Korea_main_stock_marketIndex();
    
       // ✅ 실행된 결과를 WebSocket을 통해 클라이언트로 전송
       this.server.emit('IndexData', response);
@@ -29,10 +27,13 @@ export class EventsGateway  {
     }
   }
 
-  // onModuleInit() {
-  //   // ✅ 30초마다 실행
-  //   setInterval(async () => {
-  //     await this.handleKospiIndexRequest();
-  //   }, 60000); // 30초 (30000ms)
-  // }
+ 
+
+  onModuleInit() {
+    // ✅ 30초마다 업데이트
+    setInterval(async () => {
+ 
+      await this.Korea_main_stock_marketIndex();
+    }, 30000); 
+  }
 }

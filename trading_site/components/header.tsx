@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { useSessionContext } from "@/app/providers"
 import DropdownMenu from "@/components/DropdownMenu"
 import { io } from "socket.io-client";
+import Frame from "./header-frame"
 
 type Notification = {
   id: number
@@ -37,7 +38,6 @@ export default function Header() {
   const [isSearchVisible, setIsSearchVisible] = useState(false)
   const [isNotificationsVisible, setIsNotificationsVisible] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, message: "KOSPI 지수가 2% 상승했습니다.", isRead: false },
     { id: 2, message: "관심 종목 '삼성전자'의 주가가 5% 상승했습니다.", isRead: false },
@@ -48,7 +48,7 @@ export default function Header() {
 
   useEffect(() => {
   
-    socket.emit("getKospiIndex"); // ✅ WebSocket 이벤트 요청
+    socket.emit("Korea_main_stock_marketIndex"); // ✅ WebSocket 이벤트 요청
     
     // socket.on("connect", () => {
     //   console.log("✅ WebSocket 연결됨!");
@@ -59,7 +59,6 @@ export default function Header() {
        console.log("📊 코스피 지수 데이터 받음:", data);
        transformData(data)
 
-     
     });
 
     // socket.on("disconnect", () => {
@@ -77,43 +76,39 @@ export default function Header() {
       const group1 = [
         {
           name: "KOSPI",
-          value: Number(data.bstp_nmix_prpr),
-          change: Number(data.bstp_nmix_prdy_vrss),
-          percentage: Number(data.bstp_nmix_prdy_ctrt),
+          value: Number(data.kospi.bstp_nmix_prpr),
+          change: Number(data.kospi.bstp_nmix_prdy_vrss),
+          percentage: Number(data.kospi.bstp_nmix_prdy_ctrt),
         },
         {
           name: "KOSDAQ",
-          value: Number(data.bstp_nmix_prpr),
-          change: Number(data.bstp_nmix_prdy_vrss),
-          percentage: Number(data.bstp_nmix_prdy_ctrt),
+          value: Number(data.kosdak.bstp_nmix_prpr),
+          change: Number(data.kosdak.bstp_nmix_prdy_vrss),
+          percentage: Number(data.kosdak.bstp_nmix_prdy_ctrt),
         },
+      
         {
-          name: "S&P 500",
-          value: Number(data.bstp_nmix_prpr),
-          change: Number(data.bstp_nmix_prdy_vrss),
-          percentage: Number(data.bstp_nmix_prdy_ctrt),
+          name: "kospi 200",
+          value: Number(data.kospi200.bstp_nmix_prpr),
+          change: Number(data.kospi200.bstp_nmix_prdy_vrss),
+          percentage: Number(data.kospi200.bstp_nmix_prdy_ctrt),
         },
       ]
   
       const group2 = [
         {
-          name: "USD/KRW(원)",
-          value: Number(data.bstp_nmix_prpr),
-          change: Number(data.bstp_nmix_prdy_vrss),
-          percentage: Number(data.bstp_nmix_prdy_ctrt),
+          name: "USD/KRW",
+          value: Number(data.exchange_rate_USD.ovrs_nmix_prpr),
+          change: Number(data.exchange_rate_USD.ovrs_nmix_prdy_vrss),
+          percentage: Number(data.exchange_rate_USD.prdy_ctrt),
         },
         {
-          name: "EUR/USD",
-          value: Number(data.bstp_nmix_prpr),
-          change: Number(data.bstp_nmix_prdy_vrss),
-          percentage: Number(data.bstp_nmix_prdy_ctrt),
+          name: "JPY/KRW",
+          value: Number(data.exchange_rate_JPY.ovrs_nmix_prpr),
+          change: Number(data.exchange_rate_JPY.ovrs_nmix_prdy_vrss),
+          percentage: Number(data.exchange_rate_JPY.prdy_ctrt),
         },
-        {
-          name: "BTC/USD",
-          value: Number(data.bstp_nmix_prpr),
-          change: Number(data.bstp_nmix_prdy_vrss),
-          percentage: Number(data.bstp_nmix_prdy_ctrt),
-        },
+       
       ]
       setMarketGroups(() => [group1, group2]); // ✅ 기존 데이터를 지우고 새로운 데이터로 업데이트
     }
@@ -152,41 +147,14 @@ export default function Header() {
   const unreadCount = notifications.filter((n) => !n.isRead).length
 
 
-  const stockItems = [
-    { label: "국내 주식", href: "/stocks/domestic" },
-    { label: "해외 주식", href: "/stocks/international" },
-    { label: "주식 스크리너", href: "/stocks/screener" },
-  ]
-
-  const newsItems = [
-    { label: "주요 뉴스", href: "/news/main" },
-    { label: "시장 분석", href: "/news/analysis" },
-    { label: "기업 뉴스", href: "/news/corporate" },
-  ]
 
   return (
-    <header className="bg-white">
+    <header className="bg-white whitespace-nowrap">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          {/* Current Time Display */}
-      
-
-          {/* Main Navigation - Hidden on mobile */}
-          <nav className="hidden md:flex space-x-6">
-            <Link href="/" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-              시장동향
-            </Link>
-            <DropdownMenu label="주식" items={stockItems} />
-            <DropdownMenu label="뉴스" items={newsItems} />
-            {MemoSession?.user.author === "admin" && (
-              <Link href="/stock" className="flex justify-center items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                종목 관리
-              </Link>
-            )}
-          </nav>
-
+          <Frame></Frame>
           {/* Market Data Display */}
-          {marketGroups && <div className="hidden md:flex space-x-4 text-sm">
+          {marketGroups && <div className="hidden md:flex space-x-4 text-sm" onClick={() => router.push("exchangerate")}>
             {marketGroups[currentGroupIndex]?.map((item, index) => (
               <span key={item.name} className={index > 0 ? "ml-4" : ""}>
                 {item.name}{" "}

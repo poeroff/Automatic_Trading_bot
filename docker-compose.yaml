@@ -23,7 +23,7 @@ services:
       redis : 
         condition: service_healthy
       mysql :
-        condition: service_started
+        condition: service_healthy  
       trading-server :
         condition: service_started
 

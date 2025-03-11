@@ -29,11 +29,11 @@ export class EventsGateway  {
 
  
 
-  onModuleInit() {
-    // ✅ 30초마다 업데이트
-    setInterval(async () => {
+  // onModuleInit() {
+  //   // ✅ 30초마다 업데이트
+  //   setInterval(async () => {
  
-      await this.Korea_main_stock_marketIndex();
-    }, 30000); 
-  }
+  //     await this.Korea_main_stock_marketIndex();
+  //   }, 30000); 
+  // }
 }

@@ -47,7 +47,7 @@ const typeOrmModuleOptions = {
     {
       name: 'REDIS_CLIENT',
       transport: Transport.REDIS,
-      options: { host: 'localhost', port: 6379 },
+      options: { host: "redis" , port: 6379 },
     },
   ]),ConfigModule.forRoot({
     isGlobal: true,

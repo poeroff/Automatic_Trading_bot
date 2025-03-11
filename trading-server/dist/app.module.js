@@ -53,7 +53,7 @@ exports.AppModule = AppModule = __decorate([
                 {
                     name: 'REDIS_CLIENT',
                     transport: microservices_1.Transport.REDIS,
-                    options: { host: 'localhost', port: 6379 },
+                    options: { host: "redis", port: 6379 },
                 },
             ]), config_1.ConfigModule.forRoot({
                 isGlobal: true,

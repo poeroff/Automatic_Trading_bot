@@ -7,7 +7,7 @@ async function bootstrap() {
  
   // 2️⃣ HTTP/WebSocket 서버 실행 (8080)
   const app = await NestFactory.create(AppModule);
-  app.connectMicroservice<MicroserviceOptions>({transport : Transport.REDIS, options : { port : 6379, host:"localhost" }})
+  app.connectMicroservice<MicroserviceOptions>({transport : Transport.REDIS, options : { port : 6379, host:"redis" }})
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.enableCors({

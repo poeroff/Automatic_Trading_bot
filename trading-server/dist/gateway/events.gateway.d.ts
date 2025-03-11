@@ -5,5 +5,4 @@ export declare class EventsGateway {
     server: Server;
     constructor(liveIndexService: LiveIndexService);
     Korea_main_stock_marketIndex(): Promise<void>;
-    onModuleInit(): void;
 }

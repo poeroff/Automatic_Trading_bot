@@ -1,6 +1,6 @@
 FROM node:18
 
-WORKDIR /app
+WORKDIR /Trading-clinet
 
 COPY package.json package-lock.json ./
 
@@ -10,6 +10,7 @@ COPY . .
 
 RUN npx prisma generate
 
+
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+

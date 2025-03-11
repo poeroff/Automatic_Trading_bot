@@ -16,9 +16,12 @@ const ioredis_1 = require("ioredis");
 let AppController = class AppController {
     constructor() {
         this.redisClient = new ioredis_1.default({
-            host: 'localhost',
+            host: "redis",
             port: 6379,
         });
+    }
+    HELLO() {
+        return "HELLOWORLDss";
     }
     async handleSetKey(data) {
         if (data.ttl && data.ttl > 0) {
@@ -34,6 +37,12 @@ let AppController = class AppController {
     }
 };
 exports.AppController = AppController;
+__decorate([
+    (0, common_1.Get)("HELLO"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "HELLO", null);
 __decorate([
     (0, microservices_1.EventPattern)('set_key'),
     __metadata("design:type", Function),

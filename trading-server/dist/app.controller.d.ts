@@ -1,4 +1,5 @@
 export declare class AppController {
+    HELLO(): string;
     private redisClient;
     handleSetKey(data: {
         key: string;

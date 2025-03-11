@@ -2,6 +2,7 @@
 
 import { CardContent } from "@/components/ui/card";
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -24,6 +25,7 @@ export default function Frame() {
   const [activeStyle, setActiveStyle] = useState({ left: "0px", width: "0px" });
   const [isDarkMode, setIsDarkMode] = useState(false);
   const tabRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     if (hoveredIndex !== null) {
@@ -41,6 +43,7 @@ export default function Frame() {
       const { offsetLeft, offsetWidth } = activeElement;
       setActiveStyle({ left: `${offsetLeft}px`, width: `${offsetWidth}px` });
     }
+ 
   }, [activeIndex]);
 
   useEffect(() => {
@@ -53,10 +56,6 @@ export default function Frame() {
     });
   }, []);
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle("dark");
-  };
 
   return (
     <div>
@@ -92,15 +91,15 @@ export default function Frame() {
                 }`}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
-                onClick={() => setActiveIndex(index)}
+                onClick={() => {
+                  if (index === 0) {
+                    router.push("/");
+                  }
+                  setActiveIndex(index)}}
               >
                 <div className="text-sm font-[var(--www-mattmannucci-me-geist-regular-font-family)] leading-5 whitespace-nowrap flex items-center justify-center h-full">
                   {/* ✅ "종목관리"는 관리자인 경우 Link로 감싸기 */}
-                  {tab === "종목관리" ? (
-                    <Link href="/stock">{tab}</Link>
-                  ) : (
-                    tab
-                  )}
+                  {tab === "종목관리" ? (<Link href="/stock">{tab}</Link>) : (tab)}
                 </div>
               </div>
             ))}

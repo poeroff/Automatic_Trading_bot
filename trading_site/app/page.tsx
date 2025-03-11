@@ -1,24 +1,17 @@
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/authOptions"; // authOptions 경로 확인
-import { useRecoilState } from "recoil";
-import { useEffect } from "react";
 
+"use client";
+import { useEffect, useState, useRef } from "react";
 
-export default async function Home() {
-
-
-
-  
-  
-
+export default function Page() {
 
 
   return (
-    <div>
-      asdasdsa
-
-     </div>
-    
+    <div className="p-6 space-y-4">
+      """"
+   
+    </div>
   );
 }
+
+

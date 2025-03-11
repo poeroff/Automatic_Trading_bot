@@ -20,7 +20,7 @@ exports.RedisModule = RedisModule = __decorate([
                 {
                     name: 'REDIS_CLIENT',
                     transport: microservices_1.Transport.REDIS,
-                    options: { host: 'localhost', port: 6379 },
+                    options: { host: "redis", port: 6379 },
                 },
             ]),],
         controllers: [redis_controller_1.RedisController],

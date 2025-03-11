@@ -1,11 +1,16 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import Redis from 'ioredis';
 
 @Controller()
 export class AppController {
+
+  @Get("HELLO")
+  HELLO(){
+    return "HELLOWORLDss"
+  }
   private redisClient = new Redis({
-    host: 'localhost',
+    host: "redis" ,
     port: 6379,
   });
 

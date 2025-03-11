@@ -26,11 +26,6 @@ let EventsGateway = class EventsGateway {
             console.error(`🚨 KospiIndex 실행 중 오류 발생:`, error);
         }
     }
-    onModuleInit() {
-        setInterval(async () => {
-            await this.Korea_main_stock_marketIndex();
-        }, 30000);
-    }
 };
 exports.EventsGateway = EventsGateway;
 __decorate([

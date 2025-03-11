@@ -6,7 +6,7 @@ const common_1 = require("@nestjs/common");
 const microservices_1 = require("@nestjs/microservices");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    app.connectMicroservice({ transport: microservices_1.Transport.REDIS, options: { port: 6379, host: "localhost" } });
+    app.connectMicroservice({ transport: microservices_1.Transport.REDIS, options: { port: 6379, host: "redis" } });
     app.useGlobalPipes(new common_1.ValidationPipe({ transform: true }));
     app.enableCors({
         origin: "*",

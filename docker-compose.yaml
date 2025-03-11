@@ -1,3 +1,5 @@
+
+
 services:
   trading_site:
     container_name: trading_site
@@ -7,10 +9,78 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - ./trading_site:/app
-      - /app/node_modules
+      - ./trading_site:/Trading-clinet
+      - /Trading-clinet/node_modules
     env_file:
       - ./trading_site/.env
-    stdin_open: true  #-it(tty 포함)
-    tty: true
+    environment:
+       DATABASE_URL: ${DATABASE_URL}
+    command: >
+            sh -c "npx prisma migrate deploy --schema=/Trading-clinet/prisma/schema.prisma && npm run dev"
+    stdin_open: true  # -i
+    tty: true         # -t
+    depends_on:
+      redis : 
+        condition: service_healthy
+      mysql :
+        condition: service_started
+      trading-server :
+        condition: service_started
 
+  trading-server:
+    container_name: trading-server
+    build:
+      context: ./trading-server
+      dockerfile: Dockerfile
+    ports:
+      - 4000:4000
+    volumes:
+      - ./trading-server:/Trading-server
+      - /Trading-server/node_modules
+    env_file:
+      - ./trading-server/.env
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    stdin_open: true  # -i
+    tty: true  
+    
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mysql:
+    image: mysql:8.3
+    container_name: mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+    environment:
+      MYSQL_ROOT_PASSWORD: wqdsdsf123!
+      MYSQL_USER: user
+      MYSQL_PASSWORD: wqdsdsf123!
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+
+volumes:
+  redis-data:
+  mysql-data:

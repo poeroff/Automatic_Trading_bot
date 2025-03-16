@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { StockData } from './stock-datum.entity';
+import { StockData } from './stock-data.entity';
 import { PeakDate } from './peak-dates.entity';
 import { PeakPrice } from './PeakPrice.entity';
 import { FilteredPeak } from './filtered-peaks.entity';
@@ -31,8 +31,8 @@ export class TrCode {
   @Column({ type: 'int', default: 0 })
   current_peak_count: number; // 현재 고점 수
 
-  @OneToMany(() => StockData, (stockData) => stockData.trCode)
-  stockData: StockData[];
+  // @OneToMany(() => StockData, (stockData) => stockData.trCode)
+  // stockData: StockData[];
   
   @OneToMany(() => PeakDate, (peakDate) => peakDate.trCode)
   peakDates: PeakDate[];

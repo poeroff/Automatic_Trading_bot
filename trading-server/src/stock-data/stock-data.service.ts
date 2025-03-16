@@ -3,7 +3,7 @@ import { CreateStockDatumDto } from './dto/create-stock-datum.dto';
 import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { StockData } from './entities/stock-datum.entity';
+import { StockData } from './entities/stock-data.entity';
 import { TrCode } from './entities/tr-code.entity';
 import { PeakDate } from './entities/peak-dates.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
@@ -55,7 +55,7 @@ export class StockDataService {
       Low: data.low,
       Close: data.close,
       Volume: data.volume,
-      Avg_Daily_Volume: data.avg_daily_volume,
+     
     }));
     console.log(formattedData)
 
@@ -88,17 +88,17 @@ export class StockDataService {
     // 시간을 00:00:00으로 고정
     queryDate.setHours(0, 0, 0, 0);
 
-    const reference_date = await this.stockDataRepository.findOne({
-      where: {
-        trCode: { id: trCode.id },
-        date: queryDate // 문자열로 비교
-      }
-    });
-    if(reference_date){
-      const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate : highPoint ?? null , price : reference_date?.high});
-      return await this.userInflectionRepository.save(userInflection);
-    }
-    throw new NotFoundException('Reference date not found');
+    // const reference_date = await this.stockDataRepository.findOne({
+    //   where: {
+    //     trCode: { id: trCode.id },
+    //     date: queryDate // 문자열로 비교
+    //   }
+    // });
+    // if(reference_date){
+    //   const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate : highPoint ?? null , price : reference_date?.high});
+    //   return await this.userInflectionRepository.save(userInflection);
+    // }
+    // throw new NotFoundException('Reference date not found');
    
     
 

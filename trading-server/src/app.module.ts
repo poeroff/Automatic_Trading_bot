@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { StockDataModule } from './stock-data/stock-data.module';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { StockData } from './stock-data/entities/stock-datum.entity';
+import { StockData } from './stock-data/entities/stock-data.entity';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { TrCode } from './stock-data/entities/tr-code.entity';
 import * as Joi from 'joi';
@@ -18,6 +18,8 @@ import { LiveIndexModule } from './live_index/live_index.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RedisModule } from './redis/redis.module';
+import { Kospi } from './stock-data/entities/Kospi.entity';
+import { Kosdaq } from './stock-data/entities/Kosdaq.entity';
 
 
 
@@ -33,7 +35,7 @@ const typeOrmModuleOptions = {
     port: configService.get('DB_PORT'),
     database: configService.get('DB_NAME'),
     charset: configService.get("CHAR_SET"), //이모지를 위한 추가 설정기능 이유 : 이모지는 3byte인데 utf8mb는 최대 2바이트밖에 받지 못하기 때문이다.
-    entities: [StockData, TrCode, PeakDate, PeakPrice, FilteredPeak, UserInflection],
+    entities: [StockData, TrCode, PeakDate, PeakPrice, FilteredPeak, UserInflection, Kospi,Kosdaq],
     synchronize: configService.get('DB_SYNC'),
     logging: true,
     timezone: '+09:00'

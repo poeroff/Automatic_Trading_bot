@@ -6,15 +6,16 @@ import { Cron } from '@nestjs/schedule';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { SessionService } from './SessionService';
-import { EventPattern, MessagePattern } from '@nestjs/microservices';
+import { ClientProxy, EventPattern, MessagePattern } from '@nestjs/microservices';
 
 
 
 @Controller('schedular')
 export class SchedularController {
-  constructor(private readonly schedularService: SchedularService, private configService : ConfigService, private readonly sessionService: SessionService) {}
+  constructor(private readonly schedularService: SchedularService, private configService : ConfigService, private readonly sessionService: SessionService, @Inject("REDIS_CLIENT") private readonly redisClient: ClientProxy) {}
   private readonly appkey = this.configService.get<string>('appkey')
   private readonly appsecret = this.configService.get<string>('appsecret')
+  
   
 
   //Hashkey 발급
@@ -45,7 +46,7 @@ export class SchedularController {
   }
 
   //AccessToken 발급
-  @Cron('0 12 15 * * *')
+  @Cron('0 30 20 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
   CreateAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
@@ -60,7 +61,7 @@ export class SchedularController {
     this.schedularService.CreateAccessToken(url,headers,data);
   }
   //웹 소켓 토큰 발급급
-  @Cron('0 14 21 * * *')
+  @Cron('0 55 12 * * *')
   CreateWebSocketToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/Approval"
     const headers = {
@@ -74,28 +75,48 @@ export class SchedularController {
     this.schedularService.CreateWebSocketToken(url,headers,data);
   }
 
-  //특정 주식 주봉 데이터 가져오기
-  @Cron('10 4 23 * * *')
-  getWeeklyStockData(){
+  //특정 주식 주봉 데이터 업데이트
+  @Cron('0 47 21 * * *',{timeZone :'Asia/Seoul'})
+  async getWeeklyStockData(){
+    
+    const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
     const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
     const headers = {
       'Content-Type': 'application/json; charset=UTF-8',
-      'authorization': this.sessionService.getAccessToken(),
+      'authorization': savedToken,
       'appkey': this.appkey,
       'appsecret': this.appsecret,
       'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
       "custtype" :"P"
     };
+
+   
+    this.schedularService.getWeeklyStockData(url,headers)
+
+  }
+
+  //주식 정보 업데이트
+  @Cron('0 30 20 * * *',{timeZone :'Asia/Seoul'})
+  async StockData(){
+    const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+
+    const url = "https://openapi.koreainvestment.com:9443/uapi/overseas-price/v1/quotations/industry-price";
+    const headers = {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'authorization': savedToken,
+      'appkey': this.appkey,
+      'appsecret': this.appsecret,
+      'tr_id': 'HHDFS76370100', // 주식 차트 데이터 요청 ID
+      "custtype" :"P"
+    };
+    console.log(headers)
  
     const params = {
-      FID_COND_MRKT_DIV_CODE: 'J', // 주식
-      FID_INPUT_ISCD: "005930", // 종목 코드 (예: 005930 - 삼성전자)
-      FID_INPUT_DATE_1 : "20220501",
-      FID_INPUT_DATE_2 : "20250225",
-      FID_PERIOD_DIV_CODE: 'W', // 주봉 (Weekly)
-      FID_ORG_ADJ_PRC: '0', // 수정주가 미적용
+      AUTH: '', // 주식
+      EXCD: "NYS", // 종목 코드 (예: 005930 - 삼성전자)
+    
     };
-    this.schedularService.getWeeklyStockData(url,headers,params)
+    this.schedularService.StockData(url,headers,params)
 
   }
 

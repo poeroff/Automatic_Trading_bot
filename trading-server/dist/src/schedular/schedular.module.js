@@ -13,17 +13,18 @@ const schedular_controller_1 = require("./schedular.controller");
 const schedule_1 = require("@nestjs/schedule");
 const SessionService_1 = require("./SessionService");
 const typeorm_1 = require("@nestjs/typeorm");
-const stock_data_entity_1 = require("../stock-data/entities/stock-data.entity");
+const DayStockData_entity_1 = require("../stock-data/entities/DayStockData.entity");
 const tr_code_entity_1 = require("../stock-data/entities/tr-code.entity");
 const redis_module_1 = require("../redis/redis.module");
-const Kospi_entity_1 = require("../stock-data/entities/Kospi.entity");
+const KoreanStockCode_entity_1 = require("../stock-data/entities/KoreanStockCode.entity");
+const WeekStockData_entity_1 = require("../stock-data/entities/WeekStockData.entity");
 let SchedularModule = class SchedularModule {
 };
 exports.SchedularModule = SchedularModule;
 exports.SchedularModule = SchedularModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
-        imports: [schedule_1.ScheduleModule.forRoot(), typeorm_1.TypeOrmModule.forFeature([stock_data_entity_1.StockData, tr_code_entity_1.TrCode, Kospi_entity_1.Kospi]), redis_module_1.RedisModule],
+        imports: [schedule_1.ScheduleModule.forRoot(), typeorm_1.TypeOrmModule.forFeature([DayStockData_entity_1.DayStockData, tr_code_entity_1.TrCode, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData]), redis_module_1.RedisModule],
         controllers: [schedular_controller_1.SchedularController],
         providers: [schedular_service_1.SchedularService, SessionService_1.SessionService],
         exports: [SessionService_1.SessionService]

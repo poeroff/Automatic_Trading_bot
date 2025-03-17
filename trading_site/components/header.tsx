@@ -125,6 +125,7 @@ export default function Header() {
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible)
   }
+  
   const toggleNotifications = () => {
     if (isProfileMenuVisible) {
       setIsProfileMenuVisible(false)
@@ -173,7 +174,7 @@ export default function Header() {
               className={`
                 absolute right-0 bg-gray-100 px-3 py-1 rounded-md
                 transition-all duration-300 ease-in-out
-                ${isSearchVisible ? "w-48 opacity-100" : "w-0 opacity-0"}
+                ${isSearchVisible ? "w-80 opacity-100" : "w-0 opacity-0"}
               `}
             />
             <button onClick={toggleSearch} className="text-gray-600 hover:text-blue-600 z-10">

@@ -9,47 +9,46 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.StockData = void 0;
+exports.DayStockData = void 0;
 const typeorm_1 = require("typeorm");
-const tr_code_entity_1 = require("./tr-code.entity");
-const Kospi_entity_1 = require("./Kospi.entity");
-let StockData = class StockData {
+const KoreanStockCode_entity_1 = require("./KoreanStockCode.entity");
+let DayStockData = class DayStockData {
 };
-exports.StockData = StockData;
+exports.DayStockData = DayStockData;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
-], StockData.prototype, "id", void 0);
+], DayStockData.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => Kospi_entity_1.Kospi, (trCode) => trCode.stockData, { eager: true, onDelete: 'CASCADE' }),
+    (0, typeorm_1.ManyToOne)(() => KoreanStockCode_entity_1.KoreanStockCode, (code) => code.daystockData, { eager: true, onDelete: 'CASCADE' }),
     (0, typeorm_1.JoinColumn)({ name: 'code_id' }),
-    __metadata("design:type", tr_code_entity_1.TrCode)
-], StockData.prototype, "trCode", void 0);
+    __metadata("design:type", KoreanStockCode_entity_1.KoreanStockCode)
+], DayStockData.prototype, "trCode", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'date' }),
     __metadata("design:type", String)
-], StockData.prototype, "date", void 0);
+], DayStockData.prototype, "date", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'float' }),
     __metadata("design:type", Number)
-], StockData.prototype, "open", void 0);
+], DayStockData.prototype, "open", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'float' }),
     __metadata("design:type", Number)
-], StockData.prototype, "high", void 0);
+], DayStockData.prototype, "high", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'float' }),
     __metadata("design:type", Number)
-], StockData.prototype, "low", void 0);
+], DayStockData.prototype, "low", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'float' }),
     __metadata("design:type", Number)
-], StockData.prototype, "close", void 0);
+], DayStockData.prototype, "close", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'bigint' }),
     __metadata("design:type", Number)
-], StockData.prototype, "volume", void 0);
-exports.StockData = StockData = __decorate([
-    (0, typeorm_1.Entity)('stock_data')
-], StockData);
-//# sourceMappingURL=stock-data.entity.js.map
+], DayStockData.prototype, "volume", void 0);
+exports.DayStockData = DayStockData = __decorate([
+    (0, typeorm_1.Entity)('DayStockData')
+], DayStockData);
+//# sourceMappingURL=DayStockData.entity.js.map

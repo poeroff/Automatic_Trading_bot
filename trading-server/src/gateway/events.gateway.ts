@@ -15,6 +15,7 @@ export class EventsGateway  {
   // 📌 클라이언트에서 "Korea_main_stock_marketIndex" 이벤트 요청 시 Controller의 Korea_main_stock_marketIndex 실행
   @SubscribeMessage('Korea_main_stock_marketIndex')
   async Korea_main_stock_marketIndex() {
+    console.log("Korea_main_stock_marketIndex")
     try {
       // ✅ Controller의 KospiIndex() 실행 (HTTP 요청 없이 직접 호출)
       const response = await this.liveIndexService.Korea_main_stock_marketIndex();
@@ -28,11 +29,9 @@ export class EventsGateway  {
   }
 
  
-
+  // // ✅ 30초마다 업데이트
   // onModuleInit() {
-  //   // ✅ 30초마다 업데이트
   //   setInterval(async () => {
- 
   //     await this.Korea_main_stock_marketIndex();
   //   }, 30000); 
   // }

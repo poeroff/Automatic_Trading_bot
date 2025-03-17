@@ -18,6 +18,7 @@ let EventsGateway = class EventsGateway {
         this.liveIndexService = liveIndexService;
     }
     async Korea_main_stock_marketIndex() {
+        console.log("Korea_main_stock_marketIndex");
         try {
             const response = await this.liveIndexService.Korea_main_stock_marketIndex();
             this.server.emit('IndexData', response);

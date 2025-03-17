@@ -5,17 +5,19 @@ import axios from 'axios';
 import { SessionService } from './SessionService';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Kospi } from 'src/stock-data/entities/Kospi.entity';
+import { KoreanStockCode } from 'src/stock-data/entities/KoreanStockCode.entity';
 import { Repository } from 'typeorm';
 
 import { sleep } from 'utils/sleep';
-import { StockData } from 'src/stock-data/entities/stock-data.entity';
+import { DayStockData } from 'src/stock-data/entities/DayStockData.entity';
+import { WeekStockData } from 'src/stock-data/entities/WeekStockData.entity';
 
 
 @Injectable()
 export class SchedularService {
-  constructor(@InjectRepository(Kospi) private readonly KospiRepository : Repository<Kospi> ,
-              @InjectRepository(StockData) private readonly stockdataRepository : Repository<StockData>,
+  constructor(@InjectRepository(KoreanStockCode) private readonly koreastockcodeRepository : Repository<KoreanStockCode> ,
+              @InjectRepository(DayStockData) private readonly daystockdataRepository : Repository<DayStockData>,
+              @InjectRepository(WeekStockData) private readonly weekstockdataRepository : Repository<WeekStockData>,
               private readonly sessionService: SessionService, 
               @Inject("REDIS_CLIENT") private readonly redisClient: ClientProxy) {} // ✅ 세션 서비스 주입
 
@@ -73,12 +75,12 @@ export class SchedularService {
     }
   }
 
-  async getWeeklyStockData(url,headers){
+  async getDayStockData(url,headers){
 
     let count = 0;
-    const codeList = await this.KospiRepository.find();
+    const codeList = await this.koreastockcodeRepository.find();
     for (const code of codeList) {
-      console.log(code.id)
+  
       const originalDate = code.listed_date; 
       const formattedDate = originalDate.replace(/-/g, ''); 
       const codeStr = code.code.toString().padStart(6, '0');
@@ -87,39 +89,54 @@ export class SchedularService {
         FID_INPUT_ISCD: codeStr, // 종목 코드 (예: 005930 - 삼성전자)
         FID_INPUT_DATE_1 : formattedDate,
         FID_INPUT_DATE_2 : this.todayStr,
-        FID_PERIOD_DIV_CODE: 'D', // 주봉 (Weekly)
-        FID_ORG_ADJ_PRC: '0', // 수정주가 미적용
+        FID_PERIOD_DIV_CODE: 'D', // 일본 (Day)
+        FID_ORG_ADJ_PRC: '0', // 0 : 수정주가
       };
       await sleep(500)
       const response = await axios.get(url, { headers : headers, params : params });
       const data = response.data;
       const output2 = data.output2;
       for(const stockdata of output2){
-        await this.stockdataRepository.save({date : stockdata.stck_bsop_date, open :Number(stockdata.stck_oprc),  high:Number(stockdata.stck_hgpr), low:Number(stockdata.stck_lwpr), close : Number(stockdata.stck_clpr),volume:Number(stockdata.acml_vol), trCode : {id : Number(code.id)}})
+        await this.daystockdataRepository.save({date : stockdata.stck_bsop_date, open :Number(stockdata.stck_oprc),  high:Number(stockdata.stck_hgpr), low:Number(stockdata.stck_lwpr), close : Number(stockdata.stck_clpr),volume:Number(stockdata.acml_vol), trCode : {id : Number(code.id)}})
       }
       
       count++;
       if (count === 3) {
         break;
       }
-    
-      
-      // 필요한 다른 작업 수행
     }
-    
+  }
 
-   
-    
-    // try {
-    //   const response = await axios.get(url, { headers : headers, params : params });
-     
-    //   console.log(response.data.output2)
-    
-    //   return response.data;
-    // } catch (error) {
-    //   throw new Error('주봉 데이터 조회 실패');
-    // }
+  async getWeekStockData(url,headers){
+    let count = 0;
+    const codeList = await this.koreastockcodeRepository.find();
+    for (const code of codeList) {
 
+      const originalDate = code.listed_date; 
+      const formattedDate = originalDate.replace(/-/g, ''); 
+      const codeStr = code.code.toString().padStart(6, '0');
+
+      const params = {
+        FID_COND_MRKT_DIV_CODE: 'J', // 주식
+        FID_INPUT_ISCD: codeStr, // 종목 코드 (예: 005930 - 삼성전자)
+        FID_INPUT_DATE_1 : formattedDate,
+        FID_INPUT_DATE_2 : this.todayStr,
+        FID_PERIOD_DIV_CODE: 'W', // 주봉 (Weekly)
+        FID_ORG_ADJ_PRC: '0', // 0 : 수정주가
+      };
+      await sleep(500)
+      const response = await axios.get(url, { headers : headers, params : params });
+      const data = response.data;
+      const output2 = data.output2;
+      for(const stockdata of output2){
+        await this.weekstockdataRepository.save({date : stockdata.stck_bsop_date, open :Number(stockdata.stck_oprc),  high:Number(stockdata.stck_hgpr), low:Number(stockdata.stck_lwpr), close : Number(stockdata.stck_clpr),volume:Number(stockdata.acml_vol), trCode : {id : Number(code.id)}})
+      }
+      
+      count++;
+      if (count === 3) {
+        break;
+      }
+    }
   }
 
   async StockData(url,headers,data){

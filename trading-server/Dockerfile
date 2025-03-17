@@ -17,4 +17,6 @@ COPY . .
 
 EXPOSE 4000
 
+EXPOSE 81
+
 CMD ["npm", "run", "start:dev"]

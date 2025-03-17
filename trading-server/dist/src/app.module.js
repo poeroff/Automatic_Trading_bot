@@ -13,7 +13,7 @@ const app_service_1 = require("./app.service");
 const stock_data_module_1 = require("./stock-data/stock-data.module");
 const typeorm_1 = require("@nestjs/typeorm");
 const config_1 = require("@nestjs/config");
-const stock_data_entity_1 = require("./stock-data/entities/stock-data.entity");
+const DayStockData_entity_1 = require("./stock-data/entities/DayStockData.entity");
 const typeorm_naming_strategies_1 = require("typeorm-naming-strategies");
 const tr_code_entity_1 = require("./stock-data/entities/tr-code.entity");
 const Joi = require("joi");
@@ -27,8 +27,8 @@ const live_index_module_1 = require("./live_index/live_index.module");
 const gateway_module_1 = require("./gateway/gateway.module");
 const microservices_1 = require("@nestjs/microservices");
 const redis_module_1 = require("./redis/redis.module");
-const Kospi_entity_1 = require("./stock-data/entities/Kospi.entity");
-const Kosdaq_entity_1 = require("./stock-data/entities/Kosdaq.entity");
+const KoreanStockCode_entity_1 = require("./stock-data/entities/KoreanStockCode.entity");
+const WeekStockData_entity_1 = require("./stock-data/entities/WeekStockData.entity");
 const typeOrmModuleOptions = {
     useFactory: async (configService) => ({
         namingStrategy: new typeorm_naming_strategies_1.SnakeNamingStrategy(),
@@ -39,7 +39,7 @@ const typeOrmModuleOptions = {
         port: configService.get('DB_PORT'),
         database: configService.get('DB_NAME'),
         charset: configService.get("CHAR_SET"),
-        entities: [stock_data_entity_1.StockData, tr_code_entity_1.TrCode, peak_dates_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection, Kospi_entity_1.Kospi, Kosdaq_entity_1.Kosdaq],
+        entities: [DayStockData_entity_1.DayStockData, tr_code_entity_1.TrCode, peak_dates_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData],
         synchronize: configService.get('DB_SYNC'),
         logging: true,
         timezone: '+09:00'

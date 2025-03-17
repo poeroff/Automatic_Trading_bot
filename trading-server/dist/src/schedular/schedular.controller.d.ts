@@ -14,7 +14,8 @@ export declare class SchedularController {
     CreateAuthHashKey(): void;
     CreateAccessToken(): void;
     CreateWebSocketToken(): void;
-    getWeeklyStockData(): Promise<void>;
+    getDayStockData(): Promise<void>;
+    getWeekStockData(): Promise<void>;
     StockData(): Promise<void>;
     findAll(): string;
     findOne(id: string): string;

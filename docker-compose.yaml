@@ -34,6 +34,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - 4000:4000
+      - 81:81      # WebSocket용 (Gateway)
     volumes:
       - ./trading-server:/Trading-server
       - /Trading-server/node_modules

@@ -19,6 +19,7 @@ export class LiveIndexService {
     const day = String(now.getDate()).padStart(2, '0');
     return `${year}${month}${day}`;
   };
+
   //한국 주요 증시 지수 정보 가져오기
   async Korea_main_stock_marketIndex() {
     const url = "https://openapi.koreainvestment.com:9443//uapi/domestic-stock/v1/quotations/inquire-index-price"
@@ -68,12 +69,7 @@ export class LiveIndexService {
       FID_INPUT_DATE_2	:this.getCurrentDate(),
       FID_PERIOD_DIV_CODE :"D"
     };
-  
-
-
-
-   
- 
+    
     try {
       const kospi_response = await axios.get(url, { headers: headers, params: kospi_response_params });
       const kosdak_response = await axios.get(url, { headers: headers, params: kosdak_response_params });

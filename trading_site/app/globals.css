@@ -72,3 +72,25 @@ body {
   margin: 0 auto;
 
 }
+
+
+/* 예: globals.css */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    /* 전체 너비의 절반만큼 왼쪽으로 이동 (중복된 아이템 배열을 고려) */
+    transform: translateX(-50%);
+  }
+}
+
+.marquee {
+  /* 횡스크롤 대비를 위해 inline-flex 사용 */
+  display: inline-flex;
+  /* 원하는 속도 조정 (30s 대신 15s, 20s 등으로 바꾸며 테스트) */
+  animation: marquee 30s linear infinite;
+  /* 뚝뚝 끊기지 않도록 부드럽게 렌더링 */
+  will-change: transform;
+}
+

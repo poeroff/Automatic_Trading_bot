@@ -3,7 +3,7 @@ import { CreateStockDatumDto } from './dto/create-stock-datum.dto';
 import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { StockData } from './entities/stock-data.entity';
+import { DayStockData } from './entities/DayStockData.entity';
 import { TrCode } from './entities/tr-code.entity';
 import { PeakDate } from './entities/peak-dates.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
@@ -14,7 +14,7 @@ import { UserInflection } from './entities/user-inflection.entity';
 @Injectable()
 export class StockDataService {
   constructor(
-    @InjectRepository(StockData) private stockDataRepository: Repository<StockData>,
+    @InjectRepository(DayStockData) private stockDataRepository: Repository<DayStockData>,
     @InjectRepository(TrCode) private trCodeRepository: Repository<TrCode>,
     @InjectRepository(PeakDate) private peakDateRepository: Repository<PeakDate>,
     @InjectRepository(PeakPrice) private peakPriceRepository: Repository<PeakPrice>,
@@ -38,29 +38,29 @@ export class StockDataService {
 
   async getStockData(code: string) {
     console.log(code)
-    const stockData = await this.stockDataRepository.find({
-      where: { trCode: { code: code } },
-      order: { date: 'ASC' }, // 날짜 순으로 정렬
-    });
+    // const stockData = await this.stockDataRepository.find({
+    //   where: { trCode: { code: code } },
+    //   order: { date: 'ASC' }, // 날짜 순으로 정렬
+    // });
 
-    if (!stockData || stockData.length === 0) {
-      return { status: 'error', message: `Code ${code} not found in stock_data table` };
-    }
+    // if (!stockData || stockData.length === 0) {
+    //   return { status: 'error', message: `Code ${code} not found in stock_data table` };
+    // }
 
-    // 필요한 데이터만 추출
-    const formattedData = stockData.map(data => ({
-      Date: data.date,
-      Open: data.open,
-      High: data.high,
-      Low: data.low,
-      Close: data.close,
-      Volume: data.volume,
+    // // 필요한 데이터만 추출
+    // const formattedData = stockData.map(data => ({
+    //   Date: data.date,
+    //   Open: data.open,
+    //   High: data.high,
+    //   Low: data.low,
+    //   Close: data.close,
+    //   Volume: data.volume,
      
-    }));
-    console.log(formattedData)
+    // }));
+    // console.log(formattedData)
 
 
-    return { data: formattedData };
+    // return { data: formattedData };
   }
 
 
@@ -128,12 +128,12 @@ export class StockDataService {
     if (!trCode) {
       return { message: 'No stock code or name provided' };
     }
-    const stockData = await this.stockDataRepository.find({ where: { trCode: { id: trCode.id } } });
-    const peakDates = await this.peakDateRepository.find({ where: { trCode: { id: trCode.id } } });
-    const filteredPeaks = await this.filteredPeakRepository.find({ where: { trCode: { id: trCode.id } } });
-    const userInflections = await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
+    // const stockData = await this.stockDataRepository.find({ where: { trCode: { id: trCode.id } } });
+    // const peakDates = await this.peakDateRepository.find({ where: { trCode: { id: trCode.id } } });
+    // const filteredPeaks = await this.filteredPeakRepository.find({ where: { trCode: { id: trCode.id } } });
+    // const userInflections = await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
 
-    return { trCode, stockData, peakDates, filteredPeaks, userInflections };
+    // return { trCode, stockData, peakDates, filteredPeaks, userInflections };
 
   }
   //주식,고점,변곡점,변곡점 설정 데이터 가져오기(stock_name으로 조회)
@@ -142,12 +142,12 @@ export class StockDataService {
     if (!trCode) {
       return { message: 'No stock code or name provided' };
     }
-    const stockData = await this.stockDataRepository.find({ where: { trCode: { id: trCode.id } } });
-    const peakDates = await this.peakDateRepository.find({ where: { trCode: { id: trCode.id } } });
-    const filteredPeaks = await this.filteredPeakRepository.find({ where: { trCode: { id: trCode.id } } });
-    const userInflections = await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
+    // const stockData = await this.stockDataRepository.find({ where: { trCode: { id: trCode.id } } });
+    // const peakDates = await this.peakDateRepository.find({ where: { trCode: { id: trCode.id } } });
+    // const filteredPeaks = await this.filteredPeakRepository.find({ where: { trCode: { id: trCode.id } } });
+    // const userInflections = await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
 
-    return { trCode, stockData, peakDates, filteredPeaks, userInflections };
+    // return { trCode, stockData, peakDates, filteredPeaks, userInflections };
   }
 
 

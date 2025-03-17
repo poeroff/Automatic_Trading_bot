@@ -46,7 +46,7 @@ export class SchedularController {
   }
 
   //AccessToken 발급
-  @Cron('0 30 20 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('0 53 21 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
   CreateAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
@@ -60,7 +60,8 @@ export class SchedularController {
     }
     this.schedularService.CreateAccessToken(url,headers,data);
   }
-  //웹 소켓 토큰 발급급
+
+  //웹 소켓 토큰 발급
   @Cron('0 55 12 * * *')
   CreateWebSocketToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/Approval"
@@ -75,10 +76,9 @@ export class SchedularController {
     this.schedularService.CreateWebSocketToken(url,headers,data);
   }
 
-  //특정 주식 주봉 데이터 업데이트
-  @Cron('0 47 21 * * *',{timeZone :'Asia/Seoul'})
-  async getWeeklyStockData(){
-    
+  //주식 일봉 데이터 수집집
+  @Cron('0 7 20 * * *',{timeZone :'Asia/Seoul'})
+  async getDayStockData(){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
     const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
     const headers = {
@@ -89,17 +89,31 @@ export class SchedularController {
       'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
       "custtype" :"P"
     };
-
-   
-    this.schedularService.getWeeklyStockData(url,headers)
-
+    this.schedularService.getDayStockData(url,headers)
   }
+
+  //주식 주봉 데이터 수집집
+  @Cron('0 05 20 * * *',{timeZone :'Asia/Seoul'})
+  async getWeekStockData(){
+    const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+    const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
+    const headers = {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'authorization': savedToken,
+      'appkey': this.appkey,
+      'appsecret': this.appsecret,
+      'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
+      "custtype" :"P"
+    };
+    this.schedularService.getWeekStockData(url,headers)
+  }
+
+  
 
   //주식 정보 업데이트
   @Cron('0 30 20 * * *',{timeZone :'Asia/Seoul'})
   async StockData(){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-
     const url = "https://openapi.koreainvestment.com:9443/uapi/overseas-price/v1/quotations/industry-price";
     const headers = {
       'Content-Type': 'application/json; charset=UTF-8',
@@ -114,10 +128,8 @@ export class SchedularController {
     const params = {
       AUTH: '', // 주식
       EXCD: "NYS", // 종목 코드 (예: 005930 - 삼성전자)
-    
     };
     this.schedularService.StockData(url,headers,params)
-
   }
 
 

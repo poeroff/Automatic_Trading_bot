@@ -11,20 +11,20 @@ const common_1 = require("@nestjs/common");
 const stock_data_service_1 = require("./stock-data.service");
 const stock_data_controller_1 = require("./stock-data.controller");
 const typeorm_1 = require("@nestjs/typeorm");
-const stock_data_entity_1 = require("./entities/stock-data.entity");
+const DayStockData_entity_1 = require("./entities/DayStockData.entity");
 const tr_code_entity_1 = require("./entities/tr-code.entity");
 const peak_dates_entity_1 = require("./entities/peak-dates.entity");
 const PeakPrice_entity_1 = require("./entities/PeakPrice.entity");
 const filtered_peaks_entity_1 = require("./entities/filtered-peaks.entity");
 const user_inflection_entity_1 = require("./entities/user-inflection.entity");
-const Kospi_entity_1 = require("./entities/Kospi.entity");
-const Kosdaq_entity_1 = require("./entities/Kosdaq.entity");
+const KoreanStockCode_entity_1 = require("./entities/KoreanStockCode.entity");
+const WeekStockData_entity_1 = require("./entities/WeekStockData.entity");
 let StockDataModule = class StockDataModule {
 };
 exports.StockDataModule = StockDataModule;
 exports.StockDataModule = StockDataModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([stock_data_entity_1.StockData, tr_code_entity_1.TrCode, peak_dates_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection, Kospi_entity_1.Kospi, Kosdaq_entity_1.Kosdaq])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([DayStockData_entity_1.DayStockData, tr_code_entity_1.TrCode, peak_dates_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData])],
         controllers: [stock_data_controller_1.StockDataController],
         providers: [stock_data_service_1.StockDataService],
     })

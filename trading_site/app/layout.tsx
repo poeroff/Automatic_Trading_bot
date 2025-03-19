@@ -6,6 +6,7 @@ import "./globals.css";
 import { useEffect } from "react";
 import { authOptions } from "./authOptions";
 import { useRecoilState } from "recoil";
+import { AutoTicker } from "@/components/auto-ticker";
 
 
 
@@ -27,6 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProviderAuth session={session}>
           <Header />
           {children}
+          <AutoTicker></AutoTicker>
         </SessionProviderAuth>
       </body>
     </html>

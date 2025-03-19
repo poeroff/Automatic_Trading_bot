@@ -29,15 +29,18 @@ type MarketDataGroups = MarketGroup[]
 
 export default function Header() {
   const { session, updateSession } = useSessionContext()
+
+
   const MemoSession = useMemo(() => {
     return session
   }, [session])
   const router = useRouter()
-  const [marketGroups, setMarketGroups] = useState<MarketDataGroups>([])
-  const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
+
   const [isSearchVisible, setIsSearchVisible] = useState(false)
   const [isNotificationsVisible, setIsNotificationsVisible] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
+  const [searchTerm, setSearchTerm] = useState(""); // input 값 상태 관리
+
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, message: "KOSPI 지수가 2% 상승했습니다.", isRead: false },
     { id: 2, message: "관심 종목 '삼성전자'의 주가가 5% 상승했습니다.", isRead: false },
@@ -71,56 +74,6 @@ export default function Header() {
   // }, []);
 
 
-  const transformData = (data: any) => {
-    if (data) {
-      const group1 = [
-        {
-          name: "KOSPI",
-          value: Number(data.kospi.bstp_nmix_prpr),
-          change: Number(data.kospi.bstp_nmix_prdy_vrss),
-          percentage: Number(data.kospi.bstp_nmix_prdy_ctrt),
-        },
-        {
-          name: "KOSDAQ",
-          value: Number(data.kosdak.bstp_nmix_prpr),
-          change: Number(data.kosdak.bstp_nmix_prdy_vrss),
-          percentage: Number(data.kosdak.bstp_nmix_prdy_ctrt),
-        },
-      
-        {
-          name: "kospi 200",
-          value: Number(data.kospi200.bstp_nmix_prpr),
-          change: Number(data.kospi200.bstp_nmix_prdy_vrss),
-          percentage: Number(data.kospi200.bstp_nmix_prdy_ctrt),
-        },
-      ]
-  
-      const group2 = [
-        {
-          name: "USD/KRW",
-          value: Number(data.exchange_rate_USD.ovrs_nmix_prpr),
-          change: Number(data.exchange_rate_USD.ovrs_nmix_prdy_vrss),
-          percentage: Number(data.exchange_rate_USD.prdy_ctrt),
-        },
-        {
-          name: "JPY/KRW",
-          value: Number(data.exchange_rate_JPY.ovrs_nmix_prpr),
-          change: Number(data.exchange_rate_JPY.ovrs_nmix_prdy_vrss),
-          percentage: Number(data.exchange_rate_JPY.prdy_ctrt),
-        },
-       
-      ]
-      setMarketGroups(() => [group1, group2]); // ✅ 기존 데이터를 지우고 새로운 데이터로 업데이트
-    }
-  }
-  
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentGroupIndex((prev) => (prev + 1) % 2)
-    }, 10000)
-
-    return () => clearInterval(timer)
-  }, [])
 
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible)
@@ -145,6 +98,19 @@ export default function Header() {
     }
   }
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault()
+    console.log(event.target.value)
+    setSearchTerm(event.target.value); // 입력된 값을 상태로 업데이트
+  };
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    console.log(searchTerm)
+    router.push(`/item/stock?code=${searchTerm}`)
+
+  };
+
+
   const unreadCount = notifications.filter((n) => !n.isRead).length
 
 
@@ -167,20 +133,22 @@ export default function Header() {
         {/* 오른쪽 메뉴 영역 */}
         <div className="flex items-center space-x-4 flex-shrink-0">
           {/* Search Input */}
-          <div className="relative flex items-center">
+          <form  onSubmit ={handleSubmit} className="relative flex items-center">
             <input
               type="text"
               placeholder="검색..."
+              value ={searchTerm}
+              onChange={handleSearchChange}
               className={`
                 absolute right-0 bg-gray-100 px-3 py-1 rounded-md
                 transition-all duration-300 ease-in-out
-                ${isSearchVisible ? "w-80 opacity-100" : "w-0 opacity-0"}
+                ${isSearchVisible ? "w-60 opacity-100" : "w-0 opacity-0"}
               `}
             />
-            <button onClick={toggleSearch} className="text-gray-600 hover:text-blue-600 z-10">
-              {isSearchVisible ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            <button  type="button" onClick={toggleSearch} className="text-gray-600 hover:text-blue-600 z-10">
+              {isSearchVisible ? <X className="h-5 w-5" /> : <Search className="h-6 w-6 " />}
             </button>
-          </div>
+          </form>
   
           {/* Notifications */}
           <div className="relative mt-2">
@@ -188,7 +156,7 @@ export default function Header() {
               onClick={toggleNotifications}
               className="text-gray-600 hover:text-blue-600 relative left-1/2 transform -translate-x-1/2"
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-6 w-6" />
               {unreadCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                   {unreadCount}
@@ -218,7 +186,7 @@ export default function Header() {
               className="text-gray-600 hover:text-blue-600"
               aria-label="프로필 메뉴"
             >
-              <User className="h-5 w-5" />
+              <User className="h-6 w-6" />
             </button>
             {isProfileMenuVisible && (
               <div className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-40 bg-white rounded-md shadow-lg py-1 z-10">

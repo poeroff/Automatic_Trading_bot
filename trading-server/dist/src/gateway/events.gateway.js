@@ -18,7 +18,6 @@ let EventsGateway = class EventsGateway {
         this.liveIndexService = liveIndexService;
     }
     async Korea_main_stock_marketIndex() {
-        console.log("Korea_main_stock_marketIndex");
         try {
             const response = await this.liveIndexService.Korea_main_stock_marketIndex();
             this.server.emit('IndexData', response);
@@ -26,6 +25,11 @@ let EventsGateway = class EventsGateway {
         catch (error) {
             console.error(`🚨 KospiIndex 실행 중 오류 발생:`, error);
         }
+    }
+    onModuleInit() {
+        setInterval(async () => {
+            await this.Korea_main_stock_marketIndex();
+        }, 60000);
     }
 };
 exports.EventsGateway = EventsGateway;

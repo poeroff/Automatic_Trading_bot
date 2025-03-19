@@ -26,7 +26,6 @@ let AppController = class AppController {
     async handleSetKey(data) {
         if (data.ttl && data.ttl > 0) {
             await this.redisClient.setex(data.key, data.ttl, data.value);
-            console.log("data.key:", data.key);
         }
         else {
             await this.redisClient.set(data.key, data.value);
@@ -34,7 +33,6 @@ let AppController = class AppController {
     }
     async handleGetKey(key) {
         const value = await this.redisClient.get(key);
-        console.log("data.key:", value);
         return value;
     }
 };

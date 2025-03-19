@@ -71,11 +71,19 @@ export class LiveIndexService {
     };
     
     try {
-      const kospi_response = await axios.get(url, { headers: headers, params: kospi_response_params });
-      const kosdak_response = await axios.get(url, { headers: headers, params: kosdak_response_params });
-      const kospi200_response = await axios.get(url, { headers: headers, params: kospi200_response_params });
-      const exchange_rate_USD_response = await axios.get(exchange_rate_url, { headers: exchange_rate_headers, params: exchange_rate_USD_params });
-      const exchange_rate_JPY_response = await axios.get(exchange_rate_url, { headers: exchange_rate_headers, params: exchange_rate_JPY_params });
+      const [kospi_response, kosdak_response, kospi200_response, exchange_rate_USD_response, exchange_rate_JPY_response] = await Promise.all([
+        axios.get(url, { headers: headers, params: kospi_response_params }),
+        axios.get(url, { headers: headers, params: kosdak_response_params }),
+        axios.get(url, { headers: headers, params: kospi200_response_params }),
+        axios.get(exchange_rate_url, { headers: exchange_rate_headers, params: exchange_rate_USD_params }),
+        axios.get(exchange_rate_url, { headers: exchange_rate_headers, params: exchange_rate_JPY_params })
+      ]);
+      // console.log(kospi_response)
+      // console.log(kosdak_response)
+      // console.log(kospi200_response)
+      // console.log(exchange_rate_USD_response)
+      // console.log(exchange_rate_JPY_response)
+      
       return {
         kospi: {bstp_nmix_prpr : kospi_response.data.output.bstp_nmix_prpr, bstp_nmix_prdy_vrss : kospi_response.data.output.bstp_nmix_prdy_vrss, bstp_nmix_prdy_ctrt : kospi_response.data.output.bstp_nmix_prdy_ctrt,},
         kosdak: {bstp_nmix_prpr : kosdak_response.data.output.bstp_nmix_prpr, bstp_nmix_prdy_vrss : kosdak_response.data.output.bstp_nmix_prdy_vrss, bstp_nmix_prdy_ctrt : kosdak_response.data.output.bstp_nmix_prdy_ctrt,},
@@ -84,7 +92,7 @@ export class LiveIndexService {
         exchange_rate_JPY: {ovrs_nmix_prpr :exchange_rate_JPY_response.data.output1.ovrs_nmix_prpr, ovrs_nmix_prdy_vrss:exchange_rate_JPY_response.data.output1.ovrs_nmix_prdy_vrss, prdy_ctrt:exchange_rate_JPY_response.data.output1.prdy_ctrt},
       };
     } catch (error) {
-      throw new Error('주봉 데이터 조회 실패');
+      throw new Error('지수 데이터 조회 실패');
     }
   }
 

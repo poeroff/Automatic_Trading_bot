@@ -80,11 +80,13 @@ let LiveIndexService = class LiveIndexService {
             FID_PERIOD_DIV_CODE: "D"
         };
         try {
-            const kospi_response = await axios_1.default.get(url, { headers: headers, params: kospi_response_params });
-            const kosdak_response = await axios_1.default.get(url, { headers: headers, params: kosdak_response_params });
-            const kospi200_response = await axios_1.default.get(url, { headers: headers, params: kospi200_response_params });
-            const exchange_rate_USD_response = await axios_1.default.get(exchange_rate_url, { headers: exchange_rate_headers, params: exchange_rate_USD_params });
-            const exchange_rate_JPY_response = await axios_1.default.get(exchange_rate_url, { headers: exchange_rate_headers, params: exchange_rate_JPY_params });
+            const [kospi_response, kosdak_response, kospi200_response, exchange_rate_USD_response, exchange_rate_JPY_response] = await Promise.all([
+                axios_1.default.get(url, { headers: headers, params: kospi_response_params }),
+                axios_1.default.get(url, { headers: headers, params: kosdak_response_params }),
+                axios_1.default.get(url, { headers: headers, params: kospi200_response_params }),
+                axios_1.default.get(exchange_rate_url, { headers: exchange_rate_headers, params: exchange_rate_USD_params }),
+                axios_1.default.get(exchange_rate_url, { headers: exchange_rate_headers, params: exchange_rate_JPY_params })
+            ]);
             return {
                 kospi: { bstp_nmix_prpr: kospi_response.data.output.bstp_nmix_prpr, bstp_nmix_prdy_vrss: kospi_response.data.output.bstp_nmix_prdy_vrss, bstp_nmix_prdy_ctrt: kospi_response.data.output.bstp_nmix_prdy_ctrt, },
                 kosdak: { bstp_nmix_prpr: kosdak_response.data.output.bstp_nmix_prpr, bstp_nmix_prdy_vrss: kosdak_response.data.output.bstp_nmix_prdy_vrss, bstp_nmix_prdy_ctrt: kosdak_response.data.output.bstp_nmix_prdy_ctrt, },
@@ -94,7 +96,7 @@ let LiveIndexService = class LiveIndexService {
             };
         }
         catch (error) {
-            throw new Error('주봉 데이터 조회 실패');
+            throw new Error('지수 데이터 조회 실패');
         }
     }
     findAll() {

@@ -1,31 +1,31 @@
 
 
 services:
-  trading_site:
-    container_name: trading_site
-    build:
-      context: ./trading_site
-      dockerfile: Dockerfile
-    ports:
-      - 3000:3000
-    volumes:
-      - ./trading_site:/Trading-clinet
-      - /Trading-clinet/node_modules
-    env_file:
-      - ./trading_site/.env
-    environment:
-       DATABASE_URL: ${DATABASE_URL}
-    command: >
-            sh -c "npx prisma migrate deploy --schema=/Trading-clinet/prisma/schema.prisma && npm run dev"
-    stdin_open: true  # -i
-    tty: true         # -t
-    depends_on:
-      redis : 
-        condition: service_healthy
-      mysql :
-        condition: service_healthy  
-      trading-server :
-        condition: service_started
+  # trading_site:
+  #   container_name: trading_site
+  #   build:
+  #     context: ./trading_site
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - 3000:3000
+  #   volumes:
+  #     - ./trading_site:/Trading-clinet
+  #     - /Trading-clinet/node_modules
+  #   env_file:
+  #     - ./trading_site/.env
+  #   environment:
+  #      DATABASE_URL: ${DATABASE_URL}
+  #   command: >
+  #           sh -c "npx prisma migrate deploy --schema=/Trading-clinet/prisma/schema.prisma && npm run dev"
+  #   stdin_open: true  # -i
+  #   tty: true         # -t
+  #   depends_on:
+  #     redis : 
+  #       condition: service_healthy
+  #     mysql :
+  #       condition: service_healthy  
+  #     trading-server :
+  #       condition: service_started
 
   trading-server:
     container_name: trading-server

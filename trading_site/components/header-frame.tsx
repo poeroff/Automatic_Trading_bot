@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSessionContext } from "@/app/providers";
 
-const allTabs = ["홈", "시장동향", "Activity", "Domains", "FAQ", "종목관리"];
+const allTabs = ["홈", "시장동향", "무엇을", "Domains", "FAQ", "종목관리"];
 
 export default function Frame() {
   const { session } = useSessionContext();

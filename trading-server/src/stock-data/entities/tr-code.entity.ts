@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { StockData } from './stock-data.entity';
+
 import { PeakDate } from './peak-dates.entity';
 import { PeakPrice } from './PeakPrice.entity';
 import { FilteredPeak } from './filtered-peaks.entity';

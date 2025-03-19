@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSessionContext } from "@/app/providers";
 
-const allTabs = ["홈", "시장동향", "Activity", "Domains", "Usage", "종목관리"];
+const allTabs = ["홈", "시장동향", "Activity", "Domains", "FAQ", "종목관리"];
 
 export default function Frame() {
   const { session } = useSessionContext();
@@ -97,7 +97,7 @@ export default function Frame() {
                   }
                   setActiveIndex(index)}}
               >
-                <div className="text-sm font-[var(--www-mattmannucci-me-geist-regular-font-family)] leading-5 whitespace-nowrap flex items-center justify-center h-full">
+                <div className="text-md font-[var(--www-mattmannucci-me-geist-regular-font-family)] leading-5 whitespace-nowrap flex items-center justify-center h-full">
                   {/* ✅ "종목관리"는 관리자인 경우 Link로 감싸기 */}
                   {tab === "종목관리" ? (<Link href="/stock">{tab}</Link>) : (tab)}
                 </div>

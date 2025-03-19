@@ -1,7 +1,7 @@
-import { TrCode } from './tr-code.entity';
-export declare class StockData {
+import { KoreanStockCode } from './KoreanStockCode.entity';
+export declare class DayStockData {
     id: number;
-    trCode: TrCode;
+    trCode: KoreanStockCode;
     date: string;
     open: number;
     high: number;

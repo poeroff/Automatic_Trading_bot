@@ -1,15 +1,17 @@
 import { UpdateSchedularDto } from './dto/update-schedular.dto';
 import { SessionService } from './SessionService';
 import { ClientProxy } from '@nestjs/microservices';
-import { Kospi } from 'src/stock-data/entities/Kospi.entity';
+import { KoreanStockCode } from 'src/stock-data/entities/KoreanStockCode.entity';
 import { Repository } from 'typeorm';
-import { StockData } from 'src/stock-data/entities/stock-data.entity';
+import { DayStockData } from 'src/stock-data/entities/DayStockData.entity';
+import { WeekStockData } from 'src/stock-data/entities/WeekStockData.entity';
 export declare class SchedularService {
-    private readonly KospiRepository;
-    private readonly stockdataRepository;
+    private readonly koreastockcodeRepository;
+    private readonly daystockdataRepository;
+    private readonly weekstockdataRepository;
     private readonly sessionService;
     private readonly redisClient;
-    constructor(KospiRepository: Repository<Kospi>, stockdataRepository: Repository<StockData>, sessionService: SessionService, redisClient: ClientProxy);
+    constructor(koreastockcodeRepository: Repository<KoreanStockCode>, daystockdataRepository: Repository<DayStockData>, weekstockdataRepository: Repository<WeekStockData>, sessionService: SessionService, redisClient: ClientProxy);
     today: Date;
     year: string;
     month: string;
@@ -18,7 +20,8 @@ export declare class SchedularService {
     CreateAuthHashKey(url: any, headers: any, data: any): Promise<void>;
     CreateAccessToken(url: any, headers: any, data: any): Promise<void>;
     CreateWebSocketToken(url: any, headers: any, data: any): Promise<void>;
-    getWeeklyStockData(url: any, headers: any): Promise<void>;
+    getDayStockData(url: any, headers: any): Promise<void>;
+    getWeekStockData(url: any, headers: any): Promise<void>;
     StockData(url: any, headers: any, data: any): Promise<any>;
     findAll(): string;
     findOne(id: number): string;

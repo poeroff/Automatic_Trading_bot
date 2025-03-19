@@ -16,7 +16,7 @@ exports.StockDataService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
-const stock_data_entity_1 = require("./entities/stock-data.entity");
+const DayStockData_entity_1 = require("./entities/DayStockData.entity");
 const tr_code_entity_1 = require("./entities/tr-code.entity");
 const peak_dates_entity_1 = require("./entities/peak-dates.entity");
 const PeakPrice_entity_1 = require("./entities/PeakPrice.entity");
@@ -44,23 +44,6 @@ let StockDataService = class StockDataService {
     }
     async getStockData(code) {
         console.log(code);
-        const stockData = await this.stockDataRepository.find({
-            where: { trCode: { code: code } },
-            order: { date: 'ASC' },
-        });
-        if (!stockData || stockData.length === 0) {
-            return { status: 'error', message: `Code ${code} not found in stock_data table` };
-        }
-        const formattedData = stockData.map(data => ({
-            Date: data.date,
-            Open: data.open,
-            High: data.high,
-            Low: data.low,
-            Close: data.close,
-            Volume: data.volume,
-        }));
-        console.log(formattedData);
-        return { data: formattedData };
     }
     async getUserInflection(code) {
         console.log(code);
@@ -97,22 +80,12 @@ let StockDataService = class StockDataService {
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
-        const stockData = await this.stockDataRepository.find({ where: { trCode: { id: trCode.id } } });
-        const peakDates = await this.peakDateRepository.find({ where: { trCode: { id: trCode.id } } });
-        const filteredPeaks = await this.filteredPeakRepository.find({ where: { trCode: { id: trCode.id } } });
-        const userInflections = await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
-        return { trCode, stockData, peakDates, filteredPeaks, userInflections };
     }
     async findOneByStockName(stockName) {
         const trCode = await this.trCodeRepository.findOne({ where: { name: stockName } });
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
-        const stockData = await this.stockDataRepository.find({ where: { trCode: { id: trCode.id } } });
-        const peakDates = await this.peakDateRepository.find({ where: { trCode: { id: trCode.id } } });
-        const filteredPeaks = await this.filteredPeakRepository.find({ where: { trCode: { id: trCode.id } } });
-        const userInflections = await this.userInflectionRepository.find({ where: { trCode: { id: trCode.id } } });
-        return { trCode, stockData, peakDates, filteredPeaks, userInflections };
     }
     async updateCertifiedTrCode(code) {
         const trCode = await this.trCodeRepository.findOne({ where: { code: code } });
@@ -145,7 +118,7 @@ let StockDataService = class StockDataService {
 exports.StockDataService = StockDataService;
 exports.StockDataService = StockDataService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(stock_data_entity_1.StockData)),
+    __param(0, (0, typeorm_1.InjectRepository)(DayStockData_entity_1.DayStockData)),
     __param(1, (0, typeorm_1.InjectRepository)(tr_code_entity_1.TrCode)),
     __param(2, (0, typeorm_1.InjectRepository)(peak_dates_entity_1.PeakDate)),
     __param(3, (0, typeorm_1.InjectRepository)(PeakPrice_entity_1.PeakPrice)),

@@ -19,7 +19,6 @@ export class AppController {
   async handleSetKey(data: { key: string; value: string; ttl?: number }) {
     if (data.ttl && data.ttl > 0) {
       await this.redisClient.setex(data.key, data.ttl, data.value); // TTL 적용
-      console.log("data.key:",data.key)
     } else {
       await this.redisClient.set(data.key, data.value); // TTL 없음
     }
@@ -28,7 +27,6 @@ export class AppController {
   @MessagePattern('get_key')
   async handleGetKey(key: string) {
     const value = await this.redisClient.get(key);
-    console.log("data.key:",value)
     return value;
   }
 }

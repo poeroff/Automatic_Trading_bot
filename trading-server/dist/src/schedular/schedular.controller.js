@@ -76,7 +76,7 @@ let SchedularController = class SchedularController {
         };
         this.schedularService.CreateWebSocketToken(url, headers, data);
     }
-    async getWeeklyStockData() {
+    async getDayStockData() {
         const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
         const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
         const headers = {
@@ -87,7 +87,20 @@ let SchedularController = class SchedularController {
             'tr_id': 'FHKST03010100',
             "custtype": "P"
         };
-        this.schedularService.getWeeklyStockData(url, headers);
+        this.schedularService.getDayStockData(url, headers);
+    }
+    async getWeekStockData() {
+        const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+        const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
+        const headers = {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'authorization': savedToken,
+            'appkey': this.appkey,
+            'appsecret': this.appsecret,
+            'tr_id': 'FHKST03010100',
+            "custtype": "P"
+        };
+        this.schedularService.getWeekStockData(url, headers);
     }
     async StockData() {
         const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
@@ -128,7 +141,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "CreateAuthHashKey", null);
 __decorate([
-    (0, schedule_1.Cron)('0 30 20 * * *', { timeZone: 'Asia/Seoul' }),
+    (0, schedule_1.Cron)('0 59 12 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -140,11 +153,17 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "CreateWebSocketToken", null);
 __decorate([
-    (0, schedule_1.Cron)('0 47 21 * * *', { timeZone: 'Asia/Seoul' }),
+    (0, schedule_1.Cron)('0 7 20 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], SchedularController.prototype, "getWeeklyStockData", null);
+], SchedularController.prototype, "getDayStockData", null);
+__decorate([
+    (0, schedule_1.Cron)('0 05 20 * * *', { timeZone: 'Asia/Seoul' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], SchedularController.prototype, "getWeekStockData", null);
 __decorate([
     (0, schedule_1.Cron)('0 30 20 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),

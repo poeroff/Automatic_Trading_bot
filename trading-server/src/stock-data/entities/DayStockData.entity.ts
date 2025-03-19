@@ -1,15 +1,14 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { TrCode } from './tr-code.entity';
-import { Kospi } from './Kospi.entity';
+import { KoreanStockCode } from './KoreanStockCode.entity';
 
-@Entity('stock_data')
-export class StockData {
+@Entity('DayStockData')
+export class DayStockData {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Kospi, (trCode) => trCode.stockData, { eager: true , onDelete: 'CASCADE'})
+  @ManyToOne(() => KoreanStockCode, (code) => code.daystockData, { eager: true , onDelete: 'CASCADE'})
   @JoinColumn({ name: 'code_id' }) // This is the foreign key
-  trCode: TrCode;
+  trCode: KoreanStockCode;
 
   @Column({ type: 'date' })
   date: string;

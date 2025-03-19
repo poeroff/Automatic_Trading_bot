@@ -18,14 +18,16 @@ const axios_1 = require("axios");
 const SessionService_1 = require("./SessionService");
 const microservices_1 = require("@nestjs/microservices");
 const typeorm_1 = require("@nestjs/typeorm");
-const Kospi_entity_1 = require("../stock-data/entities/Kospi.entity");
+const KoreanStockCode_entity_1 = require("../stock-data/entities/KoreanStockCode.entity");
 const typeorm_2 = require("typeorm");
 const sleep_1 = require("../../utils/sleep");
-const stock_data_entity_1 = require("../stock-data/entities/stock-data.entity");
+const DayStockData_entity_1 = require("../stock-data/entities/DayStockData.entity");
+const WeekStockData_entity_1 = require("../stock-data/entities/WeekStockData.entity");
 let SchedularService = class SchedularService {
-    constructor(KospiRepository, stockdataRepository, sessionService, redisClient) {
-        this.KospiRepository = KospiRepository;
-        this.stockdataRepository = stockdataRepository;
+    constructor(koreastockcodeRepository, daystockdataRepository, weekstockdataRepository, sessionService, redisClient) {
+        this.koreastockcodeRepository = koreastockcodeRepository;
+        this.daystockdataRepository = daystockdataRepository;
+        this.weekstockdataRepository = weekstockdataRepository;
         this.sessionService = sessionService;
         this.redisClient = redisClient;
         this.today = new Date();
@@ -68,11 +70,10 @@ let SchedularService = class SchedularService {
             throw new Error('API request failed');
         }
     }
-    async getWeeklyStockData(url, headers) {
+    async getDayStockData(url, headers) {
         let count = 0;
-        const codeList = await this.KospiRepository.find();
+        const codeList = await this.koreastockcodeRepository.find();
         for (const code of codeList) {
-            console.log(code.id);
             const originalDate = code.listed_date;
             const formattedDate = originalDate.replace(/-/g, '');
             const codeStr = code.code.toString().padStart(6, '0');
@@ -89,7 +90,35 @@ let SchedularService = class SchedularService {
             const data = response.data;
             const output2 = data.output2;
             for (const stockdata of output2) {
-                await this.stockdataRepository.save({ date: stockdata.stck_bsop_date, open: Number(stockdata.stck_oprc), high: Number(stockdata.stck_hgpr), low: Number(stockdata.stck_lwpr), close: Number(stockdata.stck_clpr), volume: Number(stockdata.acml_vol), trCode: { id: Number(code.id) } });
+                await this.daystockdataRepository.save({ date: stockdata.stck_bsop_date, open: Number(stockdata.stck_oprc), high: Number(stockdata.stck_hgpr), low: Number(stockdata.stck_lwpr), close: Number(stockdata.stck_clpr), volume: Number(stockdata.acml_vol), trCode: { id: Number(code.id) } });
+            }
+            count++;
+            if (count === 3) {
+                break;
+            }
+        }
+    }
+    async getWeekStockData(url, headers) {
+        let count = 0;
+        const codeList = await this.koreastockcodeRepository.find();
+        for (const code of codeList) {
+            const originalDate = code.listed_date;
+            const formattedDate = originalDate.replace(/-/g, '');
+            const codeStr = code.code.toString().padStart(6, '0');
+            const params = {
+                FID_COND_MRKT_DIV_CODE: 'J',
+                FID_INPUT_ISCD: codeStr,
+                FID_INPUT_DATE_1: formattedDate,
+                FID_INPUT_DATE_2: this.todayStr,
+                FID_PERIOD_DIV_CODE: 'W',
+                FID_ORG_ADJ_PRC: '0',
+            };
+            await (0, sleep_1.sleep)(500);
+            const response = await axios_1.default.get(url, { headers: headers, params: params });
+            const data = response.data;
+            const output2 = data.output2;
+            for (const stockdata of output2) {
+                await this.weekstockdataRepository.save({ date: stockdata.stck_bsop_date, open: Number(stockdata.stck_oprc), high: Number(stockdata.stck_hgpr), low: Number(stockdata.stck_lwpr), close: Number(stockdata.stck_clpr), volume: Number(stockdata.acml_vol), trCode: { id: Number(code.id) } });
             }
             count++;
             if (count === 3) {
@@ -123,10 +152,12 @@ let SchedularService = class SchedularService {
 exports.SchedularService = SchedularService;
 exports.SchedularService = SchedularService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(Kospi_entity_1.Kospi)),
-    __param(1, (0, typeorm_1.InjectRepository)(stock_data_entity_1.StockData)),
-    __param(3, (0, common_1.Inject)("REDIS_CLIENT")),
+    __param(0, (0, typeorm_1.InjectRepository)(KoreanStockCode_entity_1.KoreanStockCode)),
+    __param(1, (0, typeorm_1.InjectRepository)(DayStockData_entity_1.DayStockData)),
+    __param(2, (0, typeorm_1.InjectRepository)(WeekStockData_entity_1.WeekStockData)),
+    __param(4, (0, common_1.Inject)("REDIS_CLIENT")),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         SessionService_1.SessionService,
         microservices_1.ClientProxy])

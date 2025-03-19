@@ -1,7 +1,7 @@
 import { CreateStockDatumDto } from './dto/create-stock-datum.dto';
 import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 import { Repository } from 'typeorm';
-import { StockData } from './entities/stock-data.entity';
+import { DayStockData } from './entities/DayStockData.entity';
 import { TrCode } from './entities/tr-code.entity';
 import { PeakDate } from './entities/peak-dates.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
@@ -14,26 +14,11 @@ export declare class StockDataService {
     private peakPriceRepository;
     private filteredPeakRepository;
     private userInflectionRepository;
-    constructor(stockDataRepository: Repository<StockData>, trCodeRepository: Repository<TrCode>, peakDateRepository: Repository<PeakDate>, peakPriceRepository: Repository<PeakPrice>, filteredPeakRepository: Repository<FilteredPeak>, userInflectionRepository: Repository<UserInflection>);
+    constructor(stockDataRepository: Repository<DayStockData>, trCodeRepository: Repository<TrCode>, peakDateRepository: Repository<PeakDate>, peakPriceRepository: Repository<PeakPrice>, filteredPeakRepository: Repository<FilteredPeak>, userInflectionRepository: Repository<UserInflection>);
     create(createStockDatumDto: CreateStockDatumDto): string;
     getAllCodes(): Promise<TrCode[]>;
     gettrueCodes(): Promise<TrCode[]>;
-    getStockData(code: string): Promise<{
-        status: string;
-        message: string;
-        data?: undefined;
-    } | {
-        data: {
-            Date: string;
-            Open: number;
-            High: number;
-            Low: number;
-            Close: number;
-            Volume: number;
-        }[];
-        status?: undefined;
-        message?: undefined;
-    }>;
+    getStockData(code: string): Promise<void>;
     getUserInflection(code: string): Promise<UserInflection[] | {
         message: string;
     }>;
@@ -46,34 +31,10 @@ export declare class StockDataService {
     deleteUserInflection(id: number): Promise<import("typeorm").DeleteResult>;
     findOneByTrCode(trcode: string): Promise<{
         message: string;
-        trCode?: undefined;
-        stockData?: undefined;
-        peakDates?: undefined;
-        filteredPeaks?: undefined;
-        userInflections?: undefined;
-    } | {
-        trCode: TrCode;
-        stockData: StockData[];
-        peakDates: PeakDate[];
-        filteredPeaks: FilteredPeak[];
-        userInflections: UserInflection[];
-        message?: undefined;
-    }>;
+    } | undefined>;
     findOneByStockName(stockName: string): Promise<{
         message: string;
-        trCode?: undefined;
-        stockData?: undefined;
-        peakDates?: undefined;
-        filteredPeaks?: undefined;
-        userInflections?: undefined;
-    } | {
-        trCode: TrCode;
-        stockData: StockData[];
-        peakDates: PeakDate[];
-        filteredPeaks: FilteredPeak[];
-        userInflections: UserInflection[];
-        message?: undefined;
-    }>;
+    } | undefined>;
     updateCertifiedTrCode(code: string): Promise<TrCode | {
         message: string;
     }>;

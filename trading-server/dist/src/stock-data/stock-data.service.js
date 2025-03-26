@@ -18,7 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const DayStockData_entity_1 = require("./entities/DayStockData.entity");
 const tr_code_entity_1 = require("./entities/tr-code.entity");
-const peak_dates_entity_1 = require("./entities/peak-dates.entity");
+const PeakDate_entity_1 = require("./entities/PeakDate.entity");
 const PeakPrice_entity_1 = require("./entities/PeakPrice.entity");
 const filtered_peaks_entity_1 = require("./entities/filtered-peaks.entity");
 const user_inflection_entity_1 = require("./entities/user-inflection.entity");
@@ -120,7 +120,7 @@ exports.StockDataService = StockDataService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(DayStockData_entity_1.DayStockData)),
     __param(1, (0, typeorm_1.InjectRepository)(tr_code_entity_1.TrCode)),
-    __param(2, (0, typeorm_1.InjectRepository)(peak_dates_entity_1.PeakDate)),
+    __param(2, (0, typeorm_1.InjectRepository)(PeakDate_entity_1.PeakDate)),
     __param(3, (0, typeorm_1.InjectRepository)(PeakPrice_entity_1.PeakPrice)),
     __param(4, (0, typeorm_1.InjectRepository)(filtered_peaks_entity_1.FilteredPeak)),
     __param(5, (0, typeorm_1.InjectRepository)(user_inflection_entity_1.UserInflection)),

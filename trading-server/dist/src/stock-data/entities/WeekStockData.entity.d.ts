@@ -8,4 +8,5 @@ export declare class WeekStockData {
     low: number;
     close: number;
     volume: number;
+    is_high_point: boolean;
 }

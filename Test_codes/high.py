@@ -4,11 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def load_data():
-    conn = sqlite3.connect('stock_data.db')
+    conn = sqlite3.connect('stock_096350.db')
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM stock_data")
     data = cursor.fetchall()
-    columns = ["Date", "Open", "High", "Low", "Close", "Volume", "Label"]
+    columns = ["Date", "Open", "High", "Low", "Close", "Volume"]
     df = pd.DataFrame(data, columns=columns)
     conn.close()
     return df
@@ -86,7 +86,7 @@ def find_inflection_points_with_second_derivative(dataframe, threshold=0.01):
 
 
 
-def plot_inflection_points_with_peaks(dataframe, peaks, inflection_points):
+def plot_inflection_points_with_peaks(dataframe, peaks):
     import matplotlib.pyplot as plt
 
     plt.figure(figsize=(15, 8))

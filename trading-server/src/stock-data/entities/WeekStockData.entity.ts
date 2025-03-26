@@ -7,7 +7,7 @@ export class WeekStockData {
   id: number;
 
   @ManyToOne(() => KoreanStockCode, (code) => code.weekstockData, { eager: true , onDelete: 'CASCADE'})
-  @JoinColumn({ name: 'code_id' }) // This is the foreign key
+  @JoinColumn({ name: 'stock_id' }) // This is the foreign key
   trCode: KoreanStockCode;
 
   @Column({ type: 'date' })
@@ -27,6 +27,10 @@ export class WeekStockData {
 
   @Column({ type: 'bigint' })
   volume: number;
+
+  @Column({default:false})
+  is_high_point : boolean
+
 
 
 }

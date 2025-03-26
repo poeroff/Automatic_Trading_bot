@@ -85,7 +85,8 @@ let SchedularController = class SchedularController {
             'appkey': this.appkey,
             'appsecret': this.appsecret,
             'tr_id': 'FHKST03010100',
-            "custtype": "P"
+            "custtype": "P",
+            "tr_cont": "M"
         };
         this.schedularService.getDayStockData(url, headers);
     }
@@ -98,7 +99,8 @@ let SchedularController = class SchedularController {
             'appkey': this.appkey,
             'appsecret': this.appsecret,
             'tr_id': 'FHKST03010100',
-            "custtype": "P"
+            "custtype": "P",
+            "tr_cont": "M"
         };
         this.schedularService.getWeekStockData(url, headers);
     }
@@ -141,7 +143,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "CreateAuthHashKey", null);
 __decorate([
-    (0, schedule_1.Cron)('0 59 12 * * *', { timeZone: 'Asia/Seoul' }),
+    (0, schedule_1.Cron)('0 10 13 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -153,13 +155,13 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "CreateWebSocketToken", null);
 __decorate([
-    (0, schedule_1.Cron)('0 7 20 * * *', { timeZone: 'Asia/Seoul' }),
+    (0, schedule_1.Cron)('0 40 14 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], SchedularController.prototype, "getDayStockData", null);
 __decorate([
-    (0, schedule_1.Cron)('0 05 20 * * *', { timeZone: 'Asia/Seoul' }),
+    (0, schedule_1.Cron)('0 42 14 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

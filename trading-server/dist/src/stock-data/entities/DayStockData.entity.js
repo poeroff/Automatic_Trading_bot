@@ -21,7 +21,7 @@ __decorate([
 ], DayStockData.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => KoreanStockCode_entity_1.KoreanStockCode, (code) => code.daystockData, { eager: true, onDelete: 'CASCADE' }),
-    (0, typeorm_1.JoinColumn)({ name: 'code_id' }),
+    (0, typeorm_1.JoinColumn)({ name: 'stock_id' }),
     __metadata("design:type", KoreanStockCode_entity_1.KoreanStockCode)
 ], DayStockData.prototype, "trCode", void 0);
 __decorate([
@@ -48,6 +48,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'bigint' }),
     __metadata("design:type", Number)
 ], DayStockData.prototype, "volume", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], DayStockData.prototype, "is_high_point", void 0);
 exports.DayStockData = DayStockData = __decorate([
     (0, typeorm_1.Entity)('DayStockData')
 ], DayStockData);

@@ -4,7 +4,7 @@ import { StockDataController } from './stock-data.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DayStockData } from './entities/DayStockData.entity';
 import { TrCode } from './entities/tr-code.entity';
-import { PeakDate } from './entities/peak-dates.entity';
+import { PeakDate } from './entities/PeakDate.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
 import { FilteredPeak } from './entities/filtered-peaks.entity';
 import { UserInflection } from './entities/user-inflection.entity';

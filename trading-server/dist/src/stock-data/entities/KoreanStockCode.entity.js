@@ -13,6 +13,7 @@ exports.KoreanStockCode = void 0;
 const typeorm_1 = require("typeorm");
 const DayStockData_entity_1 = require("./DayStockData.entity");
 const WeekStockData_entity_1 = require("./WeekStockData.entity");
+const PeakDate_entity_1 = require("./PeakDate.entity");
 let KoreanStockCode = class KoreanStockCode {
 };
 exports.KoreanStockCode = KoreanStockCode;
@@ -21,37 +22,41 @@ __decorate([
     __metadata("design:type", Number)
 ], KoreanStockCode.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "company", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Number)
 ], KoreanStockCode.prototype, "code", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "category", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "products", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "listed_date", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "settlement_month", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "representative", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "homepage", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], KoreanStockCode.prototype, "region", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => DayStockData_entity_1.DayStockData, (daystockData) => daystockData.trCode),
     __metadata("design:type", Array)
@@ -60,6 +65,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => WeekStockData_entity_1.WeekStockData, (weekstockData) => weekstockData.trCode),
     __metadata("design:type", Array)
 ], KoreanStockCode.prototype, "weekstockData", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => PeakDate_entity_1.PeakDate, (peakDate) => peakDate.trCode),
+    __metadata("design:type", Array)
+], KoreanStockCode.prototype, "peakDates", void 0);
 exports.KoreanStockCode = KoreanStockCode = __decorate([
     (0, typeorm_1.Entity)('KoreanStockCode')
 ], KoreanStockCode);

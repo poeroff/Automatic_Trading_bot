@@ -10,7 +10,7 @@ import { TrCode } from './stock-data/entities/tr-code.entity';
 import * as Joi from 'joi';
 import { PeakPrice } from './stock-data/entities/PeakPrice.entity';
 import { FilteredPeak } from './stock-data/entities/filtered-peaks.entity';
-import { PeakDate } from './stock-data/entities/peak-dates.entity';
+import { PeakDate } from './stock-data/entities/PeakDate.entity';
 import { UserInflection } from './stock-data/entities/user-inflection.entity';
 import { SchedularModule } from './schedular/schedular.module';
 import { SessionModule } from 'nestjs-session';
@@ -20,6 +20,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RedisModule } from './redis/redis.module';
 import { KoreanStockCode } from './stock-data/entities/KoreanStockCode.entity';
 import { WeekStockData } from './stock-data/entities/WeekStockData.entity';
+import { ExceluploadModule } from './excelupload/excelupload.module';
 
 
 
@@ -35,7 +36,7 @@ const typeOrmModuleOptions = {
     port: configService.get('DB_PORT'),
     database: configService.get('DB_NAME'),
     charset: configService.get("CHAR_SET"), //이모지를 위한 추가 설정기능 이유 : 이모지는 3byte인데 utf8mb는 최대 2바이트밖에 받지 못하기 때문이다.
-    entities: [DayStockData, TrCode, PeakDate, PeakPrice, FilteredPeak, UserInflection, KoreanStockCode,WeekStockData],
+    entities: [DayStockData, TrCode, PeakDate, PeakPrice, FilteredPeak, UserInflection, KoreanStockCode, WeekStockData],
     synchronize: configService.get('DB_SYNC'),
     logging: true,
     timezone: '+09:00'
@@ -71,7 +72,7 @@ const typeOrmModuleOptions = {
       cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 24시간 유지
     },
   }),
-  StockDataModule, TypeOrmModule.forRootAsync(typeOrmModuleOptions), SchedularModule, LiveIndexModule, GatewayModule, RedisModule],
+  StockDataModule, TypeOrmModule.forRootAsync(typeOrmModuleOptions), SchedularModule, LiveIndexModule, GatewayModule, RedisModule, ExceluploadModule],
   controllers: [AppController],
   providers: [AppService],
 })

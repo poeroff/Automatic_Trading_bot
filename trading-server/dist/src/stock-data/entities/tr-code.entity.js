@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TrCode = void 0;
 const typeorm_1 = require("typeorm");
-const peak_dates_entity_1 = require("./peak-dates.entity");
+const PeakDate_entity_1 = require("./PeakDate.entity");
 const PeakPrice_entity_1 = require("./PeakPrice.entity");
 const filtered_peaks_entity_1 = require("./filtered-peaks.entity");
 const user_inflection_entity_1 = require("./user-inflection.entity");
@@ -51,7 +51,7 @@ __decorate([
     __metadata("design:type", Number)
 ], TrCode.prototype, "current_peak_count", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => peak_dates_entity_1.PeakDate, (peakDate) => peakDate.trCode),
+    (0, typeorm_1.OneToMany)(() => PeakDate_entity_1.PeakDate, (peakDate) => peakDate.trCode),
     __metadata("design:type", Array)
 ], TrCode.prototype, "peakDates", void 0);
 __decorate([

@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeakDate = void 0;
 const typeorm_1 = require("typeorm");
-const tr_code_entity_1 = require("./tr-code.entity");
+const KoreanStockCode_entity_1 = require("./KoreanStockCode.entity");
 let PeakDate = class PeakDate {
 };
 exports.PeakDate = PeakDate;
@@ -20,8 +20,9 @@ __decorate([
     __metadata("design:type", Number)
 ], PeakDate.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.peakDates, { onDelete: 'CASCADE' }),
-    __metadata("design:type", tr_code_entity_1.TrCode)
+    (0, typeorm_1.ManyToOne)(() => KoreanStockCode_entity_1.KoreanStockCode, (koreanstockcode) => koreanstockcode.peakDates, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'stock_id' }),
+    __metadata("design:type", KoreanStockCode_entity_1.KoreanStockCode)
 ], PeakDate.prototype, "trCode", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: "float" }),
@@ -34,4 +35,4 @@ __decorate([
 exports.PeakDate = PeakDate = __decorate([
     (0, typeorm_1.Entity)('peak_dates')
 ], PeakDate);
-//# sourceMappingURL=peak-dates.entity.js.map
+//# sourceMappingURL=PeakDate.entity.js.map

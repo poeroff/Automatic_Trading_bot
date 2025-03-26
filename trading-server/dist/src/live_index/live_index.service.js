@@ -11,10 +11,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LiveIndexService = void 0;
 const common_1 = require("@nestjs/common");
-const axios_1 = require("axios");
+const axios_1 = __importDefault(require("axios"));
 const SessionService_1 = require("../schedular/SessionService");
 const config_1 = require("@nestjs/config");
 const microservices_1 = require("@nestjs/microservices");

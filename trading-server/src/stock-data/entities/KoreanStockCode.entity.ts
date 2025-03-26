@@ -1,41 +1,49 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { DayStockData } from "./DayStockData.entity";
 import { WeekStockData } from "./WeekStockData.entity";
+import { PeakDate } from "./PeakDate.entity";
 
 @Entity('KoreanStockCode') // 테이블 이름을 'tr_codes'로 설정
 export class KoreanStockCode {
     @PrimaryGeneratedColumn()
     id : number
 
-    @Column()
+    @Column({nullable : true})
     company : string
 
-    @Column()
+    @Column({nullable : true})
     code : number
 
-    @Column()
+    @Column({nullable : true})
     category : string
 
-    @Column()
+    @Column({nullable : true})
     products : string
 
-    @Column()
+    @Column({nullable : true})
     listed_date : string
 
-    @Column()
+    @Column({nullable : true})
     settlement_month : string
 
-    @Column()
+    @Column({nullable : true})
     representative : string
 
-    @Column()
+    @Column({nullable : true})
     homepage : string
+
+    @Column({nullable : true})
+    region : string
 
     @OneToMany(() => DayStockData, (daystockData) => daystockData.trCode)
     daystockData: DayStockData[];
 
     @OneToMany(() => WeekStockData, (weekstockData) => weekstockData.trCode)
     weekstockData: WeekStockData[];
+
+    @OneToMany(() => PeakDate, (peakDate) => peakDate.trCode)
+    peakDates: PeakDate[];
+
 
 
 }

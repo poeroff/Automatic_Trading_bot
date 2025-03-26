@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
-import { PeakDate } from './peak-dates.entity';
+import { PeakDate } from './PeakDate.entity';
 import { PeakPrice } from './PeakPrice.entity';
 import { FilteredPeak } from './filtered-peaks.entity';
 import { UserInflection } from './user-inflection.entity';

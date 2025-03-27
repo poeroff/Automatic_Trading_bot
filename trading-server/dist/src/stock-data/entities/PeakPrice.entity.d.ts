@@ -1,6 +1,6 @@
-import { TrCode } from './tr-code.entity';
+import { KoreanStockCode } from './KoreanStockCode.entity';
 export declare class PeakPrice {
     id: number;
-    trCode: TrCode;
+    trCode: KoreanStockCode;
     price: number;
 }

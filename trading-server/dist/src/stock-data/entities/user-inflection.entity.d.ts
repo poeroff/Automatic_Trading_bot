@@ -1,7 +1,7 @@
-import { TrCode } from './tr-code.entity';
+import { KoreanStockCode } from './KoreanStockCode.entity';
 export declare class UserInflection {
     id: number;
-    trCode: TrCode;
+    trCode: KoreanStockCode;
     highdate: number | null;
     date: number;
     price: number;

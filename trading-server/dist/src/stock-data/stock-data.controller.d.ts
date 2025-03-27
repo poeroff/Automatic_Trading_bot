@@ -1,15 +1,26 @@
 import { StockDataService } from './stock-data.service';
-import { CreateStockDatumDto } from './dto/create-stock-datum.dto';
-import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 export declare class StockDataController {
     private readonly stockDataService;
     constructor(stockDataService: StockDataService);
-    create(createStockDatumDto: CreateStockDatumDto): string;
-    getAllCodes(): Promise<import("./entities/tr-code.entity").TrCode[]>;
-    gettrueCodes(): Promise<import("./entities/tr-code.entity").TrCode[]>;
+    getAllCodes(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
     getStockData(body: {
         code: string;
-    }): Promise<void>;
+    }): Promise<{
+        status: string;
+        message: string;
+        Data?: undefined;
+    } | {
+        Data: {
+            Date: string;
+            Open: number;
+            High: number;
+            Low: number;
+            Close: number;
+            Volume: number;
+        }[];
+        status?: undefined;
+        message?: undefined;
+    }>;
     getUserInflection(body: {
         code: string;
     }): Promise<import("./entities/user-inflection.entity").UserInflection[] | {
@@ -28,15 +39,14 @@ export declare class StockDataController {
     deleteUserInflection(body: {
         id: number;
     }): Promise<import("typeorm").DeleteResult>;
-    findOne(code?: string, name?: string): Promise<{
-        message: string;
-    } | undefined> | {
+    getstockPoint(code?: string, name?: string): Promise<{
+        Company: import("./entities/KoreanStockCode.entity").KoreanStockCode;
+        StockData: import("./entities/DayStockData.entity").DayStockData[];
+        PeakDates: import("./entities/PeakDate.entity").PeakDate[];
+        FilteredPeaks: import("./entities/filtered-peaks.entity").FilteredPeak[];
+        UserInflections: import("./entities/user-inflection.entity").UserInflection[];
+    }> | {
         message: string;
     };
-    updateCertified(code?: string, name?: string): Promise<import("./entities/tr-code.entity").TrCode | {
-        message: string;
-    }> | undefined;
-    getFalseCertified(): Promise<import("./entities/tr-code.entity").TrCode[]>;
-    update(id: string, updateStockDatumDto: UpdateStockDatumDto): string;
-    remove(id: string): string;
+    getFalseCertified(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
 }

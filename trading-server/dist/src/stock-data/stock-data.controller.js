@@ -15,20 +15,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StockDataController = void 0;
 const common_1 = require("@nestjs/common");
 const stock_data_service_1 = require("./stock-data.service");
-const create_stock_datum_dto_1 = require("./dto/create-stock-datum.dto");
-const update_stock_datum_dto_1 = require("./dto/update-stock-datum.dto");
 let StockDataController = class StockDataController {
     constructor(stockDataService) {
         this.stockDataService = stockDataService;
     }
-    create(createStockDatumDto) {
-        return this.stockDataService.create(createStockDatumDto);
-    }
     getAllCodes() {
         return this.stockDataService.getAllCodes();
-    }
-    gettrueCodes() {
-        return this.stockDataService.gettrueCodes();
     }
     getStockData(body) {
         return this.stockDataService.getStockData(body.code);
@@ -47,53 +39,26 @@ let StockDataController = class StockDataController {
     deleteUserInflection(body) {
         return this.stockDataService.deleteUserInflection(body.id);
     }
-    findOne(code, name) {
+    getstockPoint(code, name) {
         if (code) {
-            return this.stockDataService.findOneByTrCode(code);
+            return this.stockDataService.getstockPoint(+code);
         }
         else if (name) {
-            return this.stockDataService.findOneByStockName(name);
+            return this.stockDataService.getstockPoint(name);
         }
         return { message: 'No stock code or name provided' };
-    }
-    updateCertified(code, name) {
-        if (code) {
-            return this.stockDataService.updateCertifiedTrCode(code);
-        }
-        else if (name) {
-            return this.stockDataService.updateCertifiedStockName(name);
-        }
     }
     getFalseCertified() {
         return this.stockDataService.getFalseCertified();
     }
-    update(id, updateStockDatumDto) {
-        return this.stockDataService.update(+id, updateStockDatumDto);
-    }
-    remove(id) {
-        return this.stockDataService.remove(+id);
-    }
 };
 exports.StockDataController = StockDataController;
-__decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_stock_datum_dto_1.CreateStockDatumDto]),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)("get_all_codes"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], StockDataController.prototype, "getAllCodes", null);
-__decorate([
-    (0, common_1.Get)("get_true_codes"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "gettrueCodes", null);
 __decorate([
     (0, common_1.Post)("get_stock_data"),
     __param(0, (0, common_1.Body)()),
@@ -129,36 +94,13 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
-], StockDataController.prototype, "findOne", null);
-__decorate([
-    (0, common_1.Get)("certified"),
-    __param(0, (0, common_1.Query)('code')),
-    __param(1, (0, common_1.Query)('name')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "updateCertified", null);
+], StockDataController.prototype, "getstockPoint", null);
 __decorate([
     (0, common_1.Get)("false-certified"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], StockDataController.prototype, "getFalseCertified", null);
-__decorate([
-    (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_stock_datum_dto_1.UpdateStockDatumDto]),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "update", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "remove", null);
 exports.StockDataController = StockDataController = __decorate([
     (0, common_1.Controller)('stock-data'),
     __metadata("design:paramtypes", [stock_data_service_1.StockDataService])

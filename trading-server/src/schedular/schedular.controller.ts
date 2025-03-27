@@ -46,7 +46,7 @@ export class SchedularController {
   }
 
   //AccessToken 발급
-  @Cron('0 10 13 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('0 25 11 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
   CreateAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
@@ -77,7 +77,7 @@ export class SchedularController {
   }
 
   //주식 일봉 데이터 수집집
-  @Cron('0 40 14 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('30 25 11 * * *',{timeZone :'Asia/Seoul'})
   async getDayStockData(){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
     const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";

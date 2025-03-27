@@ -1,6 +1,9 @@
 import { DayStockData } from "./DayStockData.entity";
 import { WeekStockData } from "./WeekStockData.entity";
 import { PeakDate } from "./PeakDate.entity";
+import { FilteredPeak } from "./filtered-peaks.entity";
+import { UserInflection } from "./user-inflection.entity";
+import { PeakPrice } from "./PeakPrice.entity";
 export declare class KoreanStockCode {
     id: number;
     company: string;
@@ -12,7 +15,11 @@ export declare class KoreanStockCode {
     representative: string;
     homepage: string;
     region: string;
+    certified: boolean;
     daystockData: DayStockData[];
     weekstockData: WeekStockData[];
     peakDates: PeakDate[];
+    filteredPeaks: FilteredPeak[];
+    userInflections: UserInflection[];
+    peakPrices: PeakPrice[];
 }

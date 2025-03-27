@@ -5,9 +5,9 @@ from app.routers import schedule
 from app.database import create_db_pool, close_db_pool
 
 async_scheduler = AsyncIOScheduler()
-app = FastAPI()
 
-@async_scheduler.scheduled_job('cron', hour=14, minute=51)
+
+@async_scheduler.scheduled_job('cron', hour=19, minute=44)
 async def async_DayFindFeakUpdate():
     # 여기서는 request가 없으므로, 직접 app.state.db_pool을 사용해야 함
     db_pool = app.state.db_pool

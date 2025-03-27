@@ -17,7 +17,7 @@ const StockDashboard = () => {
     <div className="min-h-screen bg-background">
       <StockListPage code={code} name = {name}/>
       {(code || name) && <main className="container mx-auto px-4 py-8">
-        <StockAnalysisPoints code = {code}  name={name}/>
+        <StockAnalysisPoints code = {code}  Company={name}/>
         <CheckPage code = {code}  name={name}/>
       </main>}
     </div>

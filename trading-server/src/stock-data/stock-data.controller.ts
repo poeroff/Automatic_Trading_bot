@@ -7,20 +7,17 @@ import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 export class StockDataController {
   constructor(private readonly stockDataService: StockDataService) {}
 
-  @Post()
-  create(@Body() createStockDatumDto: CreateStockDatumDto) {
-    return this.stockDataService.create(createStockDatumDto);
-  }
+  
 
   @Get("get_all_codes")
   getAllCodes() {
     return this.stockDataService.getAllCodes();
   }
 /*  */
-  @Get("get_true_codes")
-  gettrueCodes() {
-    return this.stockDataService.gettrueCodes();
-  }
+  // @Get("get_true_codes")
+  // gettrueCodes() {
+  //   return this.stockDataService.gettrueCodes();
+  // }
 
 
   @Post("get_stock_data")
@@ -54,24 +51,24 @@ export class StockDataController {
 
   //주식,고점,변곡점,변곡점 설정 데이터 가져오기
   @Get("stock")
-  findOne(@Query('code') code?: string, @Query('name') name?: string) {
+  getstockPoint(@Query('code') code?: string, @Query('name') name?: string) {
     if (code) {
-      return this.stockDataService.findOneByTrCode(code); // tr_code로 조회
+      return this.stockDataService.getstockPoint(+code); // tr_code로 조회
     } else if (name) {
-      return this.stockDataService.findOneByStockName(name); // stock_name으로 조회
+      return this.stockDataService.getstockPoint(name); // stock_name으로 조회
     }
     return { message: 'No stock code or name provided' };
   }
 
-  //인증 여부 업데이트트
-  @Get("certified")
-  updateCertified(@Query('code') code?: string, @Query('name') name?: string) {
-    if (code) {
-      return this.stockDataService.updateCertifiedTrCode(code); // tr_code로 조회
-    } else if (name) {
-      return this.stockDataService.updateCertifiedStockName(name); // stock_name으로 조회
-    }
-  }
+  // //인증 여부 업데이트트
+  // @Get("certified")
+  // updateCertified(@Query('code') code?: string, @Query('name') name?: string) {
+  //   if (code) {
+  //     return this.stockDataService.updateCertifiedTrCode(code); // tr_code로 조회
+  //   } else if (name) {
+  //     return this.stockDataService.updateCertifiedStockName(name); // stock_name으로 조회
+  //   }
+  // }
 
   //인증이 안된 종목 조회
   @Get("false-certified")
@@ -81,13 +78,4 @@ export class StockDataController {
 
 
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStockDatumDto: UpdateStockDatumDto) {
-    return this.stockDataService.update(+id, updateStockDatumDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.stockDataService.remove(+id);
-  }
 }

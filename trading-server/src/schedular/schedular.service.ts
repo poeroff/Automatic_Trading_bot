@@ -88,15 +88,14 @@ export class SchedularService {
   // -- 임시 테이블 이름 변경
   // RENAME TABLE DayStockData_temp TO DayStockData;
   async getDayStockData(url, headers) {
-    let count = 0;
     const codeList = await this.koreastockcodeRepository.find();
-    for (let i = 500; i < codeList.length; i++) {
+    for (let i = 0; i < codeList.length; i++) {
       const code = codeList[i];
       const originalDate = code.listed_date;
     
       const codeStr = code.code.toString().padStart(6, '0');
       const startDay = dayjs(originalDate, 'YYYY-MM-DD'); 
-      const endDay = dayjs(this.todayStr, 'YYYYMMDD');
+      const endDay = dayjs(this.todayStr, 'YYYYMMDD').subtract(1, 'day');
       // 100일씩 끊을 범위 설정
       const chunkSize = 100;
       let currentStart = startDay;
@@ -144,10 +143,6 @@ export class SchedularService {
         // 만약 currentStart가 endDay를 넘어가면 while문에서 탈출됨
       }
 
-      count++;
-      if (count === 1) {
-        break;
-      }
     }
 }
 

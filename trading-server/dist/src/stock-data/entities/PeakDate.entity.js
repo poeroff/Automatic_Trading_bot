@@ -20,7 +20,7 @@ __decorate([
     __metadata("design:type", Number)
 ], PeakDate.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => KoreanStockCode_entity_1.KoreanStockCode, (koreanstockcode) => koreanstockcode.peakDates, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.ManyToOne)(() => KoreanStockCode_entity_1.KoreanStockCode, (KoreanStockCode) => KoreanStockCode.peakDates, { onDelete: 'CASCADE' }),
     (0, typeorm_1.JoinColumn)({ name: 'stock_id' }),
     __metadata("design:type", KoreanStockCode_entity_1.KoreanStockCode)
 ], PeakDate.prototype, "trCode", void 0);

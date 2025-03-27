@@ -14,6 +14,9 @@ const typeorm_1 = require("typeorm");
 const DayStockData_entity_1 = require("./DayStockData.entity");
 const WeekStockData_entity_1 = require("./WeekStockData.entity");
 const PeakDate_entity_1 = require("./PeakDate.entity");
+const filtered_peaks_entity_1 = require("./filtered-peaks.entity");
+const user_inflection_entity_1 = require("./user-inflection.entity");
+const PeakPrice_entity_1 = require("./PeakPrice.entity");
 let KoreanStockCode = class KoreanStockCode {
 };
 exports.KoreanStockCode = KoreanStockCode;
@@ -58,6 +61,10 @@ __decorate([
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "region", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], KoreanStockCode.prototype, "certified", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => DayStockData_entity_1.DayStockData, (daystockData) => daystockData.trCode),
     __metadata("design:type", Array)
 ], KoreanStockCode.prototype, "daystockData", void 0);
@@ -69,6 +76,18 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => PeakDate_entity_1.PeakDate, (peakDate) => peakDate.trCode),
     __metadata("design:type", Array)
 ], KoreanStockCode.prototype, "peakDates", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => filtered_peaks_entity_1.FilteredPeak, (filteredPeak) => filteredPeak.trCode),
+    __metadata("design:type", Array)
+], KoreanStockCode.prototype, "filteredPeaks", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => user_inflection_entity_1.UserInflection, (userInflection) => userInflection.trCode),
+    __metadata("design:type", Array)
+], KoreanStockCode.prototype, "userInflections", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => PeakPrice_entity_1.PeakPrice, (peakPrice) => peakPrice.trCode),
+    __metadata("design:type", Array)
+], KoreanStockCode.prototype, "peakPrices", void 0);
 exports.KoreanStockCode = KoreanStockCode = __decorate([
     (0, typeorm_1.Entity)('KoreanStockCode')
 ], KoreanStockCode);

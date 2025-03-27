@@ -14,7 +14,7 @@ interface StockAnalysisPointsProps {
 }
 
 const StockListPage = ({ code , name } : StockAnalysisPointsProps) => {
-    const [stockList, setStockList] = useState<{ id: number, code: string, name:string }[]>([]);
+    const [stockList, setStockList] = useState<{ id: number, company: string , code: number }[]>([]);
 
     useEffect(() => {
       const fetchData = async () => {
@@ -35,7 +35,7 @@ const StockListPage = ({ code , name } : StockAnalysisPointsProps) => {
             variant={ "outline" }
             className="px-4 py-2 whitespace-nowrap"
           >
-            {stock.name}
+            {stock.company}
           </Button>
         ))}
       </div>

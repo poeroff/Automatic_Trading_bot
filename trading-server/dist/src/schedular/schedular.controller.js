@@ -143,7 +143,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "CreateAuthHashKey", null);
 __decorate([
-    (0, schedule_1.Cron)('0 10 13 * * *', { timeZone: 'Asia/Seoul' }),
+    (0, schedule_1.Cron)('0 25 11 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -155,7 +155,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "CreateWebSocketToken", null);
 __decorate([
-    (0, schedule_1.Cron)('0 40 14 * * *', { timeZone: 'Asia/Seoul' }),
+    (0, schedule_1.Cron)('30 25 11 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

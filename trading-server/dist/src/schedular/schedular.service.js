@@ -75,14 +75,13 @@ let SchedularService = class SchedularService {
         }
     }
     async getDayStockData(url, headers) {
-        let count = 0;
         const codeList = await this.koreastockcodeRepository.find();
-        for (let i = 500; i < codeList.length; i++) {
+        for (let i = 0; i < codeList.length; i++) {
             const code = codeList[i];
             const originalDate = code.listed_date;
             const codeStr = code.code.toString().padStart(6, '0');
             const startDay = (0, dayjs_1.default)(originalDate, 'YYYY-MM-DD');
-            const endDay = (0, dayjs_1.default)(this.todayStr, 'YYYYMMDD');
+            const endDay = (0, dayjs_1.default)(this.todayStr, 'YYYYMMDD').subtract(1, 'day');
             const chunkSize = 100;
             let currentStart = startDay;
             while (currentStart.isBefore(endDay)) {
@@ -114,10 +113,6 @@ let SchedularService = class SchedularService {
                     console.error('API 호출 에러:', error.message);
                 }
                 currentStart = currentEnd.add(1, 'day');
-            }
-            count++;
-            if (count === 1) {
-                break;
             }
         }
     }

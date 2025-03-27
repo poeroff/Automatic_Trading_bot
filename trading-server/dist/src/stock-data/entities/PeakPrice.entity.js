@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeakPrice = void 0;
 const typeorm_1 = require("typeorm");
-const tr_code_entity_1 = require("./tr-code.entity");
+const KoreanStockCode_entity_1 = require("./KoreanStockCode.entity");
 let PeakPrice = class PeakPrice {
 };
 exports.PeakPrice = PeakPrice;
@@ -20,8 +20,9 @@ __decorate([
     __metadata("design:type", Number)
 ], PeakPrice.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => tr_code_entity_1.TrCode, (trCode) => trCode.peakPrices, { onDelete: 'CASCADE' }),
-    __metadata("design:type", tr_code_entity_1.TrCode)
+    (0, typeorm_1.ManyToOne)(() => KoreanStockCode_entity_1.KoreanStockCode, (KoreanStockCode) => KoreanStockCode.peakPrices, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'stock_id' }),
+    __metadata("design:type", KoreanStockCode_entity_1.KoreanStockCode)
 ], PeakPrice.prototype, "trCode", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'float' }),

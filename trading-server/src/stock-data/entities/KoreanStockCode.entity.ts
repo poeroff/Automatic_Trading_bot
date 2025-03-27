@@ -2,6 +2,9 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { DayStockData } from "./DayStockData.entity";
 import { WeekStockData } from "./WeekStockData.entity";
 import { PeakDate } from "./PeakDate.entity";
+import { FilteredPeak } from "./filtered-peaks.entity";
+import { UserInflection } from "./user-inflection.entity";
+import { PeakPrice } from "./PeakPrice.entity";
 
 @Entity('KoreanStockCode') // 테이블 이름을 'tr_codes'로 설정
 export class KoreanStockCode {
@@ -35,6 +38,9 @@ export class KoreanStockCode {
     @Column({nullable : true})
     region : string
 
+    @Column({ type: 'boolean', default: false })
+    certified: boolean; // 인증 여부
+
     @OneToMany(() => DayStockData, (daystockData) => daystockData.trCode)
     daystockData: DayStockData[];
 
@@ -43,6 +49,16 @@ export class KoreanStockCode {
 
     @OneToMany(() => PeakDate, (peakDate) => peakDate.trCode)
     peakDates: PeakDate[];
+
+    @OneToMany(() => FilteredPeak, (filteredPeak) => filteredPeak.trCode)
+    filteredPeaks: FilteredPeak[];
+
+    @OneToMany(() => UserInflection, (userInflection) => userInflection.trCode)
+    userInflections: UserInflection[];
+
+    
+    @OneToMany(() => PeakPrice, (peakPrice) => peakPrice.trCode)
+    peakPrices: PeakPrice[];
 
 
 

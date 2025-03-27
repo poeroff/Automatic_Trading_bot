@@ -43,14 +43,14 @@ const pulseAnimation = `
 
 interface StockAnalysisPointsProps {
   code: string | null;
-  name: string | null;
+  Company: string | null;
 }
 
-const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
+const StockAnalysisPoints = ({ code , Company } : StockAnalysisPointsProps)  =>{
   const highpoint = useRef<HTMLInputElement>(null)
   const inflectionpointRef = useRef<HTMLInputElement>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [title, setTitle] = useState<StockAnalysisPointsProps>({code: null,name: null});
+  const [title, setTitle] = useState<StockAnalysisPointsProps>({code: null, Company: null});
   const [chartData, setChartData] = useState<{ date: string; value: number }[]>([]); // 초기값을 빈 배열로 설정
   const [marketCapList, setMarketCapList] = useState<{ id: number, date: string; }[]>([]);
   const [volumeList, setVolumeList] = useState<{ id: number, date: string; }[]>([]);
@@ -62,25 +62,26 @@ const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
   const fetchStockData = useCallback(async (codeParam?: string, nameParam?: string) => {
     const url = codeParam ? `http://localhost:4000/stock-data/stock?code=${codeParam}` : `http://localhost:4000/stock-data/stock?name=${nameParam}`;
     const data = await Get(url);
-    if (data?.stockData) {
+    console.log(data)
+    if (data?.StockData) {
       startTransition(() => {
-        setTitle({name : data.trCode.name, code : data.trCode.code});
-        setChartData(data.stockData.map((item: any) => ({
+        setTitle({Company : data.Company.company, code : data.Company.code});
+        setChartData(data.StockData.map((item: any) => ({
           date: item.date,
           value: codeParam ? item.high : item.close
         })));
 
-        setMarketCapList(data.peakDates.map((peak: any) => ({
+        setMarketCapList(data.PeakDates.map((peak: any) => ({
           id: peak.id,
           date: peak.date,
         })));
 
-        setVolumeList(data.filteredPeaks.map((peak: any) => ({
+        setVolumeList(data.FilteredPeaks.map((peak: any) => ({
           id: peak.id,
           date: peak.date,
         })));
         
-        setCustomList(data.userInflections.map((peak: any) => {
+        setCustomList(data.UserInflections.map((peak: any) => {
           const dateStr = peak.date.toString();
         
           if(peak.highdate == null){
@@ -113,11 +114,11 @@ const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
 
   useEffect(() => {
     setErrorMessage(null)
-    if (code || name) {
-      fetchStockData(code ?? undefined, name ?? undefined);
+    if (code || Company) {
+      fetchStockData(code ?? undefined, Company ?? undefined);
     }
 
-    if (!code && !name) return; // ✅ 불필요한 실행 방지
+    if (!code && !Company) return; // ✅ 불필요한 실행 방지
 
     // CSS 스타일 한 번만 추가
     const styleSheet = document.createElement("style");
@@ -128,7 +129,7 @@ const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
     return () => {
       styleSheet.remove();
     };
-  }, [code, name, fetchStockData]);
+  }, [code, Company, fetchStockData]);
 
   // 나머지 핸들러 함수들도 useCallback으로 메모이제이션
   const handleDateClick = useCallback((date: string) => {
@@ -159,25 +160,25 @@ const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
       };
     
       if (code) payload.code = code;
-      if (name) payload.name = name;
+      if (Company) payload.name = Company;
       const result = await axios.post("http://localhost:4000/stock-data/user-inflection", payload);
       console.log(result)
       // 데이터 리프레시
-      fetchStockData(code ?? undefined, name ?? undefined);
+      fetchStockData(code ?? undefined, Company ?? undefined);
     } catch (error) {
       setErrorMessage('* 저장 중 오류가 발생.(DB에 일치하는 값이 없습니다, 인터넷 문제)');
     }
-  }, [code, name, customList.length, fetchStockData]);
+  }, [code, Company, customList.length, fetchStockData]);
 
   const handleDeleteCustomItem = useCallback(async (id: number) => {
     try {
       await Delete(`http://localhost:4000/stock-data/user-inflection`, id);
       // 데이터 리프레시
-      fetchStockData(code ?? undefined, name ?? undefined);
+      fetchStockData(code ?? undefined, Company ?? undefined);
     } catch (error) {
       setErrorMessage('* 삭제 중 오류가 발생했습니다.');
     }
-  }, [code, name]);
+  }, [code, Company]);
 
 
   // 날짜 유효성 검사 함수
@@ -194,8 +195,7 @@ const StockAnalysisPoints = ({ code , name } : StockAnalysisPointsProps)  =>{
     return day > 0 && day <= daysInMonth[month - 1];
   }, [inflectionpointRef.current?.value]);
 
-
-  return <> <ChartPage marketCapList={marketCapList} volumeList={volumeList} chartData={chartData} name={title.name} code = {title.code} selectedDate={selectedDate} customList={customList}></ChartPage><div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  return <> <ChartPage marketCapList={marketCapList} volumeList={volumeList} chartData={chartData} Company={title.Company} code = {title.code} selectedDate={selectedDate} customList={customList}></ChartPage><div className="grid grid-cols-1 md:grid-cols-3 gap-6">
     <Card>
       <CardHeader>
         <CardTitle>고점(빨간색)</CardTitle>

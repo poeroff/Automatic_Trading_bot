@@ -1,24 +1,35 @@
-import { CreateStockDatumDto } from './dto/create-stock-datum.dto';
-import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 import { Repository } from 'typeorm';
 import { DayStockData } from './entities/DayStockData.entity';
-import { TrCode } from './entities/tr-code.entity';
 import { PeakDate } from './entities/PeakDate.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
 import { FilteredPeak } from './entities/filtered-peaks.entity';
 import { UserInflection } from './entities/user-inflection.entity';
+import { KoreanStockCode } from './entities/KoreanStockCode.entity';
 export declare class StockDataService {
-    private stockDataRepository;
-    private trCodeRepository;
+    private DayStockDataRepository;
+    private KoreanStockCodeRepository;
     private peakDateRepository;
     private peakPriceRepository;
     private filteredPeakRepository;
     private userInflectionRepository;
-    constructor(stockDataRepository: Repository<DayStockData>, trCodeRepository: Repository<TrCode>, peakDateRepository: Repository<PeakDate>, peakPriceRepository: Repository<PeakPrice>, filteredPeakRepository: Repository<FilteredPeak>, userInflectionRepository: Repository<UserInflection>);
-    create(createStockDatumDto: CreateStockDatumDto): string;
-    getAllCodes(): Promise<TrCode[]>;
-    gettrueCodes(): Promise<TrCode[]>;
-    getStockData(code: string): Promise<void>;
+    constructor(DayStockDataRepository: Repository<DayStockData>, KoreanStockCodeRepository: Repository<KoreanStockCode>, peakDateRepository: Repository<PeakDate>, peakPriceRepository: Repository<PeakPrice>, filteredPeakRepository: Repository<FilteredPeak>, userInflectionRepository: Repository<UserInflection>);
+    getAllCodes(): Promise<KoreanStockCode[]>;
+    getStockData(code: string): Promise<{
+        status: string;
+        message: string;
+        Data?: undefined;
+    } | {
+        Data: {
+            Date: string;
+            Open: number;
+            High: number;
+            Low: number;
+            Close: number;
+            Volume: number;
+        }[];
+        status?: undefined;
+        message?: undefined;
+    }>;
     getUserInflection(code: string): Promise<UserInflection[] | {
         message: string;
     }>;
@@ -29,19 +40,15 @@ export declare class StockDataService {
         message: string;
     }>;
     deleteUserInflection(id: number): Promise<import("typeorm").DeleteResult>;
-    findOneByTrCode(trcode: string): Promise<{
-        message: string;
-    } | undefined>;
-    findOneByStockName(stockName: string): Promise<{
-        message: string;
-    } | undefined>;
-    updateCertifiedTrCode(code: string): Promise<TrCode | {
+    getstockPoint(stock: any): Promise<{
+        Company: KoreanStockCode;
+        StockData: DayStockData[];
+        PeakDates: PeakDate[];
+        FilteredPeaks: FilteredPeak[];
+        UserInflections: UserInflection[];
+    }>;
+    updateCertifiedTrCode(code: string): Promise<KoreanStockCode | {
         message: string;
     }>;
-    updateCertifiedStockName(name: string): Promise<TrCode | {
-        message: string;
-    }>;
-    getFalseCertified(): Promise<TrCode[]>;
-    update(id: number, updateStockDatumDto: UpdateStockDatumDto): string;
-    remove(id: number): string;
+    getFalseCertified(): Promise<KoreanStockCode[]>;
 }

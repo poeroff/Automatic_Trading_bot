@@ -13,13 +13,13 @@ interface ChartPageProps {
   volumeList: ListItem[];
   customList : ListItem[];
   chartData: { date: string; value: number }[];
-  name: string | null;
+  Company: string | null;
   code: string | null;
   selectedDate: string | null;
 }
 
-const ChartPage = ({ marketCapList, volumeList, chartData, name, code, selectedDate,customList }: ChartPageProps) => {
-  console.log(customList)
+const ChartPage = ({ marketCapList, volumeList, chartData, Company, code, selectedDate,customList }: ChartPageProps) => {
+  console.log(Company)
 
   // ✅ useMemo를 사용해 customDots 미리 계산하여 최적화
   const customDots = useMemo(() => {
@@ -89,7 +89,7 @@ const ChartPage = ({ marketCapList, volumeList, chartData, name, code, selectedD
     <Card className="mb-8">
       <CardHeader>
         <CardTitle>
-          {name} ({code})
+          {Company} ({code})
         </CardTitle>
       </CardHeader>
       <CardContent className="h-[400px]">

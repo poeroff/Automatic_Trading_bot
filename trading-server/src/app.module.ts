@@ -9,7 +9,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 import * as Joi from 'joi';
 import { PeakPrice } from './stock-data/entities/PeakPrice.entity';
-import { FilteredPeak } from './stock-data/entities/filtered-peaks.entity';
+import { FilteredPeak } from './stock-data/entities/FilterPeak.entity';
 import { PeakDate } from './stock-data/entities/PeakDate.entity';
 import { UserInflection } from './stock-data/entities/user-inflection.entity';
 import { SchedularModule } from './schedular/schedular.module';

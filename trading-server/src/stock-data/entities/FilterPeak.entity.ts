@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 import { KoreanStockCode } from './KoreanStockCode.entity';
 
@@ -8,6 +8,7 @@ export class FilteredPeak {
   id: number;
 
   @ManyToOne(() => KoreanStockCode, (KoreanStockCode) => KoreanStockCode.filteredPeaks, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'stock_id' }) // This is the foreign key
   trCode: KoreanStockCode; // TrCode와의 관계
 
   @Column({type:"float"})

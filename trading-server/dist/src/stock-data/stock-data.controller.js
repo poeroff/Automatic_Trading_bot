@@ -19,16 +19,20 @@ let StockDataController = class StockDataController {
     constructor(stockDataService) {
         this.stockDataService = stockDataService;
     }
+    GetTrueCode() {
+        return this.stockDataService.GetTrueCode();
+    }
+    StockData(body) {
+        return this.stockDataService.StockData(body.code);
+    }
     getAllCodes() {
         return this.stockDataService.getAllCodes();
-    }
-    getStockData(body) {
-        return this.stockDataService.getStockData(body.code);
     }
     getUserInflection(body) {
         return this.stockDataService.getUserInflection(body.code);
     }
     createUserInflection(body) {
+        console.log("HELLO");
         if (body.code) {
             return this.stockDataService.createUserInflectioncode(body.date, body.code, body.highPoint);
         }
@@ -48,24 +52,36 @@ let StockDataController = class StockDataController {
         }
         return { message: 'No stock code or name provided' };
     }
-    getFalseCertified() {
+    GetFalseCertified() {
         return this.stockDataService.getFalseCertified();
+    }
+    ReturnHighPeak(body) {
+        return this.stockDataService.ReturnHighPeak(body.code);
+    }
+    ReturnInflectionPoint(body) {
+        return this.stockDataService.ReturnInflectionPoint(body.code);
     }
 };
 exports.StockDataController = StockDataController;
+__decorate([
+    (0, common_1.Get)("TrueCode"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], StockDataController.prototype, "GetTrueCode", null);
+__decorate([
+    (0, common_1.Post)("StockData"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StockDataController.prototype, "StockData", null);
 __decorate([
     (0, common_1.Get)("get_all_codes"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], StockDataController.prototype, "getAllCodes", null);
-__decorate([
-    (0, common_1.Post)("get_stock_data"),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "getStockData", null);
 __decorate([
     (0, common_1.Get)("get_user_inflection"),
     __param(0, (0, common_1.Body)()),
@@ -96,11 +112,25 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], StockDataController.prototype, "getstockPoint", null);
 __decorate([
-    (0, common_1.Get)("false-certified"),
+    (0, common_1.Get)("FalseCertified"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], StockDataController.prototype, "getFalseCertified", null);
+], StockDataController.prototype, "GetFalseCertified", null);
+__decorate([
+    (0, common_1.Post)("ReturnHighPeak"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StockDataController.prototype, "ReturnHighPeak", null);
+__decorate([
+    (0, common_1.Post)("ReturnInflectionPoint"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StockDataController.prototype, "ReturnInflectionPoint", null);
 exports.StockDataController = StockDataController = __decorate([
     (0, common_1.Controller)('stock-data'),
     __metadata("design:paramtypes", [stock_data_service_1.StockDataService])

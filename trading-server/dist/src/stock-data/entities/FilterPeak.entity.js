@@ -21,6 +21,7 @@ __decorate([
 ], FilteredPeak.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => KoreanStockCode_entity_1.KoreanStockCode, (KoreanStockCode) => KoreanStockCode.filteredPeaks, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'stock_id' }),
     __metadata("design:type", KoreanStockCode_entity_1.KoreanStockCode)
 ], FilteredPeak.prototype, "trCode", void 0);
 __decorate([
@@ -34,4 +35,4 @@ __decorate([
 exports.FilteredPeak = FilteredPeak = __decorate([
     (0, typeorm_1.Entity)('filtered_peaks')
 ], FilteredPeak);
-//# sourceMappingURL=filtered-peaks.entity.js.map
+//# sourceMappingURL=FilterPeak.entity.js.map

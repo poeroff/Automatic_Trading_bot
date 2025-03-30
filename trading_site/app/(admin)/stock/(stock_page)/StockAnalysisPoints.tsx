@@ -140,22 +140,32 @@ const StockAnalysisPoints = ({ code , Company } : StockAnalysisPointsProps)  =>{
   const handleAddCustomItem = useCallback(async (event :React.FormEvent) => {
     event.preventDefault()
     const highPointValue = highpoint.current?.value;
-    if (!inflectionpointRef.current?.value) return;
+    if (!inflectionpointRef.current?.value) {
+      setErrorMessage("* 연결할 변곡점을 입력해주세요");
+      return;
+    }
+    if (!highpoint.current?.value){
+      setErrorMessage("* 연결할 고점을 입력해주세요");
+      return;
+    }
+     
 
     if (customList.length > 1) {
       setErrorMessage("* 3개 이상의 변곡점을 추가할 수 없습니다.");
       return;
     }
 
-    const dateValue = inflectionpointRef.current.value;
-    if (!isValidDate(dateValue)) {
+    const InflectionPointDateValue = inflectionpointRef.current.value;
+    const HighPointDateValue = highpoint.current.value;
+ 
+    if (!isValidDate(InflectionPointDateValue) || !isValidDate(HighPointDateValue)) {
       setErrorMessage('* 올바른 날짜 형식(YYYYMMDD)을 입력하세요.');
       return;
     }
 
     try {
       const payload: Record<string, any> = {
-        date: Number(dateValue), // 날짜 값 전송
+        date: Number(InflectionPointDateValue), // 날짜 값 전송
         highPoint: highPointValue ? Number(highPointValue) : null, // highpoint가 없으면 null
       };
     
@@ -253,7 +263,7 @@ const StockAnalysisPoints = ({ code , Company } : StockAnalysisPointsProps)  =>{
         </div>
 
       </CardContent>
-    </Card>
+    </Card> 
     <Card>
       <CardHeader>
         <CardTitle>변곡점 설정 목록</CardTitle>

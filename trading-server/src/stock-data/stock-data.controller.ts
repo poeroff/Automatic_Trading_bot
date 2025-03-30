@@ -6,8 +6,18 @@ import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 @Controller('stock-data')
 export class StockDataController {
   constructor(private readonly stockDataService: StockDataService) {}
+  // 키움 api로 통신하는 api
+  @Get("TrueCode")
+  GetTrueCode(){
+    return this.stockDataService.GetTrueCode();
+  }
 
-  
+  @Post("StockData")
+  StockData(@Body() body: { code: string }) {
+    return this.stockDataService.StockData(body.code);
+  }
+
+
 
   @Get("get_all_codes")
   getAllCodes() {
@@ -20,10 +30,7 @@ export class StockDataController {
   // }
 
 
-  @Post("get_stock_data")
-  getStockData(@Body() body: { code: string }) {
-    return this.stockDataService.getStockData(body.code);
-  }
+ 
 
 
   @Get("get_user_inflection")
@@ -34,8 +41,8 @@ export class StockDataController {
   //사용자 변곡점 설정 추가 함수
   @Post("user-inflection")
   createUserInflection(
-    @Body() body: { date: number; highPoint?: number | null; code?: string; name?: string }) {
-  
+    @Body() body: { date: number; highPoint: number ; code?: string; name?: string }) {
+    console.log("HELLO")
     if (body.code) {
       return this.stockDataService.createUserInflectioncode(body.date, body.code, body.highPoint); 
     } else if (body.name) {
@@ -71,10 +78,21 @@ export class StockDataController {
   // }
 
   //인증이 안된 종목 조회
-  @Get("false-certified")
-  getFalseCertified() {
+  @Get("FalseCertified")
+  GetFalseCertified() {
     return this.stockDataService.getFalseCertified();
   }
+  @Post("ReturnHighPeak")
+  ReturnHighPeak(@Body() body :{ code : number}){
+    return this.stockDataService.ReturnHighPeak(body.code)
+  }
+
+  @Post("ReturnInflectionPoint")
+  ReturnInflectionPoint(@Body() body :{ code : number}){
+    return this.stockDataService.ReturnInflectionPoint(body.code)
+  }
+
+
 
 
 

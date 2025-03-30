@@ -2,25 +2,21 @@ import { StockDataService } from './stock-data.service';
 export declare class StockDataController {
     private readonly stockDataService;
     constructor(stockDataService: StockDataService);
-    getAllCodes(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
-    getStockData(body: {
+    GetTrueCode(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
+    StockData(body: {
         code: string;
     }): Promise<{
-        status: string;
-        message: string;
-        Data?: undefined;
-    } | {
         Data: {
-            Date: string;
-            Open: number;
-            High: number;
-            Low: number;
-            Close: number;
-            Volume: number;
+            date: string;
+            open: number;
+            high: number;
+            low: number;
+            close: number;
+            volume: number;
+            is_high_point: boolean;
         }[];
-        status?: undefined;
-        message?: undefined;
     }>;
+    getAllCodes(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
     getUserInflection(body: {
         code: string;
     }): Promise<import("./entities/user-inflection.entity").UserInflection[] | {
@@ -28,12 +24,10 @@ export declare class StockDataController {
     }>;
     createUserInflection(body: {
         date: number;
-        highPoint?: number | null;
+        highPoint: number;
         code?: string;
         name?: string;
-    }): Promise<{
-        message: string;
-    } | undefined> | Promise<import("./entities/user-inflection.entity").UserInflection | {
+    }): Promise<import("./entities/user-inflection.entity").UserInflection | {
         message: string;
     }> | undefined;
     deleteUserInflection(body: {
@@ -43,10 +37,16 @@ export declare class StockDataController {
         Company: import("./entities/KoreanStockCode.entity").KoreanStockCode;
         StockData: import("./entities/DayStockData.entity").DayStockData[];
         PeakDates: import("./entities/PeakDate.entity").PeakDate[];
-        FilteredPeaks: import("./entities/filtered-peaks.entity").FilteredPeak[];
+        FilteredPeaks: import("./entities/FilterPeak.entity").FilteredPeak[];
         UserInflections: import("./entities/user-inflection.entity").UserInflection[];
     }> | {
         message: string;
     };
-    getFalseCertified(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
+    GetFalseCertified(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
+    ReturnHighPeak(body: {
+        code: number;
+    }): Promise<import("./entities/PeakDate.entity").PeakDate[]>;
+    ReturnInflectionPoint(body: {
+        code: number;
+    }): Promise<import("./entities/user-inflection.entity").UserInflection[]>;
 }

@@ -24,7 +24,7 @@ const CheckPage = ({ code , name } : StockAnalysisPointsProps) =>{
         await Get(`http://localhost:4000/stock-data/certified?name=${name}`);
       }
 
-      const falseCertified = await Get(`http://localhost:4000/stock-data/false-certified`);
+      const falseCertified = await Get(`http://localhost:4000/stock-data/FalseCertified`);
       if (falseCertified.length > 0) {
         router.push(`/stock?code=${falseCertified[0].code}`);
       }

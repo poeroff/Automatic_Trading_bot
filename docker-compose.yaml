@@ -50,6 +50,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+  fastapi-server:
+    container_name: fastapi-server
+    build:
+      context: ./fastapi-server  # FastAPI 프로젝트 디렉토리
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"  # FastAPI 기본 포트
+    volumes:
+      - ./fastapi-server:/app  # FastAPI 코드 마운트
+    env_file:
+      - ./fastapi-server/.env
+   
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped  # 컨테이너가 실패 시 재시작
 
   redis:
     container_name: redis

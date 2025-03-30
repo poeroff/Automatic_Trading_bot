@@ -2,7 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { DayStockData } from "./DayStockData.entity";
 import { WeekStockData } from "./WeekStockData.entity";
 import { PeakDate } from "./PeakDate.entity";
-import { FilteredPeak } from "./filtered-peaks.entity";
+import { FilteredPeak } from "./FilterPeak.entity";
 import { UserInflection } from "./user-inflection.entity";
 import { PeakPrice } from "./PeakPrice.entity";
 
@@ -56,7 +56,6 @@ export class KoreanStockCode {
     @OneToMany(() => UserInflection, (userInflection) => userInflection.trCode)
     userInflections: UserInflection[];
 
-    
     @OneToMany(() => PeakPrice, (peakPrice) => peakPrice.trCode)
     peakPrices: PeakPrice[];
 

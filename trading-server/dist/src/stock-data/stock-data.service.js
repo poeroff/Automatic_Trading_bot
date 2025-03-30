@@ -19,7 +19,7 @@ const typeorm_2 = require("typeorm");
 const DayStockData_entity_1 = require("./entities/DayStockData.entity");
 const PeakDate_entity_1 = require("./entities/PeakDate.entity");
 const PeakPrice_entity_1 = require("./entities/PeakPrice.entity");
-const filtered_peaks_entity_1 = require("./entities/filtered-peaks.entity");
+const FilterPeak_entity_1 = require("./entities/FilterPeak.entity");
 const user_inflection_entity_1 = require("./entities/user-inflection.entity");
 const KoreanStockCode_entity_1 = require("./entities/KoreanStockCode.entity");
 let StockDataService = class StockDataService {
@@ -31,34 +31,40 @@ let StockDataService = class StockDataService {
         this.filteredPeakRepository = filteredPeakRepository;
         this.userInflectionRepository = userInflectionRepository;
     }
+    async GetTrueCode() {
+        try {
+            const codes = await this.KoreanStockCodeRepository.find({ where: { certified: true } });
+            return codes;
+        }
+        catch (error) {
+            console.error('Error fetching codes:', error);
+            throw new common_1.InternalServerErrorException('Failed to fetch codes');
+        }
+    }
     async getAllCodes() {
         return await this.KoreanStockCodeRepository.find();
     }
-    async getStockData(code) {
-        const CompanyData = await this.DayStockDataRepository.find({
+    async StockData(code) {
+        const rawData = await this.DayStockDataRepository.find({
             where: { trCode: { code: +code } },
-            order: { date: 'ASC' },
+            order: { date: 'ASC' }
         });
-        if (!CompanyData || CompanyData.length === 0) {
-            return { status: 'error', message: `Code ${code} not found in stock_data table` };
-        }
-        const FormattedData = CompanyData.map(data => ({
-            Date: data.date,
-            Open: data.open,
-            High: data.high,
-            Low: data.low,
-            Close: data.close,
-            Volume: data.volume,
+        const processedData = rawData.map(item => ({
+            date: item.date,
+            open: item.open,
+            high: item.high,
+            low: item.low,
+            close: item.close,
+            volume: item.volume,
+            is_high_point: item.is_high_point
         }));
-        return { Data: FormattedData };
+        return { Data: processedData };
     }
     async getUserInflection(code) {
-        console.log(code);
         const trCode = await this.KoreanStockCodeRepository.findOne({ where: { code: +code } });
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
-        console.log(await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } }));
         return await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } });
     }
     async createUserInflectioncode(date, code, highPoint) {
@@ -70,6 +76,13 @@ let StockDataService = class StockDataService {
         const formattedDate = `${dateString.slice(0, 4)}-${dateString.slice(4, 6)}-${dateString.slice(6, 8)}`;
         const queryDate = new Date(formattedDate);
         queryDate.setHours(0, 0, 0, 0);
+        console.log(date);
+        const reference_date = await this.DayStockDataRepository.findOne({ where: { trCode: { id: trCode.id }, date: date.toString() } });
+        if (reference_date) {
+            const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate: highPoint ?? null, price: reference_date?.high });
+            return await this.userInflectionRepository.save(userInflection);
+        }
+        throw new common_1.NotFoundException('Reference date not found');
     }
     async createUserInflectionname(date, name, highPoint) {
         const trCode = await this.KoreanStockCodeRepository.findOne({ where: { company: name } });
@@ -93,8 +106,10 @@ let StockDataService = class StockDataService {
         if (!Company) {
             throw new common_1.HttpException('Not Found', common_1.HttpStatus.NOT_FOUND);
         }
-        console.log(Company);
-        const StockData = await this.DayStockDataRepository.find({ where: { trCode: { id: Company.id } } });
+        const StockData = await this.DayStockDataRepository.find({
+            where: { trCode: { id: Company.id } },
+            order: { date: "ASC" }
+        });
         const PeakDates = await this.peakDateRepository.find({ where: { trCode: { id: Company.id } } });
         const FilteredPeaks = await this.filteredPeakRepository.find({ where: { trCode: { id: Company.id } } });
         const UserInflections = await this.userInflectionRepository.find({ where: { trCode: { id: Company.id } } });
@@ -113,6 +128,14 @@ let StockDataService = class StockDataService {
         const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length > 0);
         return results;
     }
+    async ReturnHighPeak(code) {
+        const Company = await this.KoreanStockCodeRepository.findOne({ where: { code: code } });
+        return await this.peakDateRepository.find({ where: { trCode: { id: Company.id } } });
+    }
+    async ReturnInflectionPoint(code) {
+        const Company = await this.KoreanStockCodeRepository.findOne({ where: { code: code } });
+        return await this.userInflectionRepository.find({ where: { trCode: { id: Company.id } } });
+    }
 };
 exports.StockDataService = StockDataService;
 exports.StockDataService = StockDataService = __decorate([
@@ -121,7 +144,7 @@ exports.StockDataService = StockDataService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(KoreanStockCode_entity_1.KoreanStockCode)),
     __param(2, (0, typeorm_1.InjectRepository)(PeakDate_entity_1.PeakDate)),
     __param(3, (0, typeorm_1.InjectRepository)(PeakPrice_entity_1.PeakPrice)),
-    __param(4, (0, typeorm_1.InjectRepository)(filtered_peaks_entity_1.FilteredPeak)),
+    __param(4, (0, typeorm_1.InjectRepository)(FilterPeak_entity_1.FilteredPeak)),
     __param(5, (0, typeorm_1.InjectRepository)(user_inflection_entity_1.UserInflection)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,

@@ -46,7 +46,7 @@ export class SchedularController {
   }
 
   //AccessToken 발급
-  @Cron('0 25 11 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('0 59 12 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
   CreateAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"

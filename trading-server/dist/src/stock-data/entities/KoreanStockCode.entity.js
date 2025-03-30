@@ -14,7 +14,7 @@ const typeorm_1 = require("typeorm");
 const DayStockData_entity_1 = require("./DayStockData.entity");
 const WeekStockData_entity_1 = require("./WeekStockData.entity");
 const PeakDate_entity_1 = require("./PeakDate.entity");
-const filtered_peaks_entity_1 = require("./filtered-peaks.entity");
+const FilterPeak_entity_1 = require("./FilterPeak.entity");
 const user_inflection_entity_1 = require("./user-inflection.entity");
 const PeakPrice_entity_1 = require("./PeakPrice.entity");
 let KoreanStockCode = class KoreanStockCode {
@@ -77,7 +77,7 @@ __decorate([
     __metadata("design:type", Array)
 ], KoreanStockCode.prototype, "peakDates", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => filtered_peaks_entity_1.FilteredPeak, (filteredPeak) => filteredPeak.trCode),
+    (0, typeorm_1.OneToMany)(() => FilterPeak_entity_1.FilteredPeak, (filteredPeak) => filteredPeak.trCode),
     __metadata("design:type", Array)
 ], KoreanStockCode.prototype, "filteredPeaks", void 0);
 __decorate([

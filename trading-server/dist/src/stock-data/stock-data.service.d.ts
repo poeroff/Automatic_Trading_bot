@@ -2,7 +2,7 @@ import { Repository } from 'typeorm';
 import { DayStockData } from './entities/DayStockData.entity';
 import { PeakDate } from './entities/PeakDate.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
-import { FilteredPeak } from './entities/filtered-peaks.entity';
+import { FilteredPeak } from './entities/FilterPeak.entity';
 import { UserInflection } from './entities/user-inflection.entity';
 import { KoreanStockCode } from './entities/KoreanStockCode.entity';
 export declare class StockDataService {
@@ -13,29 +13,25 @@ export declare class StockDataService {
     private filteredPeakRepository;
     private userInflectionRepository;
     constructor(DayStockDataRepository: Repository<DayStockData>, KoreanStockCodeRepository: Repository<KoreanStockCode>, peakDateRepository: Repository<PeakDate>, peakPriceRepository: Repository<PeakPrice>, filteredPeakRepository: Repository<FilteredPeak>, userInflectionRepository: Repository<UserInflection>);
+    GetTrueCode(): Promise<KoreanStockCode[]>;
     getAllCodes(): Promise<KoreanStockCode[]>;
-    getStockData(code: string): Promise<{
-        status: string;
-        message: string;
-        Data?: undefined;
-    } | {
+    StockData(code: string): Promise<{
         Data: {
-            Date: string;
-            Open: number;
-            High: number;
-            Low: number;
-            Close: number;
-            Volume: number;
+            date: string;
+            open: number;
+            high: number;
+            low: number;
+            close: number;
+            volume: number;
+            is_high_point: boolean;
         }[];
-        status?: undefined;
-        message?: undefined;
     }>;
     getUserInflection(code: string): Promise<UserInflection[] | {
         message: string;
     }>;
-    createUserInflectioncode(date: number, code: string, highPoint?: number | null): Promise<{
+    createUserInflectioncode(date: number, code: string, highPoint?: number | null): Promise<UserInflection | {
         message: string;
-    } | undefined>;
+    }>;
     createUserInflectionname(date: number, name: string, highPoint?: number | null): Promise<UserInflection | {
         message: string;
     }>;
@@ -51,4 +47,6 @@ export declare class StockDataService {
         message: string;
     }>;
     getFalseCertified(): Promise<KoreanStockCode[]>;
+    ReturnHighPeak(code: number): Promise<PeakDate[]>;
+    ReturnInflectionPoint(code: number): Promise<UserInflection[]>;
 }

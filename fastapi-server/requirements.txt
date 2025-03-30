@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+asyncpg
+pandas
+apscheduler
+pyampd
+python-dotenv
+aiomysql
+cryptography

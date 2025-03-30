@@ -18,7 +18,7 @@ const StockListPage = ({ code , name } : StockAnalysisPointsProps) => {
 
     useEffect(() => {
       const fetchData = async () => {
-        const falseCertified = await Get(`http://localhost:4000/stock-data/false-certified`);
+        const falseCertified = await Get(`http://localhost:4000/stock-data/FalseCertified`);
         setStockList(falseCertified);
       };
       fetchData()

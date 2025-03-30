@@ -1,18 +1,21 @@
 import aiomysql
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 # DB 풀 생성 함수
 async def create_db_pool():
     pool = await aiomysql.create_pool(
-        host='localhost',
-        port=3307,
-        user='root',
-        password='wqdsdsf123!',
-        db='trading',
-        charset='utf8',
-        minsize=1,
-        maxsize=10,
-        cursorclass=aiomysql.cursors.DictCursor
-    )
+            host=os.getenv("DB_HOST", "localhost"),           # 기본값: localhost
+            port=int(os.getenv("DB_PORT", 3306)),             # 기본값: 3306
+            user=os.getenv("DB_USER", "root"),                # 기본값: root
+            password=os.getenv("DB_PASSWORD", "password"),    # 기본값: password
+            db=os.getenv("DB_NAME", "trading"),               # 기본값: trading
+            charset=os.getenv("DB_CHARSET", "utf8"),          # 기본값: utf8
+            minsize=int(os.getenv("DB_MIN_SIZE", 1)),         # 기본값: 1
+            maxsize=int(os.getenv("DB_MAX_SIZE", 10)),        # 기본값: 10
+            cursorclass=aiomysql.cursors.DictCursor
+        )
     return pool
 
 # DB 풀 종료 함수

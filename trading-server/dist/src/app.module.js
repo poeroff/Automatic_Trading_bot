@@ -50,7 +50,7 @@ const DayStockData_entity_1 = require("./stock-data/entities/DayStockData.entity
 const typeorm_naming_strategies_1 = require("typeorm-naming-strategies");
 const Joi = __importStar(require("joi"));
 const PeakPrice_entity_1 = require("./stock-data/entities/PeakPrice.entity");
-const filtered_peaks_entity_1 = require("./stock-data/entities/filtered-peaks.entity");
+const FilterPeak_entity_1 = require("./stock-data/entities/FilterPeak.entity");
 const PeakDate_entity_1 = require("./stock-data/entities/PeakDate.entity");
 const user_inflection_entity_1 = require("./stock-data/entities/user-inflection.entity");
 const schedular_module_1 = require("./schedular/schedular.module");
@@ -72,7 +72,7 @@ const typeOrmModuleOptions = {
         port: configService.get('DB_PORT'),
         database: configService.get('DB_NAME'),
         charset: configService.get("CHAR_SET"),
-        entities: [DayStockData_entity_1.DayStockData, PeakDate_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, filtered_peaks_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData],
+        entities: [DayStockData_entity_1.DayStockData, PeakDate_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, FilterPeak_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData],
         synchronize: configService.get('DB_SYNC'),
         logging: true,
         timezone: '+09:00'

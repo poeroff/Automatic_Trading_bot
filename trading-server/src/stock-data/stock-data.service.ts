@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateStockDatumDto } from './dto/create-stock-datum.dto';
 import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,7 +7,7 @@ import { DayStockData } from './entities/DayStockData.entity';
 
 import { PeakDate } from './entities/PeakDate.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
-import { FilteredPeak } from './entities/filtered-peaks.entity';
+import { FilteredPeak } from './entities/FilterPeak.entity';
 import { UserInflection } from './entities/user-inflection.entity';
 import { KoreanStockCode } from './entities/KoreanStockCode.entity';
 import { number } from 'joi';
@@ -24,6 +24,15 @@ export class StockDataService {
     @InjectRepository(UserInflection) private userInflectionRepository: Repository<UserInflection>,
   ) { }
 
+  async GetTrueCode(){
+    try {
+      const codes = await this.KoreanStockCodeRepository.find({where: { certified: true }});     
+       return codes
+    } catch (error) {
+      console.error('Error fetching codes:', error);
+      throw new InternalServerErrorException('Failed to fetch codes');
+    }
+  }
 
   async getAllCodes() {
     return await this.KoreanStockCodeRepository.find();
@@ -36,41 +45,34 @@ export class StockDataService {
   // }
 
 
-  async getStockData(code: string) {
-
-    const CompanyData = await this.DayStockDataRepository.find({
-      where: { trCode: { code: +code } },
-      order: { date: 'ASC' }, // 날짜 순으로 정렬
+  async StockData(code: string) {
+    const rawData = await this.DayStockDataRepository.find({
+        where: { trCode: { code: +code } },
+        order: { date: 'ASC' }
     });
-
-    if (!CompanyData || CompanyData.length === 0) {
-      return { status: 'error', message: `Code ${code} not found in stock_data table` };
-    }
-
-    // 필요한 데이터만 추출
-    const FormattedData = CompanyData.map(data => ({
-      Date: data.date,
-      Open: data.open,
-      High: data.high,
-      Low: data.low,
-      Close: data.close,
-      Volume: data.volume,
-     
+    
+    const processedData = rawData.map(item => ({
+        date: item.date,
+        open: item.open,
+        high: item.high,
+        low: item.low,
+        close: item.close,
+        volume: item.volume,
+        is_high_point: item.is_high_point
     }));
+    
+    return { Data: processedData };
+}
 
 
-    return { Data: FormattedData };
-  }
 
 
 
   async getUserInflection(code: string) {
-    console.log(code)
     const trCode = await this.KoreanStockCodeRepository.findOne({ where: { code: +code } });
     if (!trCode) {
       return { message: 'No stock code or name provided' };
     }
-    console.log(await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } }))
     return await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } });
   }
 
@@ -86,22 +88,15 @@ export class StockDataService {
 
     // 시간을 00:00:00으로 고정
     queryDate.setHours(0, 0, 0, 0);
-
-    // const reference_date = await this.stockDataRepository.findOne({
-    //   where: {
-    //     trCode: { id: trCode.id },
-    //     date: queryDate // 문자열로 비교
-    //   }
-    // });
-    // if(reference_date){
-    //   const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate : highPoint ?? null , price : reference_date?.high});
-    //   return await this.userInflectionRepository.save(userInflection);
-    // }
-    // throw new NotFoundException('Reference date not found');
+    console.log(date)
+    const reference_date = await this.DayStockDataRepository.findOne({where: {trCode: { id: trCode.id } , date: date.toString() }});
    
-    
-
-
+    if(reference_date){
+      const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate : highPoint ?? null , price : reference_date?.high});
+      return await this.userInflectionRepository.save(userInflection);
+    }
+    throw new NotFoundException('Reference date not found');
+   
   
   }
   //사용자 변곡점 설정 추가 함수(stock_name으로 조회)
@@ -113,6 +108,7 @@ export class StockDataService {
     const userInflection = this.userInflectionRepository.create({ trCode: { id: trCode.id }, date: date, highdate: highPoint ?? null });
     return await this.userInflectionRepository.save(userInflection);
   }
+
   //사용자 변곡점 설정 삭제 함수
   async deleteUserInflection(id: number) {
     return await this.userInflectionRepository.delete(id);
@@ -133,8 +129,10 @@ export class StockDataService {
     if (!Company) {
       throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
     }
-    console.log(Company)
-    const StockData = await this.DayStockDataRepository.find({ where: { trCode: { id: Company.id } } });
+    const StockData = await this.DayStockDataRepository.find({ 
+      where: { trCode: { id: Company.id } },
+      order: { date: "ASC" }
+    });
     const PeakDates = await this.peakDateRepository.find({ where: { trCode: { id: Company.id } } });
     const FilteredPeaks = await this.filteredPeakRepository.find({ where: { trCode: { id: Company.id } } });
     const UserInflections = await this.userInflectionRepository.find({ where: { trCode: { id: Company.id } } });
@@ -169,6 +167,16 @@ export class StockDataService {
     const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
     const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length > 0 );
     return results;
+  }
+
+  async ReturnHighPeak(code : number){
+    const Company = await this.KoreanStockCodeRepository.findOne({where : {code : code}})
+    return await this.peakDateRepository.find({where : {trCode : {id : Company!.id}}})
+  }
+
+  async ReturnInflectionPoint(code : number){
+    const Company = await this.KoreanStockCodeRepository.findOne({where : {code : code}})
+    return await this.userInflectionRepository.find({where : {trCode : {id : Company!.id}}})
   }
 
  

@@ -1,1 +1,7 @@
+excelupload : 엑셀 업로드를 위한 폴더
+gateway :  웹소켓을 위한 폴더
+live_index : 주요 지수(ex: 코스피, 코스닥)를 위한 폴더
+redis : redis 서버 구동을 위한 폴더
+schedular : 모든 자동 업데이트 함수를 위한 폴더
+stock-data : 주식 데이터들 모아둔 폴더(나중에 추후 분리할예정)
 

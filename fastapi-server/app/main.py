@@ -1,36 +1,52 @@
 import asyncio
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import uvicorn
 from app.routers import schedule
 from app.database import create_db_pool, close_db_pool
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from pytz import timezone
+import logging
+from datetime import datetime
 
-async_scheduler = AsyncIOScheduler()
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-#대략 23분정도 걸림(변곡점 및 고점 업데이트)
-@async_scheduler.scheduled_job('cron', hour=5, minute=15)
+# 스케줄러 설정 (이벤트 루프 명시)
+async_scheduler = AsyncIOScheduler(event_loop=asyncio.get_event_loop(), timezone=timezone('Asia/Seoul'))
+
+# 실제 작업
+@async_scheduler.scheduled_job('cron', hour=5, minute=42)
 async def async_DayFindFeakUpdate():
+    logger.info(f"Scheduled job started at {datetime.now(timezone('Asia/Seoul'))}: HELLO")
     try:
         db_pool = app.state.db_pool
         await schedule.day_find_freak_update_logic(db_pool)
     except asyncio.CancelledError:
-        print("Scheduled job cancelled, cleaning up...")
+        logger.info("Scheduled job cancelled, cleaning up...")
     except Exception as e:
-        print(f"Error in scheduled job: {e}")
+        logger.error(f"Error in scheduled job: {e}")
+
+# 디버깅용 임시 작업 (현재 시간 +1분)
+now = datetime.now(timezone('Asia/Seoul'))
+@async_scheduler.scheduled_job('cron', hour=now.hour, minute=now.minute + 1)
+async def debug_task():
+    logger.info(f"Debug task running at {datetime.now(timezone('Asia/Seoul'))}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Starting up... Connecting to DB")
+    logger.info("Starting up... Connecting to DB")
     app.state.db_pool = await create_db_pool()
+    logger.info("Starting scheduler...")
     async_scheduler.start()
-
+    logger.info(f"Scheduled jobs: {async_scheduler.get_jobs()}")  # 등록된 작업 확인
     try:
         yield
     except KeyboardInterrupt:
-        print("Received KeyboardInterrupt, shutting down gracefully...")
+        logger.info("Received KeyboardInterrupt, shutting down gracefully...")
     finally:
-        print("Shutting down... Closing DB connection")
+        logger.info("Shutting down... Closing DB connection")
         async_scheduler.shutdown(wait=False)
         await close_db_pool(app.state.db_pool)
 
@@ -38,4 +54,4 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(schedule.router)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="info")
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, log_level="info")  # 모듈 경로 수정

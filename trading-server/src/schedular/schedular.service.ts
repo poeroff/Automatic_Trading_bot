@@ -30,7 +30,7 @@ export class SchedularService {
   // YYYYMMDD 형태로 조합
   todayStr = `${this.year}${this.month}${this.day}`;
 
-  async CreateAuthHashKey(url, headers, data){
+  async createAuthHashKey(url, headers, data){
     try {
       const response = await axios.post(url, data, { headers: headers });
       this.sessionService.setHashKey(response.data.HASH); //Hashkey 설정
@@ -40,7 +40,7 @@ export class SchedularService {
 
   }
   
-  async CreateAccessToken(url, headers, data) {
+  async createAccessToken(url, headers, data) {
     try {
       const response = await axios.post(url, data, { headers: headers });
   
@@ -67,7 +67,7 @@ export class SchedularService {
   
 
 
-  async CreateWebSocketToken(url, headers, data){
+  async createWebSocketToken(url, headers, data){
     try {
       const response = await axios.post(url, data, { headers: headers });
       this.sessionService.setWebSocketToken(response.data.approval_key)
@@ -87,7 +87,7 @@ export class SchedularService {
 
   // -- 임시 테이블 이름 변경
   // RENAME TABLE DayStockData_temp TO DayStockData;
-  async getDayStockData(url, headers) {
+  async dayStockData(url, headers) {
     const codeList = await this.koreastockcodeRepository.find();
     for (let i = 0; i < codeList.length; i++) {
       const code = codeList[i];
@@ -146,7 +146,7 @@ export class SchedularService {
     }
 }
 
-  async getWeekStockData(url,headers){
+  async weekStockData(url,headers){
     let count = 0;
     const codeList = await this.koreastockcodeRepository.find();
     for (let i = 500; i < codeList.length; i++) {
@@ -210,34 +210,14 @@ export class SchedularService {
     }
   }
 
-  async StockData(url,headers,data){
-    
+  async stockData(url,headers,data){
     try {
       const response = await axios.post(url, data, { headers : headers });
-     
-      console.log(response.data.output)
-    
+
       return response.data;
     } catch (error) {
       throw new Error('주봉 데이터 조회 실패');
     }
 
-  }
-
-
-  findAll() {
-    return `This action returns all schedular`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} schedular`;
-  }
-
-  update(id: number, updateSchedularDto: UpdateSchedularDto) {
-    return `This action updates a #${id} schedular`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} schedular`;
   }
 }

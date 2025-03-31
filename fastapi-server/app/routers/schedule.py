@@ -45,7 +45,6 @@ async def day_find_freak_update_logic(pool):
         
         for row in result:
             stock_id = row['id']
-            print(stock_id)
             try:
                 sql = f"SELECT * FROM trading.DayStockData where stock_id={stock_id}"
                 stock_result = await execute_query(sql, pool=pool)

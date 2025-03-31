@@ -21,7 +21,7 @@ export class SchedularController {
   //Hashkey 발급
   @Cron('0 17 21 * * *')
   //@Cron('0 0 * * * *')
-  CreateAuthHashKey(){
+  createAuthHashKey(){
     const url = 'https://openapi.koreainvestment.com:9443/uapi/hashkey';
     const headers = {
       'Content-Type': 'application/json; charset=UTF-8',
@@ -42,13 +42,13 @@ export class SchedularController {
       FUOP_ITEM_DVSN_CD: '',
       ORD_DVSN_CD: '02',
     };
-    this.schedularService.CreateAuthHashKey(url,headers,data);
+    this.schedularService.createAuthHashKey(url,headers,data);
   }
 
   //AccessToken 발급
   @Cron('0 59 12 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
-  CreateAccessToken(){
+  createAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
     const headers = {
            "Content-Type": "application/json; charset=UTF-8"
@@ -58,12 +58,12 @@ export class SchedularController {
            "appkey": this.appkey,  
            "appsecret": this.appsecret 
     }
-    this.schedularService.CreateAccessToken(url,headers,data);
+    this.schedularService.createAccessToken(url,headers,data);
   }
 
   //웹 소켓 토큰 발급
   @Cron('0 55 12 * * *')
-  CreateWebSocketToken(){
+  createWebSocketToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/Approval"
     const headers = {
            "Content-Type": "application/json; charset=UTF-8"
@@ -73,12 +73,12 @@ export class SchedularController {
            "appkey": this.appkey,  
            "secretkey": this.appsecret 
     }
-    this.schedularService.CreateWebSocketToken(url,headers,data);
+    this.schedularService.createWebSocketToken(url,headers,data);
   }
 
   //주식 일봉 데이터 수집집
   @Cron('30 25 11 * * *',{timeZone :'Asia/Seoul'})
-  async getDayStockData(){
+  async dayStockData(){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
     const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
     const headers = {
@@ -93,12 +93,12 @@ export class SchedularController {
       
     };
  
-    this.schedularService.getDayStockData(url,headers)
+    this.schedularService.dayStockData(url,headers)
   }
 
   //주식 주봉 데이터 수집집
   @Cron('0 42 14 * * *',{timeZone :'Asia/Seoul'})
-  async getWeekStockData(){
+  async weekStockData(){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
     const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
     const headers = {
@@ -110,14 +110,14 @@ export class SchedularController {
       "custtype" :"P",
       "tr_cont" : "M"
     };
-    this.schedularService.getWeekStockData(url,headers)
+    this.schedularService.weekStockData(url,headers)
   }
 
   
 
   //주식 정보 업데이트
   @Cron('0 30 20 * * *',{timeZone :'Asia/Seoul'})
-  async StockData(){
+  async stockData(){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
     const url = "https://openapi.koreainvestment.com:9443/uapi/overseas-price/v1/quotations/industry-price";
     const headers = {
@@ -134,29 +134,11 @@ export class SchedularController {
       AUTH: '', // 주식
       EXCD: "NYS", // 종목 코드 (예: 005930 - 삼성전자)
     };
-    this.schedularService.StockData(url,headers,params)
+    this.schedularService.stockData(url,headers,params)
   }
 
 
 
 
-  @Get()
-  findAll() {
-    return this.schedularService.findAll();
-  }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.schedularService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSchedularDto: UpdateSchedularDto) {
-    return this.schedularService.update(+id, updateSchedularDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.schedularService.remove(+id);
-  }
 }

@@ -10,9 +10,10 @@ import { HttpStatusCode } from 'axios';
 export class ExceluploadController {
   constructor(private readonly exceluploadService: ExceluploadService) {}
 
+  //기업공시채널에서 엑셀 파일 올리면 db에 값 넣어주는 기능(.xlsx만 지원)(한국 주식 데이터 삽입입)
   @Post("korea")
   @UseInterceptors(FileInterceptor("file"))
-  async koreanStockuploadExcel(@UploadedFile() file){
+  async koreanStockuUploadExcel(@UploadedFile() file){
     if (!file) {
       throw new HttpException('No file uploaded', HttpStatus.BAD_REQUEST);
     }
@@ -23,8 +24,9 @@ export class ExceluploadController {
 
     // 엑셀 파일 읽기
     const workbook = XLSX.read(file.buffer, { type: 'buffer' ,codepage: 949, raw : true});
-    const sheetName = workbook.SheetNames[0]; // 첫 번째 시트 이름
-   
+    // 첫 번째 시트 이름
+    const sheetName = workbook.SheetNames[0]; 
+    //특정 행 이름 바꿔주기기("A1, B1 ....")
     const worksheet = workbook.Sheets[sheetName];
     worksheet['A1'] = { v: 'company' };
     worksheet['B1'] = { v: 'code' };
@@ -36,7 +38,7 @@ export class ExceluploadController {
     worksheet['H1'] = { v: 'homepage' };
     worksheet['I1'] = { v: 'region' };
 
-    this.exceluploadService.readExcel(worksheet);
+    this.exceluploadService.koreanStockReadExcel(worksheet);
   }
 
   @Get()

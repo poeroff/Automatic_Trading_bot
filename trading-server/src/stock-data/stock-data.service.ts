@@ -24,7 +24,7 @@ export class StockDataService {
     @InjectRepository(UserInflection) private userInflectionRepository: Repository<UserInflection>,
   ) { }
 
-  async GetTrueCode(){
+  async trueCode(){
     try {
       const codes = await this.KoreanStockCodeRepository.find({where: { certified: true }});     
        return codes
@@ -34,9 +34,9 @@ export class StockDataService {
     }
   }
 
-  async getAllCodes() {
-    return await this.KoreanStockCodeRepository.find();
-  }
+  // async getAllCodes() {
+  //   return await this.KoreanStockCodeRepository.find();
+  // }
 
   // async gettrueCodes() {
   //   const trCodes = await this.koreanstockcodeRepository.find({ where: { certified: true }, relations: ["userInflections"] });
@@ -45,36 +45,18 @@ export class StockDataService {
   // }
 
 
-  async StockData(code: string) {
-    const rawData = await this.DayStockDataRepository.find({
-        where: { trCode: { code: +code } },
-        order: { date: 'ASC' }
-    });
-    
-    const processedData = rawData.map(item => ({
-        date: item.date,
-        open: item.open,
-        high: item.high,
-        low: item.low,
-        close: item.close,
-        volume: item.volume,
-        is_high_point: item.is_high_point
-    }));
-    
-    return { Data: processedData };
-}
 
 
 
 
 
-  async getUserInflection(code: string) {
-    const trCode = await this.KoreanStockCodeRepository.findOne({ where: { code: +code } });
-    if (!trCode) {
-      return { message: 'No stock code or name provided' };
-    }
-    return await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } });
-  }
+  // async getUserInflection(code: string) {
+  //   const trCode = await this.KoreanStockCodeRepository.findOne({ where: { code: +code } });
+  //   if (!trCode) {
+  //     return { message: 'No stock code or name provided' };
+  //   }
+  //   return await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } });
+  // }
 
   //사용자 변곡점 설정 추가 함수(tr_code로 조회)
   async createUserInflectioncode(date: number, code: string, highPoint?: number | null) {
@@ -118,7 +100,7 @@ export class StockDataService {
 
 
   //주식,고점,변곡점,변곡점 설정 데이터 가져오기(tr_code로 조회)
-  async getstockPoint(stock: any) {
+  async stockPoint(stock: any) {
     let Company: KoreanStockCode | null = null;
     if (typeof stock === "number") {
       Company = await this.KoreanStockCodeRepository.findOne({ where: { code: stock } });
@@ -162,22 +144,44 @@ export class StockDataService {
   //   return await this.koreanstockcodeRepository.save(trCode);
   // }
 
-  //인증이 안된 종목 조회
-  async getFalseCertified() {
+  async falseCertified() {
+    //relations 쓰는 이유 그 자식 관계 맺어진 데이터까지 가져오기 위해서
     const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
+
+    //고점이 1개 이상인 데이터만 추출한다다
     const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length > 0 );
     return results;
   }
 
-  async ReturnHighPeak(code : number){
+  async returnHighPeak(code : number){
     const Company = await this.KoreanStockCodeRepository.findOne({where : {code : code}})
     return await this.peakDateRepository.find({where : {trCode : {id : Company!.id}}})
   }
 
-  async ReturnInflectionPoint(code : number){
+  async returnInflectionPoint(code : number){
     const Company = await this.KoreanStockCodeRepository.findOne({where : {code : code}})
     return await this.userInflectionRepository.find({where : {trCode : {id : Company!.id}}})
   }
+
+  
+  async StockData(code: string) {
+    const rawData = await this.DayStockDataRepository.find({
+        where: { trCode: { code: +code } },
+        order: { date: 'ASC' }
+    });
+    //relations을 안썻는데도 부모 요소가 불러와져서 트래픽 폭증으로 데이터가 중간에 끊켜서 특정 행만 추출하기 위해서
+    const processedData = rawData.map(item => ({
+        date: item.date,
+        open: item.open,
+        high: item.high,
+        low: item.low,
+        close: item.close,
+        volume: item.volume,
+        is_high_point: item.is_high_point
+    }));
+    
+    return { Data: processedData };
+  } 
 
  
 }

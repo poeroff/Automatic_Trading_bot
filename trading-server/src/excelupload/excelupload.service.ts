@@ -39,7 +39,7 @@ export class ExceluploadService {
   ];
 
 
-  async readExcel(worksheet: XLSX.WorkSheet) {
+  async koreanStockReadExcel(worksheet: XLSX.WorkSheet) {
     const range = XLSX.utils.decode_range(worksheet['!ref'] ?? "");
     const startRow = 1; // 2번째 줄 (0-indexed이므로 1)
     const startCol = 0; // A 열 (0-indexed)
@@ -47,6 +47,7 @@ export class ExceluploadService {
 
     for (let rowNum = startRow; rowNum <= range.e.r; rowNum++) {
       const rowValues: any[] = [];
+      //엑셀에 있는 모든 데이터 수집
       for (let colNum = startCol; colNum <= endCol; colNum++) {
         const cellAddress = XLSX.utils.encode_cell({ r: rowNum, c: colNum });
         let cellValue = worksheet[cellAddress] ? worksheet[cellAddress].v : null;
@@ -57,14 +58,17 @@ export class ExceluploadService {
         }
         rowValues.push(cellValue);
       }
+      //filterWords에 들어간 단어는 제외하고 나머지 데이터만 넣는다
       if (typeof rowValues[0] === 'string') {
         const companyName = rowValues[0];
         if (this.filterWords.some(word => companyName.includes(word))) {
           continue;
         }
       }
-      const companynmame = await this.koreanstockcoderepository.findOne({ where: { company: rowValues[0] } })
-      if (!companynmame) {
+      
+      const Company= await this.koreanstockcoderepository.findOne({ where: { company: rowValues[0] } })
+      //엑셀을 통해 데이터를 삽입할때 이미 있는 종목은 db에 넣지 않는다 (중복 제거)
+      if (!Company) {
         await this.koreanstockcoderepository.save({ company: rowValues[0], code: rowValues[1], category: rowValues[2], products: rowValues[3], listed_date: rowValues[4], settlement_month: rowValues[5], representative: rowValues[6], homepage: rowValues[7], region: rowValues[8] })
       }
     }

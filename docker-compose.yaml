@@ -61,7 +61,8 @@ services:
       - ./fastapi-server:/app  # FastAPI 코드 마운트
     env_file:
       - ./fastapi-server/.env
-   
+    environment:
+      - TZ=Asia/Seoul  # 시간대 설정
     depends_on:
       mysql:
         condition: service_healthy

@@ -9,7 +9,7 @@ export declare class StockDataController {
         highPoint: number;
         code?: string;
         name?: string;
-    }): Promise<import("./entities/user-inflection.entity").UserInflection | {
+    }): Promise<import("./entities/UserInflection.entity").UserInflection | {
         message: string;
     }> | undefined;
     stockPoint(code?: string, name?: string): Promise<{
@@ -17,7 +17,7 @@ export declare class StockDataController {
         StockData: import("./entities/DayStockData.entity").DayStockData[];
         PeakDates: import("./entities/PeakDate.entity").PeakDate[];
         FilteredPeaks: import("./entities/FilterPeak.entity").FilteredPeak[];
-        UserInflections: import("./entities/user-inflection.entity").UserInflection[];
+        UserInflections: import("./entities/UserInflection.entity").UserInflection[];
     }> | {
         message: string;
     };
@@ -29,7 +29,7 @@ export declare class StockDataController {
     }): Promise<import("./entities/PeakDate.entity").PeakDate[]>;
     returnInflectionPoint(body: {
         code: number;
-    }): Promise<import("./entities/user-inflection.entity").UserInflection[]>;
+    }): Promise<import("./entities/UserInflection.entity").UserInflection[]>;
     stockData(body: {
         code: string;
     }): Promise<{

@@ -52,7 +52,7 @@ const Joi = __importStar(require("joi"));
 const PeakPrice_entity_1 = require("./stock-data/entities/PeakPrice.entity");
 const FilterPeak_entity_1 = require("./stock-data/entities/FilterPeak.entity");
 const PeakDate_entity_1 = require("./stock-data/entities/PeakDate.entity");
-const user_inflection_entity_1 = require("./stock-data/entities/user-inflection.entity");
+const UserInflection_entity_1 = require("./stock-data/entities/UserInflection.entity");
 const schedular_module_1 = require("./schedular/schedular.module");
 const nestjs_session_1 = require("nestjs-session");
 const live_index_module_1 = require("./live_index/live_index.module");
@@ -72,7 +72,7 @@ const typeOrmModuleOptions = {
         port: configService.get('DB_PORT'),
         database: configService.get('DB_NAME'),
         charset: configService.get("CHAR_SET"),
-        entities: [DayStockData_entity_1.DayStockData, PeakDate_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, FilterPeak_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData],
+        entities: [DayStockData_entity_1.DayStockData, PeakDate_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, FilterPeak_entity_1.FilteredPeak, UserInflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData],
         synchronize: configService.get('DB_SYNC'),
         logging: true,
         timezone: '+09:00'

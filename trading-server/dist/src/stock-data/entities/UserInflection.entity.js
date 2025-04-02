@@ -38,4 +38,4 @@ __decorate([
 exports.UserInflection = UserInflection = __decorate([
     (0, typeorm_1.Entity)('user_inflection')
 ], UserInflection);
-//# sourceMappingURL=user-inflection.entity.js.map
+//# sourceMappingURL=UserInflection.entity.js.map

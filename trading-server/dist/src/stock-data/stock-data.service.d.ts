@@ -3,7 +3,7 @@ import { DayStockData } from './entities/DayStockData.entity';
 import { PeakDate } from './entities/PeakDate.entity';
 import { PeakPrice } from './entities/PeakPrice.entity';
 import { FilteredPeak } from './entities/FilterPeak.entity';
-import { UserInflection } from './entities/user-inflection.entity';
+import { UserInflection } from './entities/UserInflection.entity';
 import { KoreanStockCode } from './entities/KoreanStockCode.entity';
 export declare class StockDataService {
     private DayStockDataRepository;

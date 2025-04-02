@@ -20,7 +20,7 @@ const DayStockData_entity_1 = require("./entities/DayStockData.entity");
 const PeakDate_entity_1 = require("./entities/PeakDate.entity");
 const PeakPrice_entity_1 = require("./entities/PeakPrice.entity");
 const FilterPeak_entity_1 = require("./entities/FilterPeak.entity");
-const user_inflection_entity_1 = require("./entities/user-inflection.entity");
+const UserInflection_entity_1 = require("./entities/UserInflection.entity");
 const KoreanStockCode_entity_1 = require("./entities/KoreanStockCode.entity");
 let StockDataService = class StockDataService {
     constructor(DayStockDataRepository, KoreanStockCodeRepository, peakDateRepository, peakPriceRepository, filteredPeakRepository, userInflectionRepository) {
@@ -135,7 +135,7 @@ exports.StockDataService = StockDataService = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(PeakDate_entity_1.PeakDate)),
     __param(3, (0, typeorm_1.InjectRepository)(PeakPrice_entity_1.PeakPrice)),
     __param(4, (0, typeorm_1.InjectRepository)(FilterPeak_entity_1.FilteredPeak)),
-    __param(5, (0, typeorm_1.InjectRepository)(user_inflection_entity_1.UserInflection)),
+    __param(5, (0, typeorm_1.InjectRepository)(UserInflection_entity_1.UserInflection)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

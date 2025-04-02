@@ -55,7 +55,7 @@ let ExceluploadController = class ExceluploadController {
     constructor(exceluploadService) {
         this.exceluploadService = exceluploadService;
     }
-    async koreanStockuploadExcel(file) {
+    async koreanStockuUploadExcel(file) {
         if (!file) {
             throw new common_1.HttpException('No file uploaded', common_1.HttpStatus.BAD_REQUEST);
         }
@@ -74,7 +74,7 @@ let ExceluploadController = class ExceluploadController {
         worksheet['G1'] = { v: 'representative' };
         worksheet['H1'] = { v: 'homepage' };
         worksheet['I1'] = { v: 'region' };
-        this.exceluploadService.readExcel(worksheet);
+        this.exceluploadService.koreanStockReadExcel(worksheet);
     }
     findAll() {
         return this.exceluploadService.findAll();
@@ -97,7 +97,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], ExceluploadController.prototype, "koreanStockuploadExcel", null);
+], ExceluploadController.prototype, "koreanStockuUploadExcel", null);
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),

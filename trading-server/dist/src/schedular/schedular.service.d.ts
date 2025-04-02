@@ -1,4 +1,3 @@
-import { UpdateSchedularDto } from './dto/update-schedular.dto';
 import { SessionService } from './SessionService';
 import { ClientProxy } from '@nestjs/microservices';
 import { KoreanStockCode } from 'src/stock-data/entities/KoreanStockCode.entity';
@@ -17,14 +16,10 @@ export declare class SchedularService {
     month: string;
     day: string;
     todayStr: string;
-    CreateAuthHashKey(url: any, headers: any, data: any): Promise<void>;
-    CreateAccessToken(url: any, headers: any, data: any): Promise<void>;
-    CreateWebSocketToken(url: any, headers: any, data: any): Promise<void>;
-    getDayStockData(url: any, headers: any): Promise<void>;
-    getWeekStockData(url: any, headers: any): Promise<void>;
-    StockData(url: any, headers: any, data: any): Promise<any>;
-    findAll(): string;
-    findOne(id: number): string;
-    update(id: number, updateSchedularDto: UpdateSchedularDto): string;
-    remove(id: number): string;
+    createAuthHashKey(url: any, headers: any, data: any): Promise<void>;
+    createAccessToken(url: any, headers: any, data: any): Promise<void>;
+    createWebSocketToken(url: any, headers: any, data: any): Promise<void>;
+    dayStockData(url: any, headers: any): Promise<void>;
+    weekStockData(url: any, headers: any): Promise<void>;
+    stockData(url: any, headers: any, data: any): Promise<any>;
 }

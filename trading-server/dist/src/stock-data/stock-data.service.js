@@ -31,7 +31,7 @@ let StockDataService = class StockDataService {
         this.filteredPeakRepository = filteredPeakRepository;
         this.userInflectionRepository = userInflectionRepository;
     }
-    async GetTrueCode() {
+    async trueCode() {
         try {
             const codes = await this.KoreanStockCodeRepository.find({ where: { certified: true } });
             return codes;
@@ -40,32 +40,6 @@ let StockDataService = class StockDataService {
             console.error('Error fetching codes:', error);
             throw new common_1.InternalServerErrorException('Failed to fetch codes');
         }
-    }
-    async getAllCodes() {
-        return await this.KoreanStockCodeRepository.find();
-    }
-    async StockData(code) {
-        const rawData = await this.DayStockDataRepository.find({
-            where: { trCode: { code: +code } },
-            order: { date: 'ASC' }
-        });
-        const processedData = rawData.map(item => ({
-            date: item.date,
-            open: item.open,
-            high: item.high,
-            low: item.low,
-            close: item.close,
-            volume: item.volume,
-            is_high_point: item.is_high_point
-        }));
-        return { Data: processedData };
-    }
-    async getUserInflection(code) {
-        const trCode = await this.KoreanStockCodeRepository.findOne({ where: { code: +code } });
-        if (!trCode) {
-            return { message: 'No stock code or name provided' };
-        }
-        return await this.userInflectionRepository.find({ where: { trCode: { certified: true, id: trCode.id } } });
     }
     async createUserInflectioncode(date, code, highPoint) {
         const trCode = await this.KoreanStockCodeRepository.findOne({ where: { code: +code } });
@@ -95,7 +69,7 @@ let StockDataService = class StockDataService {
     async deleteUserInflection(id) {
         return await this.userInflectionRepository.delete(id);
     }
-    async getstockPoint(stock) {
+    async stockPoint(stock) {
         let Company = null;
         if (typeof stock === "number") {
             Company = await this.KoreanStockCodeRepository.findOne({ where: { code: stock } });
@@ -123,18 +97,34 @@ let StockDataService = class StockDataService {
         trCode.certified = true;
         return await this.KoreanStockCodeRepository.save(trCode);
     }
-    async getFalseCertified() {
+    async falseCertified() {
         const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
         const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length > 0);
         return results;
     }
-    async ReturnHighPeak(code) {
+    async returnHighPeak(code) {
         const Company = await this.KoreanStockCodeRepository.findOne({ where: { code: code } });
         return await this.peakDateRepository.find({ where: { trCode: { id: Company.id } } });
     }
-    async ReturnInflectionPoint(code) {
+    async returnInflectionPoint(code) {
         const Company = await this.KoreanStockCodeRepository.findOne({ where: { code: code } });
         return await this.userInflectionRepository.find({ where: { trCode: { id: Company.id } } });
+    }
+    async StockData(code) {
+        const rawData = await this.DayStockDataRepository.find({
+            where: { trCode: { code: +code } },
+            order: { date: 'ASC' }
+        });
+        const processedData = rawData.map(item => ({
+            date: item.date,
+            open: item.open,
+            high: item.high,
+            low: item.low,
+            close: item.close,
+            volume: item.volume,
+            is_high_point: item.is_high_point
+        }));
+        return { Data: processedData };
     }
 };
 exports.StockDataService = StockDataService;

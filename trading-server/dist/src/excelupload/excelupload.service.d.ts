@@ -8,7 +8,7 @@ export declare class ExceluploadService {
     excelDateToJSDate(date: number): Date;
     formatJSDate(jsDate: Date): string;
     filterWords: string[];
-    readExcel(worksheet: XLSX.WorkSheet): Promise<void>;
+    koreanStockReadExcel(worksheet: XLSX.WorkSheet): Promise<void>;
     findAll(): string;
     findOne(id: number): string;
     update(id: number, updateExceluploadDto: UpdateExceluploadDto): string;

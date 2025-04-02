@@ -40,7 +40,7 @@ let SchedularService = class SchedularService {
         this.day = this.today.getDate().toString().padStart(2, '0');
         this.todayStr = `${this.year}${this.month}${this.day}`;
     }
-    async CreateAuthHashKey(url, headers, data) {
+    async createAuthHashKey(url, headers, data) {
         try {
             const response = await axios_1.default.post(url, data, { headers: headers });
             this.sessionService.setHashKey(response.data.HASH);
@@ -49,7 +49,7 @@ let SchedularService = class SchedularService {
             throw new Error('API request failed');
         }
     }
-    async CreateAccessToken(url, headers, data) {
+    async createAccessToken(url, headers, data) {
         try {
             const response = await axios_1.default.post(url, data, { headers: headers });
             const accessToken = response.data.token_type + " " + response.data.access_token;
@@ -65,7 +65,7 @@ let SchedularService = class SchedularService {
             throw new Error('API request failed');
         }
     }
-    async CreateWebSocketToken(url, headers, data) {
+    async createWebSocketToken(url, headers, data) {
         try {
             const response = await axios_1.default.post(url, data, { headers: headers });
             this.sessionService.setWebSocketToken(response.data.approval_key);
@@ -74,7 +74,7 @@ let SchedularService = class SchedularService {
             throw new Error('API request failed');
         }
     }
-    async getDayStockData(url, headers) {
+    async dayStockData(url, headers) {
         const codeList = await this.koreastockcodeRepository.find();
         for (let i = 0; i < codeList.length; i++) {
             const code = codeList[i];
@@ -116,7 +116,7 @@ let SchedularService = class SchedularService {
             }
         }
     }
-    async getWeekStockData(url, headers) {
+    async weekStockData(url, headers) {
         let count = 0;
         const codeList = await this.koreastockcodeRepository.find();
         for (let i = 500; i < codeList.length; i++) {
@@ -163,27 +163,14 @@ let SchedularService = class SchedularService {
             }
         }
     }
-    async StockData(url, headers, data) {
+    async stockData(url, headers, data) {
         try {
             const response = await axios_1.default.post(url, data, { headers: headers });
-            console.log(response.data.output);
             return response.data;
         }
         catch (error) {
             throw new Error('주봉 데이터 조회 실패');
         }
-    }
-    findAll() {
-        return `This action returns all schedular`;
-    }
-    findOne(id) {
-        return `This action returns a #${id} schedular`;
-    }
-    update(id, updateSchedularDto) {
-        return `This action updates a #${id} schedular`;
-    }
-    remove(id) {
-        return `This action removes a #${id} schedular`;
     }
 };
 exports.SchedularService = SchedularService;

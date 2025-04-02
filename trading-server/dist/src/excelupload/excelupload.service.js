@@ -79,7 +79,7 @@ let ExceluploadService = class ExceluploadService {
         const day = jsDate.getDate().toString().padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
-    async readExcel(worksheet) {
+    async koreanStockReadExcel(worksheet) {
         const range = XLSX.utils.decode_range(worksheet['!ref'] ?? "");
         const startRow = 1;
         const startCol = 0;
@@ -101,8 +101,8 @@ let ExceluploadService = class ExceluploadService {
                     continue;
                 }
             }
-            const companynmame = await this.koreanstockcoderepository.findOne({ where: { company: rowValues[0] } });
-            if (!companynmame) {
+            const Company = await this.koreanstockcoderepository.findOne({ where: { company: rowValues[0] } });
+            if (!Company) {
                 await this.koreanstockcoderepository.save({ company: rowValues[0], code: rowValues[1], category: rowValues[2], products: rowValues[3], listed_date: rowValues[4], settlement_month: rowValues[5], representative: rowValues[6], homepage: rowValues[7], region: rowValues[8] });
             }
         }

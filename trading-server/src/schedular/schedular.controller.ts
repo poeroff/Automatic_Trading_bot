@@ -137,8 +137,4 @@ export class SchedularController {
     this.schedularService.stockData(url,headers,params)
   }
 
-
-
-
-
 }

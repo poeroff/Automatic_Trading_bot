@@ -11,7 +11,7 @@ import * as Joi from 'joi';
 import { PeakPrice } from './stock-data/entities/PeakPrice.entity';
 import { FilteredPeak } from './stock-data/entities/FilterPeak.entity';
 import { PeakDate } from './stock-data/entities/PeakDate.entity';
-import { UserInflection } from './stock-data/entities/user-inflection.entity';
+import { UserInflection } from './stock-data/entities/UserInflection.entity';
 import { SchedularModule } from './schedular/schedular.module';
 import { SessionModule } from 'nestjs-session';
 import { LiveIndexModule } from './live_index/live_index.module';

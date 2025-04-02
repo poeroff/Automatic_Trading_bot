@@ -3,7 +3,7 @@ import { DayStockData } from "./DayStockData.entity";
 import { WeekStockData } from "./WeekStockData.entity";
 import { PeakDate } from "./PeakDate.entity";
 import { FilteredPeak } from "./FilterPeak.entity";
-import { UserInflection } from "./user-inflection.entity";
+import { UserInflection } from "./UserInflection.entity";
 import { PeakPrice } from "./PeakPrice.entity";
 
 @Entity('KoreanStockCode') // 테이블 이름을 'tr_codes'로 설정

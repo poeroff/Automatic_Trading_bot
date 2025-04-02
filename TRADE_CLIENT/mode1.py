@@ -3,6 +3,7 @@
 import aiohttp
 from matplotlib import pyplot as plt
 import numpy as np
+import telegram
 from kiwoom_api import KiwoomAPI
 from pykiwoom.kiwoom import Kiwoom
 import pandas as pd
@@ -10,6 +11,7 @@ from PyQt5.QAxContainer import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from pykiwoom.kiwoom import *
+import pythoncom
 import asyncio
 from datetime import datetime, timedelta
 import time
@@ -40,33 +42,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.dates as mdates
 
-# rearranged_data는 이미 코드에서 생성되었다고 가정
-# 형식: highdate, HighPrice, date, price 컬럼이 있는 DataFrame
-def plot_stock_chart_from_entity(day_stock_data):
-    # 'day_stock_data'는 DayStockData 엔티티 객체 리스트라고 가정
-    data = pd.DataFrame([{
-        'date': stock_data.date,
-        'close': stock_data.close
-    } for stock_data in day_stock_data])
-
-    # 날짜를 x축, 종가(close)를 y축으로 설정
-    plt.figure(figsize=(10, 6))
-    plt.plot(data['date'], data['close'], label='Close Price', color='b', lw=2)
-
-    # 차트 꾸미기
-    plt.title('Stock Price Chart')
-    plt.xlabel('Date')
-    plt.ylabel('Price')
-    plt.grid(True)
-    plt.legend()
-
-    # 차트 표시
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
-
-                    
-
 
 
 class Trade:
@@ -74,7 +49,7 @@ class Trade:
         # 키움 관련
         self.kiwoom = kiwoom  # 기존 로그인된 키움 객체
         self.loop = asyncio.get_event_loop()
-        # self.kiwoom.ocx.OnReceiveRealData.connect(self._receive_real_data)   # 키움 객체의 내부 QAxWidget에 이벤트 핸들러 연결
+        self.kiwoom.ocx.OnReceiveRealData.connect(self._receive_real_data)   # 키움 객체의 내부 QAxWidget에 이벤트 핸들러 연결
 
 
         self.trend_lines_by_code = {}
@@ -85,13 +60,104 @@ class Trade:
         self.alert_history = {}  # 코드별 마지막 알람 시간을 저장할 딕셔너리
         self.all_codes = []  # 전체 종목 코드를 저장할 리스트 추가
         
-
+        
         # 텔레그램 설정
-        # self.telegram_token = '7530225524:AAHxEprH6pjGkuqaEwU7lteqSMopp2LHFDw'
-        # self.telegram_chat_id = '7103296678'
-        # self.telegram_bot = None
-        # self.setup_telegram()
-        # self.base_url = "http://127.0.0.1:8000"
+     
+        self.telegram_token = '7530225524:AAHxEprH6pjGkuqaEwU7lteqSMopp2LHFDw'
+        self.telegram_chat_id = '7103296678'
+        self.telegram_bot = None
+        self.setup_telegram()
+
+
+    def setup_telegram(self):
+        """텔레그램 봇 초기화"""
+        try:
+            self.telegram_bot = telegram.Bot(token=self.telegram_token)
+            print("텔레그램 봇 연결 성공!")
+        except Exception as e:
+            print(f"텔레그램 봇 연결 실패: {str(e)}")
+            self.telegram_bot = None
+
+    def adjust_price(self,   price):
+        if price <= 2000:
+            return price
+        elif 2000 < price <= 5000:
+            return round(price / 5) * 5
+        elif 5000 < price <= 20000:
+            return round(price / 10) * 10
+        elif 20000 < price <= 50000:
+            return round(price / 50) * 50
+        elif 50000 < price <= 200000:
+            return round(price / 100) * 100
+        elif 200000 < price <= 500000:
+            return round(price / 500) * 500
+        else:
+            return round(price / 1000) * 1000
+        
+    def get_price_margin(self, price):
+        if price <= 2000:
+            return 10  # 예시: 10원
+        elif 2000 < price <= 5000:
+            return 20  # 예시: 20원
+        elif 5000 < price <= 20000:
+            return 50  # 예시: 50원
+        elif 20000 < price <= 50000:
+            return 100  # 예시: 100원
+        elif 50000 < price <= 200000:
+            return 200  # 예시: 200원
+        elif 200000 < price <= 500000:
+            return 500  # 예시: 500원
+        else:
+            return 1000  # 예시: 1000원
+        
+
+    def queue_telegram_message(self, code, current_price, trend_price, line_type):
+        """텔레그램 메시지 큐에 추가"""
+        message = f"🔔 {line_type} 근접 알림!\n\n"
+        message += f"종목코드: {code}\n"
+        message += f"현재가격: {current_price:,}원\n"
+        message += f"{line_type} 가격: {trend_price:,}원\n"
+        message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        
+        # 비동기 이벤트 루프에서 메시지 전송
+        asyncio.get_event_loop().create_task(self.send_telegram_message(message))
+
+
+    async def send_error_message(self, error_type, details):
+        """에러 메시지 텔레그램 전송"""
+        try:
+            if self.telegram_bot is None:
+                print("텔레그램 봇이 초기화되지 않았습니다.")
+                return
+                
+            message = f"⚠️ 에러 발생\n\n"
+            message += f"유형: {error_type}\n"
+            message += f"상세: {details}"
+            
+            await self.telegram_bot.send_message(
+                chat_id=self.telegram_chat_id,
+                text=message
+            )
+            print(f"에러 메시지 전송 완료: {error_type}")
+            
+        except Exception as e:
+            print(f"에러 메시지 전송 실패: {str(e)}")
+
+    async def send_telegram_message(self, message):
+        """텔레그램 메시지 전송"""
+        try:
+            if self.telegram_bot is None:
+                print("텔레그램 봇이 초기화되지 않았습니다.")
+                return
+                
+            await self.telegram_bot.send_message(
+                chat_id=self.telegram_chat_id,
+                text=message
+            )
+            print("텔레그램 메시지 전송 완료")
+            
+        except Exception as e:
+            print(f"텔레그램 메시지 전송 실패: {str(e)}")
 
 
     async def analyze_stock(self, code):
@@ -101,116 +167,76 @@ class Trade:
                 async with session.post("http://localhost:4000/stock-data/StockData", json={'code': code}) as response:
                     response_json = await response.json()
                     if not response_json or 'Data' not in response_json or not response_json['Data']:
-                        print(f"종목 {code}: 데이터가 비어있습니다")
-                        return None
+                        return 
                     # Data 키에서 실제 데이터 배열 가져오기
                     data = pd.DataFrame(response_json['Data'])
                     if len(data) < 14:
-                        print("충분한 데이터가 없습니다.")
-                        return None
+                        return
                     
                     # 날짜 변환
                     data["date"] = pd.to_datetime(data["date"])
-                    # 종가(close)를 기준으로 선 차트 생성
-                    # plt.figure(figsize=(10, 6))
-                    # plt.plot(data['date'], data['close'], label='Close Price', color='b', lw=2)
-
-                    # # 차트 꾸미기
-                    # plt.title('Stock Price Chart')
-                    # plt.xlabel('Date')
-                    # plt.ylabel('Price')
-                    # plt.grid(True)
-                    # plt.legend()
-
-                    # # 차트 표시
-                    # plt.xticks(rotation=45)
-                    # plt.tight_layout()
-                    # plt.show()
-                  
                     HighPoint =  await find_peaks(code)
                     HighPoint = pd.DataFrame(HighPoint)
-                    print("HIGHPOINT",HighPoint)
                     InflectionPoint =  await inflection_point(code)
                     InflectionPoint = pd.DataFrame(InflectionPoint)
                     InflectionPoint['highdate'] = pd.to_datetime(InflectionPoint['highdate'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
                     InflectionPoint['date'] = pd.to_datetime(InflectionPoint['date'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
-                    print("InflectionPoint",InflectionPoint)
-
+                  
+         
                     inflectionpoint_data = InflectionPoint[['highdate', 'date', 'price']]
-
+                 
 
                     # HighPoint에서 date와 price 추출
                     highpoint_data = HighPoint[['date', 'price']]
+                   
 
                     # InflectionPoint의 highdate에 맞는 HighPoint의 price를 가져오기
                     inflectionpoint_data['HighPrice'] = inflectionpoint_data['highdate'].map(highpoint_data.set_index('date')['price'])
                     rearranged_data = inflectionpoint_data[['highdate', 'HighPrice', 'date', 'price']]
 
-              
-                    # 종가(close)를 기준으로 선 차트 생성
-                    # 종가(close)를 기준으로 선 차트 생성
-                    # rearranged_data 출력으로 데이터 확인
-                    print("rearranged_data:\n", rearranged_data)
+                    
+                    # 빈 리스트 생성하여 각 데이터 포인트의 추세선 가격을 저장
+                    trend_prices_list = []
 
-                    # 종가(close)로 선 차트 그리기
-                    # 종가(close)로 선 차트 그리기
-                    plt.figure(figsize=(12, 6))  # 가로 크기를 늘려 최근 날짜까지 보기 좋게
-                    plt.plot(data['date'], data['close'], label='Close Price', color='b', lw=2)
+                    # 데이터 포인트 개수만큼 반복
+                    for i in range(len(rearranged_data)):
+                        # 빨간색 점 (HighPoint, highdate)
+                        highdate_point = pd.to_datetime(rearranged_data['highdate'].iloc[i])
+                        highprice_point = rearranged_data['HighPrice'].iloc[i]
+                        
+                        # 파란색 점 (Inflection Point, date)
+                        date_point = pd.to_datetime(rearranged_data['date'].iloc[i])
+                        price_point = pd.to_numeric(rearranged_data['price'].iloc[i], errors='coerce')
+                        
+                        # 추세선 계산
+                        # 두 점: (highdate, HighPrice)와 (date, price)
+                        x1 = highdate_point.to_pydatetime()  # datetime 객체로 변환
+                        y1 = highprice_point
+                        x2 = date_point.to_pydatetime()
+                        y2 = price_point
+                        
+                        # 날짜를 숫자(일 단위)로 변환하여 계산
+                        days_diff = (x2 - x1).days
+                        slope = (y2 - y1) / days_diff  # 기울기
+                        intercept = y1 - slope * (x1 - datetime(1970, 1, 1)).days  # 절편 (Unix epoch 기준)
+                        
+                        # 추세선 날짜 범위: highdate부터 최근 날짜(2025-03-30)까지
+                        trend_dates = pd.date_range(start=highdate_point, end='2025-03-30', freq='D')
+                        trend_days = [(d - datetime(1970, 1, 1)).days for d in trend_dates]
+                        trend_values = [slope * day + intercept for day in trend_days]
+                        
+                        # 최근 날짜의 추세선 가격 저장
+                        latest_trend_price = trend_values[-1]
+                        trend_prices_list.append(latest_trend_price)
+                        #print(f"데이터 포인트 {i+1}의 최근 날짜 (2025-03-30) 추세선 가격: {latest_trend_price:.2f}")
 
-                    # 빨간색 점 (HighPoint, highdate)
-                    highdate_points = pd.to_datetime(rearranged_data['highdate'])
-                    highprice_points = rearranged_data['HighPrice']
-                    plt.scatter(highdate_points, highprice_points, color='red', label='High Date', s=100, zorder=5)
+                    # 모든 추세선 가격을 리스트 형태로 저장
+                    self.trend_lines_by_code[code] = {
+                        "adjusted_prices": trend_prices_list,
+                    }
 
-                    # 파란색 점 (Inflection Point, date)
-                    date_points = pd.to_datetime(rearranged_data['date'])
-                    price_points = pd.to_numeric(rearranged_data['price'], errors='coerce')
-                    plt.scatter(date_points, price_points, color='blue', label='Inflection Date', s=100, zorder=5)
-
-                    # 추세선 계산
-                    # 두 점: (highdate, HighPrice)와 (date, price)
-                    x1 = highdate_points.iloc[0].to_pydatetime()  # datetime 객체로 변환
-                    y1 = highprice_points.iloc[0]
-                    x2 = date_points.iloc[0].to_pydatetime()
-                    y2 = price_points.iloc[0]
-
-                    # 날짜를 숫자(일 단위)로 변환하여 계산
-                    days_diff = (x2 - x1).days
-                    slope = (y2 - y1) / days_diff  # 기울기
-                    intercept = y1 - slope * (x1 - datetime(1970, 1, 1)).days  # 절편 (Unix epoch 기준)
-
-                    # 추세선 날짜 범위: highdate부터 최근 날짜(2025-03-30)까지
-                    trend_dates = pd.date_range(start=highdate_points.iloc[0], end='2025-03-30', freq='D')
-                    trend_days = [(d - datetime(1970, 1, 1)).days for d in trend_dates]
-                    trend_prices = [slope * day + intercept for day in trend_days]
-
-                    # 추세선 그리기
-                    plt.plot(trend_dates, trend_prices, color='green', linestyle='--', label='Trend Line', lw=2)
-
-                    # x축과 y축 범위 설정
-                    all_dates = pd.concat([data['date'], highdate_points, date_points, pd.Series(trend_dates)])
-                    all_prices = pd.concat([data['close'], highprice_points, price_points, pd.Series(trend_prices)])
-                    date_min, date_max = all_dates.min(), all_dates.max()
-                    price_min, price_max = all_prices.min(), all_prices.max()
-                    margin = (price_max - price_min) * 0.1
-                    plt.xlim(date_min, date_max)
-                    plt.ylim(price_min - margin, price_max + margin)
-
-                    # 차트 꾸미기
-                    plt.title('Stock Price Chart with Trend Line')
-                    plt.xlabel('Date')
-                    plt.ylabel('Price')
-                    plt.grid(True)
-                    plt.legend()
-                    plt.xticks(rotation=45)
-                    plt.tight_layout()
-
-                    # 차트 표시
-                    plt.show()
-
-                    # 최근 날짜의 추세선 가격 출력
-                    latest_trend_price = trend_prices[-1]
-                    print(f"최근 날짜 (2025-03-30)의 추세선 가격: {latest_trend_price:.2f}")
+                    #print(f"전체 추세선 가격 리스트: {trend_prices_list}")
+            
                 
         except Exception as e:
             print(f"종목 {code} 분석 중 에러: {str(e)}\n상세 정보: {type(e).__name__}")
@@ -232,37 +258,37 @@ class Trade:
             for code in self.all_codes:
                 print(code)
                 await self.analyze_stock(code)
-            # 성공한 종목 코드에 대해서만 실시간 등록 수행
-            # try:
-            #     all_codes = list(self.trend_lines_by_code.keys())  # 모든 종목 코드 가져오기
-            #     total_codes = len(all_codes)
+            #성공한 종목 코드에 대해서만 실시간 등록 수행
+            try:
+                all_codes = list(self.trend_lines_by_code.keys())  # 모든 종목 코드 가져오기
+                total_codes = len(all_codes)
+                print(total_codes)
 
-            #     for i in range(0, total_codes, 100):
-            #             chunk_codes = all_codes[i:i + 100]
-            #             screen_no = f"01{str(i // 100).zfill(2)}"
-            #             codes_string = ";".join(chunk_codes)
+                for i in range(0, total_codes, 100):
+                        chunk_codes = [str(code) for code in all_codes[i:i + 100]]
+                        screen_no = f"01{str(i // 100).zfill(2)}"
+                        codes_string = ";".join(chunk_codes)
+                        print(f"화면번호: {screen_no}")
+                        print(f"종목 수: {len(chunk_codes)}")
 
-            #             print(f"화면번호: {screen_no}")
-            #             print(f"종목 수: {len(chunk_codes)}")
+                        self.kiwoom.ocx.dynamicCall(
+                            "SetRealReg(QString, QString, QString, QString)",
+                            screen_no, codes_string, ";".join(self.fids), "0"
+                        )
+                        print(f"실시간 등록 완료: {codes_string}")
+                        await asyncio.sleep(3.6)
 
-            #             self.kiwoom.ocx.dynamicCall(
-            #                 "SetRealReg(QString, QString, QString, QString)",
-            #                 screen_no, codes_string, ";".join(self.fids), "0"
-            #             )
-            #             print(f"실시간 등록 완료: {codes_string}")
-            #             await asyncio.sleep(3.6)
+                print(f"전체 {total_codes}개 종목 실시간 등록 완료")
 
-            #     print(f"전체 {total_codes}개 종목 실시간 등록 완료")
-
-            # except Exception as e:
-            #     error_msg = f"실시간 등록 프로세스 에러\n에러 내용: {str(e)}"
-            #     # await self.send_error_message("시스템 에러", error_msg)
-            #     return {}
+            except Exception as e:
+                error_msg = f"실시간 등록 프로세스 에러\n에러 내용: {str(e)}"
+                await self.send_error_message("시스템 에러", error_msg)
+                return {}
         
                     
         except Exception as e:
             error_msg = f"전체 감시 프로세스 에러\n에러 내용: {str(e)}"
-            # await self.send_error_message("시스템 에러", error_msg)
+            await self.send_error_message("시스템 에러", error_msg)
             return {}
 
    
@@ -283,6 +309,61 @@ class Trade:
             print(f"시스템 시작 실패: {str(e)}")
             import traceback
             traceback.print_exc()
+    def _receive_real_data(self, code, real_type, real_data):
+        """실시간 데이터 수신"""
+        try:
+            if real_type == "주식체결":
+                # 현재 시간 확인
+                current_time = time.time()
+                
+                # 마지막 알람으로부터 8시간이 지났는지 확인
+                if code in self.alert_history:
+                    last_alert_time = self.alert_history[code]
+                    time_diff = current_time - last_alert_time
+                    if time_diff < 8 * 3600:  # 8시간(초 단위)
+                        return  # 8시간이 지나지 않았으면 알람 보내지 않음
+                
+                current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))  # 현재가      
+
+                if code in self.trend_lines_by_code:
+                    adjusted_prices = self.trend_lines_by_code[code]["adjusted_prices"]
+              
+
+                    # current_price가 adjusted_prices의 값 중 하나와 일치하는지 확인
+                    chunk_size = 5  # 5개씩 나누기
+                    for i in range(0, len(adjusted_prices), chunk_size):
+                        chunk = adjusted_prices[i:i + chunk_size]  # 5개씩 슬라이스
+                        for index, adjusted_price in enumerate(chunk):
+                            # 인덱스 조정: chunk 내의 인덱스에 chunk의 시작 인덱스를 더함
+                            global_index = i + index
+                            
+                            if abs(current_price - adjusted_price) <= self.get_price_margin(current_price):
+                                print(f"Current price {current_price} is within margin of adjusted price {adjusted_price} for code {code} at global index {global_index}. 거래량 상승")
+                                self.queue_telegram_message(code, current_price, adjusted_price, f"{global_index}번째 Price Alert 거래량 상승")
+                                self.alert_history[code] = current_time
+                        
+                            elif abs(current_price - adjusted_price) <= self.get_price_margin(current_price):
+                                print(f"Current price {current_price} is within margin of adjusted price {adjusted_price} for code {code} at global index {global_index}. 거래량 미달")
+                                self.queue_telegram_message(code, current_price, adjusted_price, f"{global_index}번째 Price Alert 거래량 미달" )
+                                self.alert_history[code] = current_time
+                            
+                # current_price가 result의 값 중 하나와 일치하는지 확인
+                # if code in self.trend_lines_by_code:
+                #     adjusted_prices = self.trend_lines_by_code[code]["adjusted_prices"]
+                #     avg_daily_volume = self.trend_lines_by_code[code]["avg_daily_volume"]
+                #     print("adjusted_prices", adjusted_prices)
+                #     print("avg_daily_volume", avg_daily_volume)
+
+                #     # current_price가 adjusted_prices의 값 중 하나와 일치하는지 확인
+                #     for index, adjusted_price in enumerate(adjusted_prices):
+                #         if abs(current_price - adjusted_price) <= self.get_price_margin(current_price) and current_volume > avg_daily_volume:
+                #             print(f"Current price {current_price} is within margin of adjusted price {adjusted_price} for code {code} at index {index}.")
+                #             self.queue_telegram_message(code, current_price, adjusted_price, f"{index}번째 Price Alert")
+                #             self.alert_history[code] = current_time
+                #             print(f"Current volume: {current_volume}")  # 거래량 출력
+
+        except Exception as e:
+            print(f"실시간 데이터 처리 중 에러: {str(e)}")
 
 
 

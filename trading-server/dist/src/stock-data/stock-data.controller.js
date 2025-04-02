@@ -19,17 +19,11 @@ let StockDataController = class StockDataController {
     constructor(stockDataService) {
         this.stockDataService = stockDataService;
     }
-    GetTrueCode() {
-        return this.stockDataService.GetTrueCode();
+    trueCode() {
+        return this.stockDataService.trueCode();
     }
-    StockData(body) {
-        return this.stockDataService.StockData(body.code);
-    }
-    getAllCodes() {
-        return this.stockDataService.getAllCodes();
-    }
-    getUserInflection(body) {
-        return this.stockDataService.getUserInflection(body.code);
+    falseCertified() {
+        return this.stockDataService.falseCertified();
     }
     createUserInflection(body) {
         console.log("HELLO");
@@ -40,26 +34,26 @@ let StockDataController = class StockDataController {
             return this.stockDataService.createUserInflectionname(body.date, body.name, body.highPoint);
         }
     }
-    deleteUserInflection(body) {
-        return this.stockDataService.deleteUserInflection(body.id);
-    }
-    getstockPoint(code, name) {
+    stockPoint(code, name) {
         if (code) {
-            return this.stockDataService.getstockPoint(+code);
+            return this.stockDataService.stockPoint(+code);
         }
         else if (name) {
-            return this.stockDataService.getstockPoint(name);
+            return this.stockDataService.stockPoint(name);
         }
         return { message: 'No stock code or name provided' };
     }
-    GetFalseCertified() {
-        return this.stockDataService.getFalseCertified();
+    deleteUserInflection(body) {
+        return this.stockDataService.deleteUserInflection(body.id);
     }
-    ReturnHighPeak(body) {
-        return this.stockDataService.ReturnHighPeak(body.code);
+    returnHighPeak(body) {
+        return this.stockDataService.returnHighPeak(body.code);
     }
-    ReturnInflectionPoint(body) {
-        return this.stockDataService.ReturnInflectionPoint(body.code);
+    returnInflectionPoint(body) {
+        return this.stockDataService.returnInflectionPoint(body.code);
+    }
+    stockData(body) {
+        return this.stockDataService.StockData(body.code);
     }
 };
 exports.StockDataController = StockDataController;
@@ -68,27 +62,13 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], StockDataController.prototype, "GetTrueCode", null);
+], StockDataController.prototype, "trueCode", null);
 __decorate([
-    (0, common_1.Post)("StockData"),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "StockData", null);
-__decorate([
-    (0, common_1.Get)("get_all_codes"),
+    (0, common_1.Get)("FalseCertified"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], StockDataController.prototype, "getAllCodes", null);
-__decorate([
-    (0, common_1.Get)("get_user_inflection"),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "getUserInflection", null);
+], StockDataController.prototype, "falseCertified", null);
 __decorate([
     (0, common_1.Post)("user-inflection"),
     __param(0, (0, common_1.Body)()),
@@ -97,6 +77,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], StockDataController.prototype, "createUserInflection", null);
 __decorate([
+    (0, common_1.Get)("stock"),
+    __param(0, (0, common_1.Query)('code')),
+    __param(1, (0, common_1.Query)('name')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], StockDataController.prototype, "stockPoint", null);
+__decorate([
     (0, common_1.Delete)("user-inflection"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -104,33 +92,26 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], StockDataController.prototype, "deleteUserInflection", null);
 __decorate([
-    (0, common_1.Get)("stock"),
-    __param(0, (0, common_1.Query)('code')),
-    __param(1, (0, common_1.Query)('name')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "getstockPoint", null);
-__decorate([
-    (0, common_1.Get)("FalseCertified"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "GetFalseCertified", null);
-__decorate([
     (0, common_1.Post)("ReturnHighPeak"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], StockDataController.prototype, "ReturnHighPeak", null);
+], StockDataController.prototype, "returnHighPeak", null);
 __decorate([
     (0, common_1.Post)("ReturnInflectionPoint"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], StockDataController.prototype, "ReturnInflectionPoint", null);
+], StockDataController.prototype, "returnInflectionPoint", null);
+__decorate([
+    (0, common_1.Post)("StockData"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StockDataController.prototype, "stockData", null);
 exports.StockDataController = StockDataController = __decorate([
     (0, common_1.Controller)('stock-data'),
     __metadata("design:paramtypes", [stock_data_service_1.StockDataService])

@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SchedularController = void 0;
 const common_1 = require("@nestjs/common");
 const schedular_service_1 = require("./schedular.service");
-const update_schedular_dto_1 = require("./dto/update-schedular.dto");
 const schedule_1 = require("@nestjs/schedule");
 const config_1 = require("@nestjs/config");
 const SessionService_1 = require("./SessionService");
@@ -29,7 +28,7 @@ let SchedularController = class SchedularController {
         this.appkey = this.configService.get('appkey');
         this.appsecret = this.configService.get('appsecret');
     }
-    CreateAuthHashKey() {
+    createAuthHashKey() {
         const url = 'https://openapi.koreainvestment.com:9443/uapi/hashkey';
         const headers = {
             'Content-Type': 'application/json; charset=UTF-8',
@@ -50,9 +49,9 @@ let SchedularController = class SchedularController {
             FUOP_ITEM_DVSN_CD: '',
             ORD_DVSN_CD: '02',
         };
-        this.schedularService.CreateAuthHashKey(url, headers, data);
+        this.schedularService.createAuthHashKey(url, headers, data);
     }
-    CreateAccessToken() {
+    createAccessToken() {
         const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP";
         const headers = {
             "Content-Type": "application/json; charset=UTF-8"
@@ -62,9 +61,9 @@ let SchedularController = class SchedularController {
             "appkey": this.appkey,
             "appsecret": this.appsecret
         };
-        this.schedularService.CreateAccessToken(url, headers, data);
+        this.schedularService.createAccessToken(url, headers, data);
     }
-    CreateWebSocketToken() {
+    createWebSocketToken() {
         const url = "https://openapi.koreainvestment.com:9443/oauth2/Approval";
         const headers = {
             "Content-Type": "application/json; charset=UTF-8"
@@ -74,9 +73,9 @@ let SchedularController = class SchedularController {
             "appkey": this.appkey,
             "secretkey": this.appsecret
         };
-        this.schedularService.CreateWebSocketToken(url, headers, data);
+        this.schedularService.createWebSocketToken(url, headers, data);
     }
-    async getDayStockData() {
+    async dayStockData() {
         const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
         const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
         const headers = {
@@ -88,9 +87,9 @@ let SchedularController = class SchedularController {
             "custtype": "P",
             "tr_cont": "M"
         };
-        this.schedularService.getDayStockData(url, headers);
+        this.schedularService.dayStockData(url, headers);
     }
-    async getWeekStockData() {
+    async weekStockData() {
         const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
         const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
         const headers = {
@@ -102,9 +101,9 @@ let SchedularController = class SchedularController {
             "custtype": "P",
             "tr_cont": "M"
         };
-        this.schedularService.getWeekStockData(url, headers);
+        this.schedularService.weekStockData(url, headers);
     }
-    async StockData() {
+    async stockData() {
         const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
         const url = "https://openapi.koreainvestment.com:9443/uapi/overseas-price/v1/quotations/industry-price";
         const headers = {
@@ -120,19 +119,7 @@ let SchedularController = class SchedularController {
             AUTH: '',
             EXCD: "NYS",
         };
-        this.schedularService.StockData(url, headers, params);
-    }
-    findAll() {
-        return this.schedularService.findAll();
-    }
-    findOne(id) {
-        return this.schedularService.findOne(+id);
-    }
-    update(id, updateSchedularDto) {
-        return this.schedularService.update(+id, updateSchedularDto);
-    }
-    remove(id) {
-        return this.schedularService.remove(+id);
+        this.schedularService.stockData(url, headers, params);
     }
 };
 exports.SchedularController = SchedularController;
@@ -141,65 +128,37 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], SchedularController.prototype, "CreateAuthHashKey", null);
+], SchedularController.prototype, "createAuthHashKey", null);
 __decorate([
     (0, schedule_1.Cron)('0 59 12 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], SchedularController.prototype, "CreateAccessToken", null);
+], SchedularController.prototype, "createAccessToken", null);
 __decorate([
     (0, schedule_1.Cron)('0 55 12 * * *'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], SchedularController.prototype, "CreateWebSocketToken", null);
+], SchedularController.prototype, "createWebSocketToken", null);
 __decorate([
     (0, schedule_1.Cron)('30 25 11 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], SchedularController.prototype, "getDayStockData", null);
+], SchedularController.prototype, "dayStockData", null);
 __decorate([
     (0, schedule_1.Cron)('0 42 14 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], SchedularController.prototype, "getWeekStockData", null);
+], SchedularController.prototype, "weekStockData", null);
 __decorate([
     (0, schedule_1.Cron)('0 30 20 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], SchedularController.prototype, "StockData", null);
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], SchedularController.prototype, "findAll", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], SchedularController.prototype, "findOne", null);
-__decorate([
-    (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_schedular_dto_1.UpdateSchedularDto]),
-    __metadata("design:returntype", void 0)
-], SchedularController.prototype, "update", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], SchedularController.prototype, "remove", null);
+], SchedularController.prototype, "stockData", null);
 exports.SchedularController = SchedularController = __decorate([
     (0, common_1.Controller)('schedular'),
     __param(3, (0, common_1.Inject)("REDIS_CLIENT")),

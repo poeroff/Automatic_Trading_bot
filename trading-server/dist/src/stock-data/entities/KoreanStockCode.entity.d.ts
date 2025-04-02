@@ -2,7 +2,7 @@ import { DayStockData } from "./DayStockData.entity";
 import { WeekStockData } from "./WeekStockData.entity";
 import { PeakDate } from "./PeakDate.entity";
 import { FilteredPeak } from "./FilterPeak.entity";
-import { UserInflection } from "./user-inflection.entity";
+import { UserInflection } from "./UserInflection.entity";
 import { PeakPrice } from "./PeakPrice.entity";
 export declare class KoreanStockCode {
     id: number;

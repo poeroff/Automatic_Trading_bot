@@ -15,7 +15,7 @@ const DayStockData_entity_1 = require("./entities/DayStockData.entity");
 const PeakDate_entity_1 = require("./entities/PeakDate.entity");
 const PeakPrice_entity_1 = require("./entities/PeakPrice.entity");
 const FilterPeak_entity_1 = require("./entities/FilterPeak.entity");
-const user_inflection_entity_1 = require("./entities/user-inflection.entity");
+const UserInflection_entity_1 = require("./entities/UserInflection.entity");
 const KoreanStockCode_entity_1 = require("./entities/KoreanStockCode.entity");
 const WeekStockData_entity_1 = require("./entities/WeekStockData.entity");
 let StockDataModule = class StockDataModule {
@@ -23,7 +23,7 @@ let StockDataModule = class StockDataModule {
 exports.StockDataModule = StockDataModule;
 exports.StockDataModule = StockDataModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([DayStockData_entity_1.DayStockData, PeakDate_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, FilterPeak_entity_1.FilteredPeak, user_inflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([DayStockData_entity_1.DayStockData, PeakDate_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, FilterPeak_entity_1.FilteredPeak, UserInflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData])],
         controllers: [stock_data_controller_1.StockDataController],
         providers: [stock_data_service_1.StockDataService],
     })

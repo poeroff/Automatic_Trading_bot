@@ -1,10 +1,8 @@
 #2025-03-29 제작
 # import numpy as np
 import aiohttp
-from matplotlib import pyplot as plt
 import numpy as np
 import telegram
-from kiwoom_api import KiwoomAPI
 from pykiwoom.kiwoom import Kiwoom
 import pandas as pd
 from PyQt5.QAxContainer import *
@@ -15,14 +13,9 @@ import pythoncom
 import asyncio
 from datetime import datetime, timedelta
 import time
-import pandas as pd
-from Api import Api
-from gui import Program_Gui
-from kiwoom_api import KiwoomAPI
 from  Auth.Login import Auth
 from PyQt5.QtWidgets import QApplication
 import sys
-from scipy.signal import argrelextrema
 from pyampd.ampd import find_peaks  # 정확한 경로에서 함수 가져오기
 
 
@@ -38,9 +31,8 @@ async def inflection_point(code):
                     response_json = await response.json()
                     return response_json
 
-import matplotlib.pyplot as plt
-import pandas as pd
-import matplotlib.dates as mdates
+
+
 
 
 
@@ -316,12 +308,12 @@ class Trade:
                 # 현재 시간 확인
                 current_time = time.time()
                 
-                # 마지막 알람으로부터 8시간이 지났는지 확인
+                # 마지막 알람으로부터 24시간이 지났는지 확인
                 if code in self.alert_history:
                     last_alert_time = self.alert_history[code]
                     time_diff = current_time - last_alert_time
-                    if time_diff < 8 * 3600:  # 8시간(초 단위)
-                        return  # 8시간이 지나지 않았으면 알람 보내지 않음
+                    if time_diff < 24 * 3600:  # 24시간(초 단위)
+                        return  # 24시간이 지나지 않았으면 알람 보내지 않음
                 
                 current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))  # 현재가      
 
@@ -341,11 +333,6 @@ class Trade:
                                 print(f"Current price {current_price} is within margin of adjusted price {adjusted_price} for code {code} at global index {global_index}. 거래량 상승")
                                 self.queue_telegram_message(code, current_price, adjusted_price, f"{global_index}번째 Price Alert 거래량 상승")
                                 self.alert_history[code] = current_time
-                        
-                            elif abs(current_price - adjusted_price) <= self.get_price_margin(current_price):
-                                print(f"Current price {current_price} is within margin of adjusted price {adjusted_price} for code {code} at global index {global_index}. 거래량 미달")
-                                self.queue_telegram_message(code, current_price, adjusted_price, f"{global_index}번째 Price Alert 거래량 미달" )
-                                self.alert_history[code] = current_time
                             
                 # current_price가 result의 값 중 하나와 일치하는지 확인
                 # if code in self.trend_lines_by_code:
@@ -364,8 +351,6 @@ class Trade:
 
         except Exception as e:
             print(f"실시간 데이터 처리 중 에러: {str(e)}")
-
-
 
 def main():
     app = QApplication(sys.argv)

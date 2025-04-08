@@ -149,7 +149,7 @@ export class StockDataService {
     const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
 
     //고점이 1개 이상인 데이터만 추출한다다
-    const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length > 0 );
+    const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length >= 3 );
     return results;
   }
 

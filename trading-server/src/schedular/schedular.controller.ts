@@ -46,7 +46,7 @@ export class SchedularController {
   }
 
   //AccessToken 발급
-  @Cron('0 57 12 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('0 57 14 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
   createAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
@@ -76,9 +76,9 @@ export class SchedularController {
     this.schedularService.createWebSocketToken(url,headers,data);
   }
 
-  //주식 일봉 데이터 수집집
-  @Cron('0 59 12 * * *',{timeZone :'Asia/Seoul'})
-  async dayStockData(){
+  //주식 일봉 데이터 수집(상장 ~ 현재)
+  @Cron('30 25 11 * * *',{timeZone :'Asia/Seoul'})
+  async alldayStockData(){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
     const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
     const headers = {
@@ -90,10 +90,27 @@ export class SchedularController {
       "custtype" :"P",
       "tr_cont" : "M"
 
+      
     };
  
-    this.schedularService.dayStockData(url,headers)
+    this.schedularService.alldayStockData(url,headers)
   }
+    //주식 일봉 데이터 수집(어제 ~ 현재재)
+    @Cron('30 25 11 * * *',{timeZone :'Asia/Seoul'})
+    async dayStockData(){
+      const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+      const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
+      const headers = {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'authorization': savedToken,
+        'appkey': this.appkey,
+        'appsecret': this.appsecret,
+        'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
+        "custtype" :"P",
+        "tr_cont" : "M"
+      };
+      this.schedularService.dayStockData(url,headers)
+    }
 
   //주식 주봉 데이터 수집집
   @Cron('0 42 14 * * *',{timeZone :'Asia/Seoul'})

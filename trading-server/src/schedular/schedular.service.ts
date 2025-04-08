@@ -87,7 +87,7 @@ export class SchedularService {
 
   // -- 임시 테이블 이름 변경
   // RENAME TABLE DayStockData_temp TO DayStockData;
-  async dayStockData(url, headers) {
+  async alldayStockData(url, headers) {
     const codeList = await this.koreastockcodeRepository.find();
     for (let i = 0; i < codeList.length; i++) {
       const code = codeList[i];
@@ -145,6 +145,66 @@ export class SchedularService {
 
     }
 }
+
+async dayStockData(url, headers) {
+  const codeList = await this.koreastockcodeRepository.find();
+  for (let i = 0; i < codeList.length; i++) {
+    const code = codeList[i];
+    const originalDate = code.listed_date;
+  
+    const codeStr = code.code.toString().padStart(6, '0');
+    const startDay = dayjs(originalDate, 'YYYY-MM-DD'); 
+    const endDay = dayjs(this.todayStr, 'YYYYMMDD').subtract(1, 'day');
+    // 100일씩 끊을 범위 설정
+    const chunkSize = 100;
+    let currentStart = startDay;
+
+    // while문으로 100일 단위 반복
+    while (currentStart.isBefore(endDay)) {
+      // currentStart + 99일 = 이번 chunk의 종료일
+      let currentEnd = currentStart.add(chunkSize - 1, 'day');
+      // 만약 endDay를 넘어가면 endDay로 조정
+      if (currentEnd.isAfter(endDay)) {
+        currentEnd = endDay;
+      }
+
+      // API 파라미터 (주봉)
+      const params = {
+        FID_COND_MRKT_DIV_CODE: 'J',        // 주식
+        FID_INPUT_ISCD: codeStr,            // 종목 코드
+        FID_INPUT_DATE_1: currentStart.format('YYYYMMDD'),  // chunk 시작
+        FID_INPUT_DATE_2: currentEnd.format('YYYYMMDD'),    // chunk 종료
+        FID_PERIOD_DIV_CODE: 'D',           // 주봉
+        FID_ORG_ADJ_PRC: '0',               // 수정주가
+      };
+
+      // API 호출 전 잠시 대기
+      await sleep(500);
+
+      // API 호출
+      try {
+        const response = await axios.get(url, { headers, params });
+        const data = response.data;
+        const output2 = data.output2;
+        //여기서 DB 저장 등 필요한 작업을 수행
+        for (const stockdata of output2) {
+          const stock = await this.daystockdataRepository.findOne({where : {date : stockdata.stck_bsop_date , trCode : {id :Number(code.id)  }}})
+          if(!stock){
+            await this.daystockdataRepository.save({ date: stockdata.stck_bsop_date, open: Number(stockdata.stck_oprc), high: Number(stockdata.stck_hgpr), low: Number(stockdata.stck_lwpr), close: Number(stockdata.stck_clpr), volume: Number(stockdata.acml_vol), trCode: { id: Number(code.id) } });
+          }
+        }
+      } catch (error) {
+        console.error('API 호출 에러:', error.message);
+      }
+
+      // 다음 chunk 시작일은 이번 chunk의 끝 + 1일
+      currentStart = currentEnd.add(1, 'day');
+      // 만약 currentStart가 endDay를 넘어가면 while문에서 탈출됨
+    }
+
+  }
+}
+
 
   async weekStockData(url,headers){
     let count = 0;

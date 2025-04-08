@@ -74,6 +74,48 @@ let SchedularService = class SchedularService {
             throw new Error('API request failed');
         }
     }
+    async alldayStockData(url, headers) {
+        const codeList = await this.koreastockcodeRepository.find();
+        for (let i = 0; i < codeList.length; i++) {
+            const code = codeList[i];
+            const originalDate = code.listed_date;
+            const codeStr = code.code.toString().padStart(6, '0');
+            const startDay = (0, dayjs_1.default)(originalDate, 'YYYY-MM-DD');
+            const endDay = (0, dayjs_1.default)(this.todayStr, 'YYYYMMDD').subtract(1, 'day');
+            const chunkSize = 100;
+            let currentStart = startDay;
+            while (currentStart.isBefore(endDay)) {
+                let currentEnd = currentStart.add(chunkSize - 1, 'day');
+                if (currentEnd.isAfter(endDay)) {
+                    currentEnd = endDay;
+                }
+                const params = {
+                    FID_COND_MRKT_DIV_CODE: 'J',
+                    FID_INPUT_ISCD: codeStr,
+                    FID_INPUT_DATE_1: currentStart.format('YYYYMMDD'),
+                    FID_INPUT_DATE_2: currentEnd.format('YYYYMMDD'),
+                    FID_PERIOD_DIV_CODE: 'D',
+                    FID_ORG_ADJ_PRC: '0',
+                };
+                await (0, sleep_1.sleep)(500);
+                try {
+                    const response = await axios_1.default.get(url, { headers, params });
+                    const data = response.data;
+                    const output2 = data.output2;
+                    for (const stockdata of output2) {
+                        const stock = await this.daystockdataRepository.findOne({ where: { date: stockdata.stck_bsop_date, trCode: { id: Number(code.id) } } });
+                        if (!stock) {
+                            await this.daystockdataRepository.save({ date: stockdata.stck_bsop_date, open: Number(stockdata.stck_oprc), high: Number(stockdata.stck_hgpr), low: Number(stockdata.stck_lwpr), close: Number(stockdata.stck_clpr), volume: Number(stockdata.acml_vol), trCode: { id: Number(code.id) } });
+                        }
+                    }
+                }
+                catch (error) {
+                    console.error('API 호출 에러:', error.message);
+                }
+                currentStart = currentEnd.add(1, 'day');
+            }
+        }
+    }
     async dayStockData(url, headers) {
         const codeList = await this.koreastockcodeRepository.find();
         for (let i = 0; i < codeList.length; i++) {

@@ -13,6 +13,7 @@ export declare class SchedularController {
     createAuthHashKey(): void;
     createAccessToken(): void;
     createWebSocketToken(): void;
+    alldayStockData(): Promise<void>;
     dayStockData(): Promise<void>;
     weekStockData(): Promise<void>;
     stockData(): Promise<void>;

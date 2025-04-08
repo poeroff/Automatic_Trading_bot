@@ -75,6 +75,20 @@ let SchedularController = class SchedularController {
         };
         this.schedularService.createWebSocketToken(url, headers, data);
     }
+    async alldayStockData() {
+        const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+        const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
+        const headers = {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'authorization': savedToken,
+            'appkey': this.appkey,
+            'appsecret': this.appsecret,
+            'tr_id': 'FHKST03010100',
+            "custtype": "P",
+            "tr_cont": "M"
+        };
+        this.schedularService.alldayStockData(url, headers);
+    }
     async dayStockData() {
         const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
         const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
@@ -141,6 +155,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "createWebSocketToken", null);
+__decorate([
+    (0, schedule_1.Cron)('30 25 11 * * *', { timeZone: 'Asia/Seoul' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], SchedularController.prototype, "alldayStockData", null);
 __decorate([
     (0, schedule_1.Cron)('30 25 11 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),

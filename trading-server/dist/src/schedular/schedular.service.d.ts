@@ -19,6 +19,7 @@ export declare class SchedularService {
     createAuthHashKey(url: any, headers: any, data: any): Promise<void>;
     createAccessToken(url: any, headers: any, data: any): Promise<void>;
     createWebSocketToken(url: any, headers: any, data: any): Promise<void>;
+    alldayStockData(url: any, headers: any): Promise<void>;
     dayStockData(url: any, headers: any): Promise<void>;
     weekStockData(url: any, headers: any): Promise<void>;
     stockData(url: any, headers: any, data: any): Promise<any>;

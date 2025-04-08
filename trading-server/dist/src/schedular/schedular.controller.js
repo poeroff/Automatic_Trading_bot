@@ -130,7 +130,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SchedularController.prototype, "createAuthHashKey", null);
 __decorate([
-    (0, schedule_1.Cron)('0 59 12 * * *', { timeZone: 'Asia/Seoul' }),
+    (0, schedule_1.Cron)('0 57 14 * * *', { timeZone: 'Asia/Seoul' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)

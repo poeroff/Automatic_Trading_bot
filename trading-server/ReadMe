@@ -1,5 +1,5 @@
 src > 
-  excelupload : 엑셀 업로드를 위한 폴더
+  excelupload : 주식 데이터 로드를 위한 폴더(필터링)
   gateway :  웹소켓을 위한 폴더
   live_index : 주요 지수(ex: 코스피, 코스닥)를 위한 폴더
   redis : redis 서버 구동을 위한 폴더

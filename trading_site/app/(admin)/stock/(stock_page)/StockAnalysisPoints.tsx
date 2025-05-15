@@ -42,15 +42,14 @@ const pulseAnimation = `
 
 
 interface StockAnalysisPointsProps {
-  code: string | null;
-  Company: string | null;
+  code: string;
 }
 
-const StockAnalysisPoints = ({ code , Company } : StockAnalysisPointsProps)  =>{
+const StockAnalysisPoints = ({ code }: StockAnalysisPointsProps) => {
   const highpoint = useRef<HTMLInputElement>(null)
   const inflectionpointRef = useRef<HTMLInputElement>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [title, setTitle] = useState<StockAnalysisPointsProps>({code: null, Company: null});
+  const [title, setTitle] = useState<{ code: string; Company: string | null }>({ code: "", Company: null });
   const [chartData, setChartData] = useState<{ date: string; value: number }[]>([]); // 초기값을 빈 배열로 설정
   const [marketCapList, setMarketCapList] = useState<{ id: number, date: string; }[]>([]);
   const [volumeList, setVolumeList] = useState<{ id: number, date: string; }[]>([]);
@@ -114,11 +113,11 @@ const StockAnalysisPoints = ({ code , Company } : StockAnalysisPointsProps)  =>{
 
   useEffect(() => {
     setErrorMessage(null)
-    if (code || Company) {
-      fetchStockData(code ?? undefined, Company ?? undefined);
+    if (code ) {
+      fetchStockData(code ?? undefined);
     }
 
-    if (!code && !Company) return; // ✅ 불필요한 실행 방지
+    if (!code ) return; // ✅ 불필요한 실행 방지
 
     // CSS 스타일 한 번만 추가
     const styleSheet = document.createElement("style");
@@ -129,7 +128,7 @@ const StockAnalysisPoints = ({ code , Company } : StockAnalysisPointsProps)  =>{
     return () => {
       styleSheet.remove();
     };
-  }, [code, Company, fetchStockData]);
+  }, [code,  fetchStockData]);
 
   // 나머지 핸들러 함수들도 useCallback으로 메모이제이션
   const handleDateClick = useCallback((date: string) => {
@@ -170,25 +169,25 @@ const StockAnalysisPoints = ({ code , Company } : StockAnalysisPointsProps)  =>{
       };
     
       if (code) payload.code = code;
-      if (Company) payload.name = Company;
+     
       const result = await axios.post("http://localhost:4000/stock-data/user-inflection", payload);
       console.log(result)
       // 데이터 리프레시
-      fetchStockData(code ?? undefined, Company ?? undefined);
+      fetchStockData(code ?? undefined);
     } catch (error) {
       setErrorMessage('* 저장 중 오류가 발생.(DB에 일치하는 값이 없습니다, 인터넷 문제)');
     }
-  }, [code, Company, customList.length, fetchStockData]);
+  }, [code, customList.length, fetchStockData]);
 
   const handleDeleteCustomItem = useCallback(async (id: number) => {
     try {
       await Delete(`http://localhost:4000/stock-data/user-inflection`, id);
       // 데이터 리프레시
-      fetchStockData(code ?? undefined, Company ?? undefined);
+      fetchStockData(code ?? undefined);
     } catch (error) {
       setErrorMessage('* 삭제 중 오류가 발생했습니다.');
     }
-  }, [code, Company]);
+  }, [code]);
 
 
   // 날짜 유효성 검사 함수

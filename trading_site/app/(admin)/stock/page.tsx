@@ -15,10 +15,11 @@ const StockDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <div>HELLO</div>
       <StockListPage code={code} name = {name}/>
       {(code || name) && <main className="container mx-auto px-4 py-8">
-        <StockAnalysisPoints code = {code}  Company={name}/>
-        <CheckPage code = {code}  name={name}/>
+        {code && <StockAnalysisPoints code={code} />}
+        {code && <CheckPage code={code}/>}
       </main>}
     </div>
   );

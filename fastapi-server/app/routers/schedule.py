@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Request
+import logging
+from fastapi import APIRouter, Request, logger
 from app.database import execute_query
 from pyampd.ampd import find_peaks  # 정확한 경로에서 함수 가져오기
 import pandas as pd
 import asyncio
-
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/schedule", tags=["schedule"])
+
 
 
 # RSI 계산 함수
@@ -26,6 +29,7 @@ def compute_rsi(series, period=14):
     # RSI 계산
     rsi = 100 - (100 / (1 + rs))
     return rsi
+
 
 
 # 1) 실제 DB 작업 로직 함수
@@ -53,11 +57,14 @@ async def day_find_freak_update_logic(pool):
                     continue
                 
                 df = pd.DataFrame(stock_result)
+                df = df.sort_values(by='date').reset_index(drop=True)
                 # RSI 컬럼 추가 (기간 14 예시)
                 if len(df) < 14:
                     continue
-                df['RSI'] = compute_rsi(df['high'], period=14)
+                df['RSI'] = compute_rsi(df['close'], period=14)
                 df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
+                df['EMA_224'] = df['close'].ewm(span=224, adjust=False).mean()
+              
            
                 # 종가 추출
                 closing_prices = df['high'].values
@@ -70,10 +77,11 @@ async def day_find_freak_update_logic(pool):
                 
                 if len(peaks) == 0:
                     continue
-                find_peak = [p for p in peaks if df.iloc[p]['RSI'] >= 70]
+
+                find_peak = [p for p in peaks if df.iloc[p]['RSI'] >= 70  and df.iloc[p]['close'] > df.iloc[p]['EMA_224']]
                 find_peak_dates = df.iloc[find_peak]['date']
                 find_peak_values = df.iloc[find_peak]['high']
-                filtered_peaks =  [p for p in peaks if df.iloc[p]['RSI'] < 70 and df.iloc[p]['RSI'] >= 50 ]
+                filtered_peaks =  [p for p in peaks if df.iloc[p]['RSI'] < 70 and df.iloc[p]['RSI'] >= 50  and df.iloc[p]['close'] > df.iloc[p]['EMA_224']]
                 filtered_peaks_dates = df.iloc[filtered_peaks]['date']
                 filtered_peaks_values = df.iloc[filtered_peaks]['high']
 

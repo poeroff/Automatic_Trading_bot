@@ -152,8 +152,7 @@ class Trade:
             print(f"텔레그램 메시지 전송 실패: {str(e)}")
 
 
-    async def analyze_stock(self, code):
-        """개별 종목 분석"""
+    async def generate_trend_line(self,code):
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post("http://localhost:4000/stock-data/StockData", json={'code': code}) as response:
@@ -173,14 +172,14 @@ class Trade:
                     InflectionPoint = pd.DataFrame(InflectionPoint)
                     InflectionPoint['highdate'] = pd.to_datetime(InflectionPoint['highdate'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
                     InflectionPoint['date'] = pd.to_datetime(InflectionPoint['date'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
-                  
-         
+                    
+            
                     inflectionpoint_data = InflectionPoint[['highdate', 'date', 'price']]
-                 
+                    
 
                     # HighPoint에서 date와 price 추출
                     highpoint_data = HighPoint[['date', 'price']]
-                   
+                    
 
                     # InflectionPoint의 highdate에 맞는 HighPoint의 price를 가져오기
                     inflectionpoint_data['HighPrice'] = inflectionpoint_data['highdate'].map(highpoint_data.set_index('date')['price'])
@@ -226,13 +225,11 @@ class Trade:
                     self.trend_lines_by_code[code] = {
                         "adjusted_prices": trend_prices_list,
                     }
-
-                    #print(f"전체 추세선 가격 리스트: {trend_prices_list}")
-            
-                
         except Exception as e:
             print(f"종목 {code} 분석 중 에러: {str(e)}\n상세 정보: {type(e).__name__}")
             return None
+
+
 
     async def surveillance(self):
         """종목 분석 수행"""
@@ -248,7 +245,6 @@ class Trade:
                     
             # 2. 종목 분석 수행
             for code in self.all_codes:
-                print(code)
                 await self.analyze_stock(code)
             #성공한 종목 코드에 대해서만 실시간 등록 수행
             try:
@@ -301,6 +297,15 @@ class Trade:
             print(f"시스템 시작 실패: {str(e)}")
             import traceback
             traceback.print_exc()
+
+            
+    # 알림 조건이 활성화되었을때 Main 서버로 신호 보내는 함수
+    async def send_alert_signal_to_main_server():
+        async with aiohttp.ClientSession() as session:
+            async with session.post("http://localhost:4000/stock-data/TrueCode") as response:
+                return
+        
+
     def _receive_real_data(self, code, real_type, real_data):
         """실시간 데이터 수신"""
         try:
@@ -315,7 +320,8 @@ class Trade:
                     if time_diff < 24 * 3600:  # 24시간(초 단위)
                         return  # 24시간이 지나지 않았으면 알람 보내지 않음
                 
-                current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))  # 현재가      
+                current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))  # 현재가     
+                print(current_price) 
 
                 if code in self.trend_lines_by_code:
                     adjusted_prices = self.trend_lines_by_code[code]["adjusted_prices"]
@@ -333,6 +339,8 @@ class Trade:
                                 print(f"Current price {current_price} is within margin of adjusted price {adjusted_price} for code {code} at global index {global_index}. 거래량 상승")
                                 self.queue_telegram_message(code, current_price, adjusted_price, f"{global_index}번째 Price Alert 거래량 상승")
                                 self.alert_history[code] = current_time
+                                print(current_price, code, datetime.now())
+                               
                             
                 # current_price가 result의 값 중 하나와 일치하는지 확인
                 # if code in self.trend_lines_by_code:

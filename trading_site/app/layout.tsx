@@ -7,6 +7,8 @@ import { useEffect } from "react";
 import { authOptions } from "./authOptions";
 import { useRecoilState } from "recoil";
 import { AutoTicker } from "@/components/auto-ticker";
+import Footer from "@/components/footer";
+
 
 
 
@@ -28,6 +30,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProviderAuth session={session}>
           <Header />
           {children}
+          <Footer></Footer>
           <AutoTicker></AutoTicker>
         </SessionProviderAuth>
       </body>

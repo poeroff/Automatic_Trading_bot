@@ -149,7 +149,7 @@ export class UpdateService {
           }
           // 다음 chunk 시작일은 이번 chunk의 끝 + 1일
           currentStart = currentEnd.add(1, 'day');
-          // 만약 currentStart가 endDay를 넘어가면 while문에서 탈출됨
+          // 만약 currentStart가 endDay를 넘어가면 while문에서 탈출
         }
     }
   }

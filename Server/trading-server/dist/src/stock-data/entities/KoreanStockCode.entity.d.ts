@@ -1,0 +1,34 @@
+import { DayStockData } from "./DayStockData.entity";
+import { WeekStockData } from "./WeekStockData.entity";
+import { PeakDate } from "./PeakDate.entity";
+import { FilteredPeak } from "./FilterPeak.entity";
+import { UserInflection } from "./UserInflection.entity";
+import { PeakPrice } from "./PeakPrice.entity";
+import { Alert } from "./Alert.entity";
+export declare class KoreanStockCode {
+    id: number;
+    company: string;
+    code: string;
+    category: string;
+    products: string;
+    listed_date: string;
+    settlement_month: string;
+    representative: string;
+    homepage: string;
+    region: string;
+    mket_id_cd: string;
+    capital_Impairment: string;
+    admn_item_yn: string;
+    tr_stop_yn: string;
+    mcap: string;
+    sale_account: string;
+    trendline_oblique_angle: boolean;
+    certified: boolean;
+    daystockData: DayStockData[];
+    weekstockData: WeekStockData[];
+    peakDates: PeakDate[];
+    filteredPeaks: FilteredPeak[];
+    userInflections: UserInflection[];
+    peakPrices: PeakPrice[];
+    alert: Alert[];
+}

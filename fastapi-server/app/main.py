@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 async_scheduler = AsyncIOScheduler(event_loop=asyncio.get_event_loop(), timezone=timezone('Asia/Seoul'))
 
 # 실제 작업
-@async_scheduler.scheduled_job('cron', hour=5, minute=42)
+@async_scheduler.scheduled_job('cron', hour=0, minute=29)
 async def async_DayFindFeakUpdate():
     logger.info(f"Scheduled job started at {datetime.now(timezone('Asia/Seoul'))}: HELLO")
     try:
@@ -28,11 +28,7 @@ async def async_DayFindFeakUpdate():
     except Exception as e:
         logger.error(f"Error in scheduled job: {e}")
 
-# 디버깅용 임시 작업 (현재 시간 +1분)
-now = datetime.now(timezone('Asia/Seoul'))
-@async_scheduler.scheduled_job('cron', hour=now.hour, minute=now.minute + 1)
-async def debug_task():
-    logger.info(f"Debug task running at {datetime.now(timezone('Asia/Seoul'))}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

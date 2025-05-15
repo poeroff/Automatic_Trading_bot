@@ -30,24 +30,44 @@ services:
   trading-server:
     container_name: trading-server
     build:
-      context: ./trading-server
+      context: ./Server/trading-server
       dockerfile: Dockerfile
     ports:
       - 4000:4000
       - 81:81      # WebSocket용 (Gateway)
     volumes:
-      - ./trading-server:/Trading-server
-      - /Trading-server/node_modules
+      - ./Server/trading-server:/trading-server
+      - /trading-server/node_modules
     env_file:
-      - ./trading-server/.env
+      - ./Server/trading-server/.env
     environment:
       - CHOKIDAR_USEPOLLING=true
     stdin_open: true  # -i
     tty: true  
     
     depends_on:
-      mysql:
-        condition: service_healthy
+      # mysql:
+      #   condition: service_healthy
+      redis:
+        condition: service_started
+  updateserver:
+    container_name: updateserver
+    build:
+      context: ./Server/updateserver
+      dockerfile: Dockerfile
+    ports:
+      - 4001:4001
+    volumes:
+      - ./Server/updateserver:/updateserver
+      - /updateserver/node_modules
+      
+    env_file:
+      - ./Server/updateserver/.env
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    stdin_open: true  # -i
+    tty: true
+    depends_on:
       redis:
         condition: service_started
   fastapi-server:
@@ -64,8 +84,8 @@ services:
     environment:
       - TZ=Asia/Seoul  # 시간대 설정
     depends_on:
-      mysql:
-        condition: service_healthy
+      # mysql:
+      #   condition: service_healthy
       redis:
         condition: service_started
     restart: unless-stopped  # 컨테이너가 실패 시 재시작
@@ -83,24 +103,24 @@ services:
       timeout: 5s
       retries: 5
 
-  mysql:
-    image: mysql:8.3
-    container_name: mysql
-    ports:
-      - "3307:3306"
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 20s
-      retries: 10
-    environment:
-      MYSQL_ROOT_PASSWORD: wqdsdsf123!
-      MYSQL_USER: user
-      MYSQL_PASSWORD: wqdsdsf123!
-    volumes:
-      - mysql-data:/var/lib/mysql
-      - ./mysql-init:/docker-entrypoint-initdb.d
+  # mysql:
+  #   image: mysql:8.3
+  #   container_name: mysql
+  #   ports:
+  #     - "3307:3306"
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 5s
+  #     timeout: 20s
+  #     retries: 10
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: wqdsdsf123!
+  #     MYSQL_USER: admin
+  #     MYSQL_PASSWORD: wqdsdsf123!
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #     - ./mysql-init:/docker-entrypoint-initdb.d
 
 volumes:
   redis-data:
-  mysql-data:
+  # mysql-data:

@@ -63,6 +63,7 @@ const WeekStockData_entity_1 = require("./stock-data/entities/WeekStockData.enti
 const excelupload_module_1 = require("./excelupload/excelupload.module");
 const Alert_entity_1 = require("./stock-data/entities/Alert.entity");
 const signals_module_1 = require("./signals/signals.module");
+const stock_rankings_module_1 = require("./stock-rankings/stock-rankings.module");
 const typeOrmModuleOptions = {
     useFactory: async (configService) => ({
         namingStrategy: new typeorm_naming_strategies_1.SnakeNamingStrategy(),
@@ -111,7 +112,7 @@ exports.AppModule = AppModule = __decorate([
                     cookie: { maxAge: 1000 * 60 * 60 * 24 },
                 },
             }),
-            stock_data_module_1.StockDataModule, typeorm_1.TypeOrmModule.forRootAsync(typeOrmModuleOptions), live_index_module_1.LiveIndexModule, gateway_module_1.GatewayModule, redis_module_1.RedisModule, excelupload_module_1.ExceluploadModule, signals_module_1.SignalsModule],
+            stock_data_module_1.StockDataModule, typeorm_1.TypeOrmModule.forRootAsync(typeOrmModuleOptions), live_index_module_1.LiveIndexModule, gateway_module_1.GatewayModule, redis_module_1.RedisModule, excelupload_module_1.ExceluploadModule, signals_module_1.SignalsModule, stock_rankings_module_1.StockRankingsModule],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })

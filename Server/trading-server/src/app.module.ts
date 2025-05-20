@@ -23,6 +23,7 @@ import { WeekStockData } from './stock-data/entities/WeekStockData.entity';
 import { ExceluploadModule } from './excelupload/excelupload.module';
 import { Alert } from './stock-data/entities/Alert.entity';
 import { SignalsModule } from './signals/signals.module';
+import { StockRankingsModule } from './stock-rankings/stock-rankings.module';
 
 
 
@@ -74,7 +75,7 @@ const typeOrmModuleOptions = {
       cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 24시간 유지
     },
   }),
-  StockDataModule, TypeOrmModule.forRootAsync(typeOrmModuleOptions), LiveIndexModule, GatewayModule, RedisModule, ExceluploadModule, SignalsModule],
+  StockDataModule, TypeOrmModule.forRootAsync(typeOrmModuleOptions), LiveIndexModule, GatewayModule, RedisModule, ExceluploadModule, SignalsModule, StockRankingsModule],
   controllers: [AppController],
   providers: [AppService],
 })

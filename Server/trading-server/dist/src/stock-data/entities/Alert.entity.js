@@ -35,6 +35,10 @@ __decorate([
     __metadata("design:type", Number)
 ], Alert.prototype, "price", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], Alert.prototype, "has_item", void 0);
+__decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Date)
 ], Alert.prototype, "createdAt", void 0);

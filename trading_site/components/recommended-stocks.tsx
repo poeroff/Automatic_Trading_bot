@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowUpRight, ArrowDownRight, Calendar } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, Calendar, ChevronDown } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import Link from "next/link"
 
 type StockCategory = "all" | "growth" | "value" | "dividend"
 
@@ -44,87 +45,30 @@ interface Signal {
   currentPrice: string
 }
 
-const stockData = {
-  all: [
-    { name: "삼성전자", code: "005930", price: 72800, change: 2.1, recommendation: "매수", sector: "전자" },
-    { name: "현대차", code: "005380", price: 246000, change: 1.5, recommendation: "매수", sector: "자동차" },
-    { name: "NAVER", code: "035420", price: 186500, change: -0.8, recommendation: "중립", sector: "서비스" },
-    { name: "카카오", code: "035720", price: 56700, change: 3.2, recommendation: "매수", sector: "서비스" },
-    { name: "LG화학", code: "051910", price: 452000, change: -1.2, recommendation: "중립", sector: "화학" },
-    { name: "SK하이닉스", code: "000660", price: 168500, change: 4.3, recommendation: "강력매수", sector: "반도체" },
-  ],
-  growth: [
-    { name: "카카오", code: "035720", price: 56700, change: 3.2, recommendation: "매수", sector: "서비스" },
-    { name: "SK하이닉스", code: "000660", price: 168500, change: 4.3, recommendation: "강력매수", sector: "반도체" },
-    { name: "셀트리온", code: "068270", price: 178500, change: 2.8, recommendation: "매수", sector: "제약" },
-    { name: "POSCO홀딩스", code: "005490", price: 375000, change: 1.9, recommendation: "매수", sector: "철강" },
-  ],
-  value: [
-    { name: "삼성전자", code: "005930", price: 72800, change: 2.1, recommendation: "매수", sector: "전자" },
-    { name: "현대차", code: "005380", price: 246000, change: 1.5, recommendation: "매수", sector: "자동차" },
-    { name: "KB금융", code: "105560", price: 58700, change: 0.5, recommendation: "중립", sector: "금융" },
-    { name: "LG전자", code: "066570", price: 112000, change: 1.2, recommendation: "매수", sector: "전자" },
-  ],
-  dividend: [
-    { name: "KT&G", code: "033780", price: 92400, change: 0.3, recommendation: "매수", sector: "소비재" },
-    { name: "한국전력", code: "015760", price: 19850, change: -0.5, recommendation: "중립", sector: "전기" },
-    { name: "SK텔레콤", code: "017670", price: 48900, change: 0.8, recommendation: "매수", sector: "통신" },
-    { name: "현대차우", code: "005385", price: 108500, change: 1.1, recommendation: "매수", sector: "자동차" },
-  ],
-}
-
 export function RecommendedStocks({ category = "all" }: RecommendedStocksProps) {
   const [signals, setSignals] = useState<Signal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [visibleCount, setVisibleCount] = useState(6) // 초기에 보여줄 아이템 수
+  const [hasMore, setHasMore] = useState(false) // 더 보여줄 아이템이 있는지 여부
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
         const response = await axios.get("http://localhost:4000/signals/trigger")
-        setSignals(response.data)
+        const fetchedSignals = response.data
+        setSignals(fetchedSignals)
+        setHasMore(fetchedSignals.length > visibleCount) // 더 보여줄 아이템이 있는지 확인
         setError(null)
       } catch (error) {
-        console.error("데이터를 가져오는 중 오류 발생:", error)
         setError("데이터를 불러오는 중 오류가 발생했습니다.")
-        // 개발 환경에서는 더미 데이터 사용
-        if (process.env.NODE_ENV === "development") {
-          setSignals(
-            stockData.all.map((stock, index) => ({
-              id: index,
-              price: stock.price * 0.95, // 예시: 현재 가격보다 5% 낮은 가격을 시그널 가격으로 설정
-              createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(), // 최근 30일 내 랜덤 날짜
-              currentPrice: stock.price.toString(),
-              trCode: {
-                id: index,
-                company: stock.name,
-                code: stock.code,
-                category: stock.sector,
-                products: "",
-                listed_date: "",
-                settlement_month: "",
-                representative: "",
-                homepage: "",
-                region: "",
-                mket_id_cd: "",
-                capital_Impairment: "",
-                admn_item_yn: "",
-                tr_stop_yn: "",
-                mcap: "",
-                sale_account: "",
-                trendline_oblique_angle: false,
-                certified: false,
-              },
-            })),
-          )
-        }
       } finally {
         setLoading(false)
       }
     }
     fetchData()
-  }, [])
+  }, [visibleCount])
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString)
@@ -152,6 +96,12 @@ export function RecommendedStocks({ category = "all" }: RecommendedStocksProps) 
     return change
   }
 
+  // 더보기 버튼 클릭 핸들러
+  const handleShowMore = () => {
+    setVisibleCount(signals.length) // 모든 아이템 표시
+    setHasMore(false) // 더 이상 표시할 아이템이 없음
+  }
+
   if (loading) {
     return <div className="text-center py-8">데이터를 불러오는 중...</div>
   }
@@ -160,73 +110,92 @@ export function RecommendedStocks({ category = "all" }: RecommendedStocksProps) 
     return <div className="text-center py-8 text-red-500">{error}</div>
   }
 
+  // 현재 보여줄 아이템만 필터링
+  const visibleSignals = signals.slice(0, visibleCount)
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {signals.map((stock) => {
-        const changePercentage = calculateChangePercentage(stock.price, stock.currentPrice)
-        const daysSinceSignal = getDaysSinceSignal(stock.createdAt)
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {visibleSignals.map((stock) => {
+          const changePercentage = calculateChangePercentage(stock.price, stock.currentPrice)
+          const daysSinceSignal = getDaysSinceSignal(stock.createdAt)
 
-        return (
-          <Card key={stock.trCode.code}>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{stock.trCode.company}</CardTitle>
-                  <CardDescription>
-                    {stock.trCode.code} | {stock.trCode.category}
-                  </CardDescription>
-                </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="flex items-center gap-1 bg-blue-50">
-                        <Calendar className="h-3 w-3" />
-                        <span>{formatDate(stock.createdAt)}</span>
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>매수 신호 발생일 ({daysSinceSignal}일 전)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col space-y-4">
-                <div className="flex justify-between items-center">
+          return (
+            <Card key={stock.trCode.code}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-sm text-muted-foreground">매수 신호 가격</div>
-                    <div className="text-lg font-medium">
-                      {Number.parseInt(stock.price.toString()).toLocaleString()}원
-                    </div>
+                    <CardTitle className="text-lg">{stock.trCode.company}</CardTitle>
+                    <CardDescription>
+                      {stock.trCode.code} | {stock.trCode.category}
+                    </CardDescription>
                   </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">현재 가격</div>
-                    <div className="text-lg font-bold">{Number.parseInt(stock.currentPrice).toLocaleString()}원</div>
-                  </div>
-                  {changePercentage !== null && (
-                    <div className={`flex items-center ${changePercentage > 0 ? "text-green-500" : "text-red-500"}`}>
-                      {changePercentage > 0 ? (
-                        <ArrowUpRight className="h-4 w-4 mr-1" />
-                      ) : (
-                        <ArrowDownRight className="h-4 w-4 mr-1" />
-                      )}
-                      <span>{Math.abs(changePercentage).toFixed(2)}%</span>
-                    </div>
-                  )}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="flex items-center gap-1 bg-blue-50">
+                          <Calendar className="h-3 w-3" />
+                          <span>{formatDate(stock.createdAt)}</span>
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>매수 신호 발생일 ({daysSinceSignal}일 전)</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-muted-foreground">매수 신호 가격</div>
+                      <div className="text-lg font-medium">
+                        {Number.parseInt(stock.price.toString()).toLocaleString()}원
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">현재 가격</div>
+                      <div className="text-lg font-bold">{Number.parseInt(stock.currentPrice).toLocaleString()}원</div>
+                    </div>
+                    {changePercentage !== null && (
+                      <div className={`flex items-center ${changePercentage > 0 ? "text-green-500" : "text-red-500"}`}>
+                        {changePercentage > 0 ? (
+                          <ArrowUpRight className="h-4 w-4 mr-1" />
+                        ) : (
+                          <ArrowDownRight className="h-4 w-4 mr-1" />
+                        )}
+                        <span>{Math.abs(changePercentage).toFixed(2)}%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button variant="outline" className="w-full">
+                  상세 분석
+                </Button>
+              </CardFooter>
+            </Card>
+          )
+        })}
+      </div>
 
-               
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                상세 분석
-              </Button>
-            </CardFooter>
-          </Card>
-        )
-      })}
+      {/* 더보기 버튼 */}
+      {hasMore && (
+        <div className="flex justify-center mt-8">
+          <Link href= "123" onClick={handleShowMore} className="flex items-center gap-2 px-8">
+            더보기 <ChevronDown className="h-4 w-4" />
+          </Link>
+        </div>
+      )}
+
+      {/* 전체 종목 수 표시 */}
+      <div className="text-center text-sm text-muted-foreground">
+        {visibleCount < signals.length
+          ? `${visibleCount}개 / 총 ${signals.length}개 종목 표시 중`
+          : `전체 ${signals.length}개 종목 표시 중`}
+      </div>
     </div>
   )
 }

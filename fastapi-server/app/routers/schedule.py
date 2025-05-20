@@ -85,46 +85,44 @@ async def day_find_freak_update_logic(pool):
                 filtered_peaks_dates = df.iloc[filtered_peaks]['date']
                 filtered_peaks_values = df.iloc[filtered_peaks]['high']
 
+                peak_count = 0
+                filtered_peak_count = 0
+
                 for date_val, close_val in zip(find_peak_dates, find_peak_values):
                     try:
-                        # sql_check = """
-                        #     SELECT 1 FROM trading.peak_dates
-                        #     WHERE stock_id = %s AND date = %s
-                        # """
-                        # params = [stock_id, date_val]
-                        # result = await execute_query(sql_check, params=params, pool=pool)
-                        
-                        # if not result:
                         sql_insert = """
                             INSERT INTO trading.peak_dates (price, date, stock_id)
                             VALUES (%s, %s, %s)
                         """
                         params = [close_val, date_val, stock_id]
                         await execute_query(sql_insert, params=params, pool=pool)
+                        peak_count += 1
                         await asyncio.sleep(0.01)  # 10ms delay to throttle writes
                     except Exception as e:
                         print(f"Error inserting peak data: {e} for stock_id={stock_id}, date={date_val}")
                 for date_val, close_val in zip(filtered_peaks_dates, filtered_peaks_values):
                     try:
-                        # sql_check = """
-                        #     SELECT 1 FROM trading.filtered_peaks
-                        #     WHERE stock_id = %s AND date = %s
-                        # """
-                        # params = [stock_id, date_val]
-                        # result = await execute_query(sql_check, params=params, pool=pool)
-                        
-                        # if not result:
                         sql_insert = """
                             INSERT INTO trading.filtered_peaks (price, date, stock_id)
                             VALUES (%s, %s, %s)
                         """
                         params = [close_val, date_val, stock_id]
                         await execute_query(sql_insert, params=params, pool=pool)
+                        filtered_peak_count += 1
                         await asyncio.sleep(0.01)  # 10ms delay to throttle writes
                     except Exception as e:
                         print(f"Error inserting peak data: {e} for stock_id={stock_id}, date={date_val}")
-                
-                # print(peak_dates, peak_values, df['RSI'][270])
+
+                if peak_count <= 3 or filtered_peak_count <= 3:
+                    try:
+                        update_sql = """
+                            UPDATE trading.KoreanStockCode
+                            SET certified = true
+                            WHERE id = %s
+                        """
+                        await execute_query(update_sql, params=[stock_id], pool=pool)
+                    except Exception as e:
+                        print(f"Error updating certified status: {e} for stock_id={stock_id}")
             except Exception as e:
                 print(f"Error processing stock data: {e} for stock_id={stock_id}")
     

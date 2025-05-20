@@ -15,6 +15,9 @@ export class Alert {
   @Column()
   price : number 
 
+  @Column({default : false})
+  has_item : boolean
+
   @Column()
   createdAt: Date;
 

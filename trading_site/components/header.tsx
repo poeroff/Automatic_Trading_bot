@@ -264,7 +264,7 @@ export default function Header() {
           <Link href="#" className="text-sm font-medium hover:text-primary">
             종목 추천
           </Link>
-          <Link href="#" className="text-sm font-medium hover:text-primary">
+          <Link href="marketanalysis" className="text-sm font-medium hover:text-primary">
             시장 분석
           </Link>
           <Link href="#" className="text-sm font-medium hover:text-primary">

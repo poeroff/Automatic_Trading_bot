@@ -92,7 +92,7 @@ let StockDataService = class StockDataService {
         return await this.KoreanStockCodeRepository.save(trCode);
     }
     async falseCertified() {
-        const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
+        const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'], take: 100 });
         const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length >= 3);
         return results;
     }

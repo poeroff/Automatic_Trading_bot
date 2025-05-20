@@ -33,7 +33,8 @@ let SignalsService = class SignalsService {
         }
         const alert = this.AlertRepository.create({
             price: +price,
-            trCode: stockCode
+            trCode: stockCode,
+            has_item: true
         });
         this.EventsGateway.signals();
         return await this.AlertRepository.save(alert);
@@ -41,6 +42,7 @@ let SignalsService = class SignalsService {
     async triggerStockSignal(url, headers) {
         let Trigger = [];
         Trigger = await this.AlertRepository.find({
+            where: { has_item: true },
             order: {
                 createdAt: 'DESC',
             },

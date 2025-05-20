@@ -140,7 +140,8 @@ export class StockDataService {
 
   async falseCertified() {
     //relations 쓰는 이유 그 자식 관계 맺어진 데이터까지 가져오기 위해서
-    const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
+    // const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
+    const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'],take : 100 });
 
     //고점이 1개 이상인 데이터만 추출한다다
     const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length >= 3 );

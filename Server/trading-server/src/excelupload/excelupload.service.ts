@@ -233,7 +233,7 @@ export class ExceluploadService {
       }
       else if(Company){
         await this.koreanstockcoderepository.update({ code: rowValues[1] }, { mket_id_cd: market_cap?.mket_id_cd, mcap : market_cap?.result, capital_Impairment :  CapitalImpaired.result, admn_item_yn : market_cap?.admn_item_yn, tr_stop_yn : market_cap?.tr_stop_yn, sale_account : check_revenue.result })
-        if( market_cap?.result == "N" ||CapitalImpaired.result == "N"|| market_cap?.admn_item_yn == "N" || market_cap?.tr_stop_yn == "N" || check_revenue.result == "N")
+        if( market_cap?.result == "Y" ||CapitalImpaired.result == "Y"|| market_cap?.admn_item_yn == "Y" || market_cap?.tr_stop_yn == "Y" || check_revenue.result == "Y")
           await this.DayStockRepository.delete({trCode : {code : rowValues[1]}})
         }
     }

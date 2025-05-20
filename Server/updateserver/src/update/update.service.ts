@@ -94,63 +94,66 @@ export class UpdateService {
         sale_account: "N",
       },
     });    
+
     for (let i = 0; i < codeList.length; i++) {
-   
       const code = codeList[i];
-        const originalDate = code.listed_date;
-        const startDay = dayjs(originalDate, 'YYYY-MM-DD');
-        const endDay = dayjs(this.todayStr, 'YYYYMMDD').subtract(1, 'day');
-        // 100일씩 끊을 범위 설정
-        const chunkSize = 100;
-        let currentStart = startDay;
-        // while문으로 100일 단위 반복
-        while (currentStart.isBefore(endDay)) {
-          // currentStart + 99일 = 이번 chunk의 종료일
-          let currentEnd = currentStart.add(chunkSize - 1, 'day');
-          // 만약 endDay를 넘어가면 endDay로 조정
-          if (currentEnd.isAfter(endDay)) {
-            currentEnd = endDay;
-          }
-          // API 파라미터 (주봉)
-          const params = {
-            FID_COND_MRKT_DIV_CODE: 'J',        // 주식
-            FID_INPUT_ISCD: code.code,            // 종목 코드
-            FID_INPUT_DATE_1: currentStart.format('YYYYMMDD'),  // chunk 시작
-            FID_INPUT_DATE_2: currentEnd.format('YYYYMMDD'),    // chunk 종료
-            FID_PERIOD_DIV_CODE: 'D',           // 주봉
-            FID_ORG_ADJ_PRC: '0',              // 수정주가
-          };
-          // API 호출
-          try {
-            const response = await Get(url,headers,params)
-            const output2 = response.data.output2;
-        
-        
-            if(output2.length >= 1){
-              const stock = await this.daystockdataRepository.findOne({ where: { date: output2[0].stck_bsop_date, trCode: { id: Number(code.id) } } })
-              if(!stock){
-                for (const stockdata of output2) { 
-                  const stock2 = await this.daystockdataRepository.findOne({ where: { date: stockdata.stck_bsop_date, trCode: { id: Number(code.id) } } })
-                  if(!stock2){
-                    await this.daystockdataRepository.save({ date: stockdata.stck_bsop_date, open: Number(stockdata.stck_oprc), high: Number(stockdata.stck_hgpr), low: Number(stockdata.stck_lwpr), close: Number(stockdata.stck_clpr), volume: Number(stockdata.acml_vol), trCode: { id: Number(code.id) }, prdy_vrss_sign:stockdata.prdy_vrss_sign , prdy_vrss : stockdata.prdy_vrss });
-                  }
-                  else if(stock2){
-                    break;
-                  }
+  
+      const originalDate = code.listed_date;
+      const startDay = dayjs(originalDate, 'YYYY-MM-DD');
+      const endDay = dayjs(this.todayStr, 'YYYYMMDD').subtract(1, 'day');
+      // 100일씩 끊을 범위 설정
+      const chunkSize = 100;
+      let currentStart = startDay;
+      // while문으로 100일 단위 반복
+ 
+      while (currentStart.isBefore(endDay)) {
+        // currentStart + 99일 = 이번 chunk의 종료일
+        let currentEnd = currentStart.add(chunkSize - 1, 'day');
+        // 만약 endDay를 넘어가면 endDay로 조정
+        if (currentEnd.isAfter(endDay)) {
+          currentEnd = endDay;
+        }
+        // API 파라미터 (주봉)
+        const params = {
+          FID_COND_MRKT_DIV_CODE: 'J',        // 주식
+          FID_INPUT_ISCD: code.code,            // 종목 코드
+          FID_INPUT_DATE_1: currentStart.format('YYYYMMDD'),  // chunk 시작
+          FID_INPUT_DATE_2: currentEnd.format('YYYYMMDD'),    // chunk 종료
+          FID_PERIOD_DIV_CODE: 'D',           // 주봉
+          FID_ORG_ADJ_PRC: '0',              // 수정주가
+        };
+        // API 호출
+       
+        try {
+          const response = await Get(url,headers,params)
+          const output2 = response.data.output2;
+      
+      
+          if(output2.length >= 1){
+            const stock = await this.daystockdataRepository.findOne({ where: { date: output2[0].stck_bsop_date, trCode: { id: Number(code.id) } } })
+            if(!stock){
+              for (const stockdata of output2) { 
+                const stock2 = await this.daystockdataRepository.findOne({ where: { date: stockdata.stck_bsop_date, trCode: { id: Number(code.id) } } })
+                if(!stock2){
+                  await this.daystockdataRepository.save({ date: stockdata.stck_bsop_date, open: Number(stockdata.stck_oprc), high: Number(stockdata.stck_hgpr), low: Number(stockdata.stck_lwpr), close: Number(stockdata.stck_clpr), volume: Number(stockdata.acml_vol), trCode: { id: Number(code.id) }, prdy_vrss_sign:stockdata.prdy_vrss_sign , prdy_vrss : stockdata.prdy_vrss });
+                }
+                else if(stock2){
+                  break;
                 }
               }
-              else if(stock){
-                break
-              }
             }
-           
-          } catch (error) {
-            console.error('API 호출 에러:', error.message);
+            else if(stock){
+              break
+            }
           }
-          // 다음 chunk 시작일은 이번 chunk의 끝 + 1일
-          currentStart = currentEnd.add(1, 'day');
-          // 만약 currentStart가 endDay를 넘어가면 while문에서 탈출
+          
+        } catch (error) {
+          console.error('API 호출 에러:', error.message);
         }
+        // 다음 chunk 시작일은 이번 chunk의 끝 + 1일
+        currentStart = currentEnd.add(1, 'day');
+        // 만약 currentStart가 endDay를 넘어가면 while문에서 탈출
+      }
     }
   }
 

@@ -15,9 +15,11 @@ export class Alert {
   @Column()
   price : number 
 
+  @Column({default : false})
+  has_item : boolean
+
   @Column()
   createdAt: Date;
-
 
   @ManyToOne(() => KoreanStockCode, (KoreanStockCode) => KoreanStockCode.peakDates, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'stock_id' }) // This is the foreign key

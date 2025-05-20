@@ -25,7 +25,8 @@ export class SignalsService {
     // Create the alert with the proper relation
     const alert = this.AlertRepository.create({
       price: +price,
-      trCode: stockCode  // Set the entire entity, not just {code: code}
+      trCode: stockCode,  // Set the entire entity, not just {code: code}
+      has_item : true
     });
     this.EventsGateway.signals()
     return await this.AlertRepository.save(alert);
@@ -34,6 +35,7 @@ export class SignalsService {
   async triggerStockSignal(url,headers) {
     let Trigger: Alert[] = []; // 명시적 타입 선언
     Trigger = await this.AlertRepository.find({
+      where : { has_item : true},
       order: {
         createdAt: 'DESC',
       },

@@ -112,12 +112,43 @@ async def day_find_freak_update_logic(pool):
                         await asyncio.sleep(0.01)  # 10ms delay to throttle writes
                     except Exception as e:
                         print(f"Error inserting peak data: {e} for stock_id={stock_id}, date={date_val}")
+    
+                select_sql = "SELECT * FROM trading.StockFilter WHERE stock_id = %s"
+                select_params = [stock_id]
+                row = await execute_query(select_sql, params=select_params, pool=pool)
 
+                if row:
+                    # 2. 이미 있으면 UPDATE
+                    update_sql = """
+                        UPDATE trading.StockFilter
+                        SET currenthigh_count = %s , previoushigh_count = %s
+                        WHERE stock_id = %s
+                    """
+                    update_params = [peak_count, row[0]['currenthigh_count'], stock_id]
+                    await execute_query(update_sql, params=update_params, pool=pool)
+                else:
+                    # 3. 없으면 CREATE (INSERT)
+                    insert_sql = """
+                        INSERT INTO trading.StockFilter (stock_id, currenthigh_count)
+                        VALUES (%s, %s)
+                    """
+                    insert_params = [stock_id, peak_count]
+                    await execute_query(insert_sql, params=insert_params, pool=pool)
+       
+                if row:
+                    if(row[0]['currenthigh_count'] != row[0]['previoushigh_count']):
+                        update_sql = """
+                            UPDATE trading.KoreanStockCode
+                            SET certified = false
+                            WHERE id = %s
+                        """
+                        await execute_query(update_sql, params=[stock_id], pool=pool)
+                
                 if peak_count <= 3 or filtered_peak_count <= 3:
                     try:
                         update_sql = """
                             UPDATE trading.KoreanStockCode
-                            SET certified = true
+                            SET unmet_conditions = false
                             WHERE id = %s
                         """
                         await execute_query(update_sql, params=[stock_id], pool=pool)

@@ -171,7 +171,7 @@ const StockAnalysisPoints = ({ code }: StockAnalysisPointsProps) => {
       if (code) payload.code = code;
      
       const result = await axios.post("http://localhost:4000/stock-data/user-inflection", payload);
-      console.log(result)
+
       // 데이터 리프레시
       fetchStockData(code ?? undefined);
     } catch (error) {

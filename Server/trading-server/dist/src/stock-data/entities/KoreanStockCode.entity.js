@@ -18,6 +18,7 @@ const FilterPeak_entity_1 = require("./FilterPeak.entity");
 const UserInflection_entity_1 = require("./UserInflection.entity");
 const PeakPrice_entity_1 = require("./PeakPrice.entity");
 const Alert_entity_1 = require("./Alert.entity");
+const StockFilter_1 = require("./StockFilter");
 let KoreanStockCode = class KoreanStockCode {
 };
 exports.KoreanStockCode = KoreanStockCode;
@@ -86,13 +87,17 @@ __decorate([
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "sale_account", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: false }),
+    (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)
-], KoreanStockCode.prototype, "trendline_oblique_angle", void 0);
+], KoreanStockCode.prototype, "unmet_conditions", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'boolean', default: false }),
     __metadata("design:type", Boolean)
 ], KoreanStockCode.prototype, "certified", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => StockFilter_1.StockFilter, (stockFilter) => stockFilter.trCode),
+    __metadata("design:type", StockFilter_1.StockFilter)
+], KoreanStockCode.prototype, "stockFilter", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => DayStockData_entity_1.DayStockData, (daystockData) => daystockData.trCode),
     __metadata("design:type", Array)

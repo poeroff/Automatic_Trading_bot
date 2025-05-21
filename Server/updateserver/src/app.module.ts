@@ -45,6 +45,7 @@ import { Alert } from '../libs/entity/Alert.entity'
 import { UpdateModule } from './update/update.module';
 import { RedisModule } from './redis/redis.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { StockFilter } from '../libs/entity/StockFilter';
 
 
 
@@ -60,7 +61,7 @@ const typeOrmModuleOptions = {
     port: configService.get('DB_PORT'),
     database: configService.get('DB_NAME'),
     charset: configService.get("CHAR_SET"), //이모지를 위한 추가 설정기능 이유 : 이모지는 3byte인데 utf8mb는 최대 2바이트밖에 받지 못하기 때문이다.
-    entities: [DayStockData, PeakDate, PeakPrice, FilteredPeak, UserInflection, KoreanStockCode, WeekStockData, Alert],
+    entities: [DayStockData, PeakDate, PeakPrice, FilteredPeak, UserInflection, KoreanStockCode, WeekStockData, Alert, StockFilter],
     synchronize: configService.get('DB_SYNC'),
     logging: true,
     timezone: '+09:00'

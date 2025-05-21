@@ -92,9 +92,8 @@ let StockDataService = class StockDataService {
         return await this.KoreanStockCodeRepository.save(trCode);
     }
     async falseCertified() {
-        const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'], take: 100 });
-        const results = uncertifiedTrCodes.filter(trCode => trCode.peakDates.length >= 3);
-        return results;
+        const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { capital_Impairment: 'N', admn_item_yn: 'N', tr_stop_yn: 'N', mcap: 'N', sale_account: 'N', certified: false, unmet_conditions: true }, take: 10 });
+        return uncertifiedTrCodes;
     }
     async returnHighPeak(code) {
         const Company = await this.KoreanStockCodeRepository.findOne({ where: { code: code } });

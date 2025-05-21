@@ -16,7 +16,7 @@ export class UpdateController {
 
   //Hashkey 발급
   // @Cron('0 17 21 * * *')
-  //@Cron('0 0 * * * *')
+  @Cron('1 0 0 * * 1,5',{timeZone :'Asia/Seoul'})
   createAuthHashKey(){
     const url = 'https://openapi.koreainvestment.com:9443/uapi/hashkey';
     const headers = {
@@ -42,7 +42,7 @@ export class UpdateController {
   }
 
   //AccessToken 발급
-  @Cron('1 50 18 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('1 2 19 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
   createAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
@@ -58,7 +58,7 @@ export class UpdateController {
   }
 
   //웹 소켓 토큰 발급
-  // @Cron('0 55 12 * * *')
+  @Cron('1 0 0 * * 1,5',{timeZone :'Asia/Seoul'})
   createWebSocketToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/Approval"
     const headers = {
@@ -73,7 +73,7 @@ export class UpdateController {
   }
 
   //주식 일봉 데이터 수집(상장 ~ 어제) 주식 데이터가 완전히 비어있을떄 딱 한번 그 외에는 사용하지 말것
-  @Cron('10 23 17 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('0 30 18 * * 1,5',{timeZone :'Asia/Seoul'})
   async alldayStockData(){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
     const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";

@@ -5,6 +5,7 @@ import { FilteredPeak } from "./FilterPeak.entity";
 import { UserInflection } from "./UserInflection.entity";
 import { PeakPrice } from "./PeakPrice.entity";
 import { Alert } from "./Alert.entity";
+import { StockFilter } from "./StockFilter";
 export declare class KoreanStockCode {
     id: number;
     company: string;
@@ -22,8 +23,9 @@ export declare class KoreanStockCode {
     tr_stop_yn: string;
     mcap: string;
     sale_account: string;
-    trendline_oblique_angle: boolean;
+    unmet_conditions: boolean;
     certified: boolean;
+    stockFilter: StockFilter;
     daystockData: DayStockData[];
     weekstockData: WeekStockData[];
     peakDates: PeakDate[];

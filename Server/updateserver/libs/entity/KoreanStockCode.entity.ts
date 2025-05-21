@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { DayStockData } from "./DayStockData.entity";
 import { WeekStockData } from "./WeekStockData.entity";
 import { PeakDate } from "./PeakDate.entity";
@@ -6,6 +6,7 @@ import { FilteredPeak } from "./FilterPeak.entity";
 import { UserInflection } from "./UserInflection.entity";
 import { PeakPrice } from "./PeakPrice.entity";
 import { Alert } from "./Alert.entity";
+import { StockFilter } from "./StockFilter";
 
 @Entity('KoreanStockCode') // 테이블 이름을 'tr_codes'로 설정
 export class KoreanStockCode {
@@ -57,13 +58,16 @@ export class KoreanStockCode {
     // 매출액
     @Column()
     sale_account : string
-    //빗각인지, 추세선인지 여부 확인(빗각을 그을 수 없을 경우에 추세선 사용)
-    @Column({default : false})
-    trendline_oblique_angle : boolean
 
+    //고점, 변곡점의 최소 개수가 만족하는지 확인  
+    @Column({default : true})
+    unmet_conditions : boolean
 
     @Column({ type: 'boolean', default: false })
     certified: boolean; // 인증 여부
+
+    @OneToOne(() => StockFilter, (stockFilter) => stockFilter.trCode)
+    stockFilter: StockFilter;
 
     @OneToMany(() => DayStockData, (daystockData) => daystockData.trCode)
     daystockData: DayStockData[];

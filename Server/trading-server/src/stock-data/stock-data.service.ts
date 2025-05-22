@@ -26,9 +26,9 @@ export class StockDataService {
 
   async trueCode(){
     try {
-      const codes = await this.KoreanStockCodeRepository.find({where: { certified: true }, relations:["userInflections"]});     
-      const filtered = codes.filter(code => code.userInflections.length > 0);
-      return filtered
+      const codes = await this.KoreanStockCodeRepository.find({where: { unmet_conditions: true , certified: true }});     
+  
+      return codes
     } catch (error) {
       console.error('Error fetching codes:', error);
       throw new InternalServerErrorException('Failed to fetch codes');

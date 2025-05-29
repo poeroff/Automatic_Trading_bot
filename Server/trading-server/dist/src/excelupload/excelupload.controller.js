@@ -62,7 +62,6 @@ let ExceluploadController = class ExceluploadController {
     }
     async koreanStockuUploadExcel(file) {
         const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-        console.log(savedToken);
         if (!savedToken) {
             throw new common_1.HttpException('Not Found AccessToken', common_1.HttpStatus.NOT_FOUND);
         }

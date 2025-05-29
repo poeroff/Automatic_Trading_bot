@@ -1,22 +1,25 @@
 #2025-03-29 제작
 # import numpy as np
-import aiohttp
 import numpy as np
+#from pykiwoom.kiwoom import Kiwoom
+import aiohttp
+import requests
 import telegram
-from pykiwoom.kiwoom import Kiwoom
 import pandas as pd
+from pykiwoom.kiwoom import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from pykiwoom.kiwoom import *
 import pythoncom
 import asyncio
 from datetime import datetime, timedelta
 import time
-from  Auth.Login import Auth
-from PyQt5.QtWidgets import QApplication
 import sys
-from pyampd.ampd import find_peaks  # 정확한 경로에서 함수 가져오기
+from PyQt5.QtWidgets import QApplication
+
+from  Auth.Login import Auth
+
+
 
 
 async def find_peaks(code):
@@ -32,17 +35,18 @@ async def inflection_point(code):
                     return response_json
 
 
-
-
-
-
 class Trade:
     def __init__(self, kiwoom):
         # 키움 관련
         self.kiwoom = kiwoom  # 기존 로그인된 키움 객체
-        self.loop = asyncio.get_event_loop()
+        # Fix: Use asyncio.new_event_loop() instead of get_event_loop()
+        try:
+            self.loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
+        
         self.kiwoom.ocx.OnReceiveRealData.connect(self._receive_real_data)   # 키움 객체의 내부 QAxWidget에 이벤트 핸들러 연결
-
 
         self.trend_lines_by_code = {}
         self.price_margin = 100
@@ -111,8 +115,13 @@ class Trade:
         message += f"{line_type} 가격: {trend_price:,}원\n"
         message += f"시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         
-        # 비동기 이벤트 루프에서 메시지 전송
-        asyncio.get_event_loop().create_task(self.send_telegram_message(message))
+        # Fix: Use asyncio.create_task with proper event loop handling
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.send_telegram_message(message))
+        except RuntimeError:
+            # If no running loop, create a new one
+            asyncio.create_task(self.send_telegram_message(message))
 
 
     async def send_error_message(self, error_type, details):
@@ -167,8 +176,10 @@ class Trade:
                     # 날짜 변환
                     data["date"] = pd.to_datetime(data["date"])
                     HighPoint =  await find_peaks(code)
+                
                     HighPoint = pd.DataFrame(HighPoint)
                     InflectionPoint =  await inflection_point(code)
+            
                     InflectionPoint = pd.DataFrame(InflectionPoint)
                     InflectionPoint['highdate'] = pd.to_datetime(InflectionPoint['highdate'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
                     InflectionPoint['date'] = pd.to_datetime(InflectionPoint['date'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
@@ -229,7 +240,12 @@ class Trade:
             print(f"종목 {code} 분석 중 에러: {str(e)}\n상세 정보: {type(e).__name__}")
             return None
 
-
+    async def analyze_stock(self, code):
+        """Individual stock analysis - this method seems to be missing from the original code"""
+        try:
+            await self.generate_trend_line(code)
+        except Exception as e:
+            print(f"종목 {code} 분석 실패: {str(e)}")
 
     async def surveillance(self):
         """종목 분석 수행"""
@@ -245,6 +261,7 @@ class Trade:
                     
             # 2. 종목 분석 수행
             for code in self.all_codes:
+                print(code)
                 await self.analyze_stock(code)
             #성공한 종목 코드에 대해서만 실시간 등록 수행
             try:
@@ -283,11 +300,31 @@ class Trade:
 
     def Trade_Start(self):
         try:
-            # 1. 초기 분석 수행 및 실시간 등록
-            async def run_surveillance():
-                return await self.surveillance()
-            asyncio.get_event_loop().run_until_complete(run_surveillance())
-            print("result",self.trend_lines_by_code)
+            # Fix: Proper async event loop handling
+            if hasattr(asyncio, 'run'):
+                # Python 3.7+
+                try:
+                    loop = asyncio.get_running_loop()
+                    # If there's already a running loop, create a task
+                    task = loop.create_task(self.surveillance())
+                    # Wait for completion in a thread-safe way
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run_coroutine_threadsafe, self.surveillance(), loop)
+                        future.result()
+                except RuntimeError:
+                    # No running loop, use asyncio.run
+                    asyncio.run(self.surveillance())
+            else:
+                # Python < 3.7 fallback
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(self.surveillance())
+                finally:
+                    loop.close()
+                    
+            print("result", self.trend_lines_by_code)
 
             # 2. 이벤트 루프 유지 (실시간 데이터 수신을 위해)
             while True:
@@ -300,9 +337,22 @@ class Trade:
 
             
     # 알림 조건이 활성화되었을때 Main 서버로 신호 보내는 함수
-    async def send_alert_signal_to_main_server():
+    
+    # def send_alert_signal_to_main_server_sync(self, code, current_price):
+    #     try:
+    #         response = requests.post(
+    #             "http://localhost:4000/signals",
+    #             json={'code': code, 'price': str(current_price)}, # JSON은 보통 문자열을 선호하므로 str() 고려
+    #             timeout=5  # 5초 타임아웃 설정
+    #         )
+    #         response.raise_for_status() # 2xx 상태 코드가 아니면 오류 발생
+    #         print(f"✅ Signal Sent (Sync): Code {code}, Price {current_price}, Status {response.status_code}")
+    #     except requests.exceptions.RequestException as e:
+    #         print(f"❌ Failed to send signal (Sync): {e}")
+            
+    async def send_alert_signal_to_main_server_sync(self, code, current_price):
         async with aiohttp.ClientSession() as session:
-            async with session.post("http://localhost:4000/stock-data/TrueCode") as response:
+            async with session.post("http://localhost:4000/signals",json={'code': code, 'price': current_price}) as response:
                 return
         
 
@@ -321,6 +371,7 @@ class Trade:
                         return  # 24시간이 지나지 않았으면 알람 보내지 않음
                 
                 current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))  # 현재가     
+            
                 print(current_price) 
 
                 if code in self.trend_lines_by_code:
@@ -339,8 +390,8 @@ class Trade:
                                 print(f"Current price {current_price} is within margin of adjusted price {adjusted_price} for code {code} at global index {global_index}. 거래량 상승")
                                 self.queue_telegram_message(code, current_price, adjusted_price, f"{global_index}번째 Price Alert 거래량 상승")
                                 self.alert_history[code] = current_time
-                                print(current_price, code, datetime.now())
-                               
+                                self.send_alert_signal_to_main_server_sync(code, current_price)
+                                return 
                             
                 # current_price가 result의 값 중 하나와 일치하는지 확인
                 # if code in self.trend_lines_by_code:

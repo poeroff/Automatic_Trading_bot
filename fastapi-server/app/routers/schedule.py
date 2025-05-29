@@ -42,13 +42,14 @@ async def day_find_freak_update_logic(pool):
         await execute_query("SET SQL_SAFE_UPDATES = 0", pool=pool)
         sql_clear_peak_dates = "DELETE FROM trading.peak_dates"
         sql_clear_filtered_peaks = "DELETE FROM trading.filtered_peaks"
-        
+ 
         await execute_query(sql_clear_peak_dates, pool=pool)
         await execute_query(sql_clear_filtered_peaks, pool=pool)
         await execute_query("SET SQL_SAFE_UPDATES = 1", pool=pool)
         
         for row in result:
             stock_id = row['id']
+   
             try:
                 sql = f"SELECT * FROM trading.DayStockData where stock_id={stock_id}"
                 stock_result = await execute_query(sql, pool=pool)

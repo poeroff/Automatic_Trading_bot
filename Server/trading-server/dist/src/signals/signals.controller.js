@@ -41,7 +41,6 @@ let SignalsController = class SignalsController {
             "custtype": "P",
             "tr_cont": "M"
         };
-        console.log(headers);
         return this.signalsService.triggerStockSignal(url, headers);
     }
     triggerStockSignals() {

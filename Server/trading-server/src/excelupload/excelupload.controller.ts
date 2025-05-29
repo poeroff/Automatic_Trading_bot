@@ -21,7 +21,6 @@ export class ExceluploadController {
   @UseInterceptors(FileInterceptor("file"))
   async koreanStockuUploadExcel(@UploadedFile() file){
     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-    console.log(savedToken)
     if(!savedToken){
       throw new HttpException('Not Found AccessToken', HttpStatus.NOT_FOUND);
     }

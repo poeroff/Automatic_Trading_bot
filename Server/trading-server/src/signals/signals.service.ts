@@ -1,14 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSignalDto } from './dto/create-signal.dto';
 import { UpdateSignalDto } from './dto/update-signal.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { read } from 'fs';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { KoreanStockCode } from 'src/stock-data/entities/KoreanStockCode.entity';
 import { Alert } from 'src/stock-data/entities/Alert.entity';
 import { EventsGateway } from 'src/gateway/events.gateway';
 import { Get } from 'utils/axios_get';
+import dayjs from 'dayjs';
 
 
 @Injectable()
@@ -21,14 +22,32 @@ export class SignalsService {
     if (!stockCode) {
       throw new NotFoundException(`Stock with code ${code} not found`);
     }
-    
-    // Create the alert with the proper relation
+     // 1. 한달 전 날짜 계산
+     const oneMonthAgo = dayjs().subtract(31, 'day').toDate();
+
+     // 2. 해당 stock_id를 가지면서, 일주일 내에 생성된 Alert가 있는지 확인
+     const recentAlert = await this.AlertRepository.findOne({
+       where: {
+         trCode: { id: stockCode.id }, // 관계를 통해 stock_id 필터링
+         createdAt: MoreThan(oneMonthAgo), // createdAt이 일주일 전보다 최신인지 확인
+       },
+       order: { createdAt: 'DESC' }, // 혹시 여러 개 있을 경우 최신 것을 기준으로 확인 (선택적)
+     });
+    if (recentAlert) {
+      throw new ConflictException(
+        `An alert for code ${code} was already created on ${dayjs(recentAlert.createdAt).format('YYYY-MM-DD HH:mm')}, which is within the last 7 days.`,
+      );
+      // 또는 return recentAlert; 등으로 기존 알림을 반환할 수도 있습니다.
+    }
+    // 4. 일주일 내에 생성된 Alert가 없다면, 새로 생성
     const alert = this.AlertRepository.create({
       price: +price,
-      trCode: stockCode,  // Set the entire entity, not just {code: code}
-      has_item : true
+      trCode: stockCode, // 전체 엔티티 할당
+      has_item: true,
+      // createdAt은 @BeforeInsert 데코레이터에 의해 자동으로 설정됩니다.
     });
-    this.EventsGateway.signals()
+  
+    // this.EventsGateway.signals()
     return await this.AlertRepository.save(alert);
   }
 

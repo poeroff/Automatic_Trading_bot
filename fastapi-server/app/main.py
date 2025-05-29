@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 async_scheduler = AsyncIOScheduler(event_loop=asyncio.get_event_loop(), timezone=timezone('Asia/Seoul'))
 
 # 실제 작업
-@async_scheduler.scheduled_job('cron', hour=19, minute=27)
+@async_scheduler.scheduled_job('cron', hour=12, minute=21)
 async def async_DayFindFeakUpdate():
     try:
         db_pool = app.state.db_pool

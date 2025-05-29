@@ -30,8 +30,7 @@ export class SignalsController {
       'tr_id': 'FHKST01010100', // 주식 차트 데이터 요청 ID
       "custtype" :"P",
       "tr_cont" : "M"
-    };
-    console.log(headers)
+    }
     return this.signalsService.triggerStockSignal(url,headers)
   }
   //모든 알림 신호 보내주기

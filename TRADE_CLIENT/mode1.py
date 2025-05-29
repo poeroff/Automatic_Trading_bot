@@ -3,6 +3,7 @@
 import numpy as np
 #from pykiwoom.kiwoom import Kiwoom
 import aiohttp
+import requests
 import telegram
 import pandas as pd
 from pykiwoom.kiwoom import *
@@ -172,12 +173,13 @@ class Trade:
                     if len(data) < 14:
                         return
                     
-                    
                     # 날짜 변환
                     data["date"] = pd.to_datetime(data["date"])
                     HighPoint =  await find_peaks(code)
+                
                     HighPoint = pd.DataFrame(HighPoint)
                     InflectionPoint =  await inflection_point(code)
+            
                     InflectionPoint = pd.DataFrame(InflectionPoint)
                     InflectionPoint['highdate'] = pd.to_datetime(InflectionPoint['highdate'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
                     InflectionPoint['date'] = pd.to_datetime(InflectionPoint['date'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
@@ -335,9 +337,22 @@ class Trade:
 
             
     # 알림 조건이 활성화되었을때 Main 서버로 신호 보내는 함수
-    async def send_alert_signal_to_main_server(self):
+    
+    # def send_alert_signal_to_main_server_sync(self, code, current_price):
+    #     try:
+    #         response = requests.post(
+    #             "http://localhost:4000/signals",
+    #             json={'code': code, 'price': str(current_price)}, # JSON은 보통 문자열을 선호하므로 str() 고려
+    #             timeout=5  # 5초 타임아웃 설정
+    #         )
+    #         response.raise_for_status() # 2xx 상태 코드가 아니면 오류 발생
+    #         print(f"✅ Signal Sent (Sync): Code {code}, Price {current_price}, Status {response.status_code}")
+    #     except requests.exceptions.RequestException as e:
+    #         print(f"❌ Failed to send signal (Sync): {e}")
+            
+    async def send_alert_signal_to_main_server_sync(self, code, current_price):
         async with aiohttp.ClientSession() as session:
-            async with session.post("http://localhost:4000/stock-data/TrueCode") as response:
+            async with session.post("http://localhost:4000/signals",json={'code': code, 'price': current_price}) as response:
                 return
         
 
@@ -356,6 +371,7 @@ class Trade:
                         return  # 24시간이 지나지 않았으면 알람 보내지 않음
                 
                 current_price = abs(int(self.kiwoom.GetCommRealData(code, 10)))  # 현재가     
+            
                 print(current_price) 
 
                 if code in self.trend_lines_by_code:
@@ -374,8 +390,8 @@ class Trade:
                                 print(f"Current price {current_price} is within margin of adjusted price {adjusted_price} for code {code} at global index {global_index}. 거래량 상승")
                                 self.queue_telegram_message(code, current_price, adjusted_price, f"{global_index}번째 Price Alert 거래량 상승")
                                 self.alert_history[code] = current_time
-                                print(current_price, code, datetime.now())
-                               
+                                self.send_alert_signal_to_main_server_sync(code, current_price)
+                                return 
                             
                 # current_price가 result의 값 중 하나와 일치하는지 확인
                 # if code in self.trend_lines_by_code:

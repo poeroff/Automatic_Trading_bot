@@ -50,7 +50,6 @@ export function RecommendedStocks({ category = "all" }: RecommendedStocksProps) 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(6) // 초기에 보여줄 아이템 수
-  const [hasMore, setHasMore] = useState(false) // 더 보여줄 아이템이 있는지 여부
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,8 +57,8 @@ export function RecommendedStocks({ category = "all" }: RecommendedStocksProps) 
         setLoading(true)
         const response = await axios.get("http://localhost:4000/signals/trigger")
         const fetchedSignals = response.data
+        console.log(fetchedSignals)
         setSignals(fetchedSignals)
-        setHasMore(fetchedSignals.length > visibleCount) // 더 보여줄 아이템이 있는지 확인
         setError(null)
       } catch (error) {
         setError("데이터를 불러오는 중 오류가 발생했습니다.")
@@ -99,7 +98,6 @@ export function RecommendedStocks({ category = "all" }: RecommendedStocksProps) 
   // 더보기 버튼 클릭 핸들러
   const handleShowMore = () => {
     setVisibleCount(signals.length) // 모든 아이템 표시
-    setHasMore(false) // 더 이상 표시할 아이템이 없음
   }
 
   if (loading) {
@@ -181,20 +179,16 @@ export function RecommendedStocks({ category = "all" }: RecommendedStocksProps) 
         })}
       </div>
 
-      {/* 더보기 버튼 */}
-      {hasMore && (
-        <div className="flex justify-center mt-8">
-          <Link href= "123" onClick={handleShowMore} className="flex items-center gap-2 px-8">
-            더보기 <ChevronDown className="h-4 w-4" />
-          </Link>
-        </div>
-      )}
 
-      {/* 전체 종목 수 표시 */}
-      <div className="text-center text-sm text-muted-foreground">
-        {visibleCount < signals.length
-          ? `${visibleCount}개 / 총 ${signals.length}개 종목 표시 중`
-          : `전체 ${signals.length}개 종목 표시 중`}
+      
+
+
+      
+      
+      <div className="flex justify-center mt-8">
+        <Link href="123" onClick={handleShowMore} className="flex items-center gap-2 px-8">
+          더보기 <ChevronDown className="h-4 w-4" />
+        </Link>
       </div>
     </div>
   )

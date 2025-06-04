@@ -286,7 +286,9 @@ export default function Header() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input type="search" placeholder="종목 검색..." className="w-64 pl-8" />
           </div>
-          <Button>로그인</Button>
+          <Link href="/signin">
+            <Button>로그인</Button>
+          </Link>        
         </div>
 
         {/* 모바일 검색 및 메뉴 */}

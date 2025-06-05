@@ -25,7 +25,6 @@ export class StockRankingsController {
       "custtype" :"P",
       
     };
-    console.log(headers)
     const params = {
       FID_COND_MRKT_DIV_CODE: 'J',        
       FID_COND_SCR_DIV_CODE: "20171",          

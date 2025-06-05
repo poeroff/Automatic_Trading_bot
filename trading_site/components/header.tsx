@@ -245,7 +245,90 @@ export default function Header() {
   const { session, updateSession } = useSessionContext()
   const pathname = usePathname()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+// header.tsx에서 수정할 부분
+// 기존 imports에 추가
+"use client";
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+// 종목 데이터 (헤더 컴포넌트 내부 또는 상단에 추가)
+const STOCK_LIST = [
+  { code: "005930", name: "삼성전자" },
+  { code: "000660", name: "SK하이닉스" },
+  { code: "035420", name: "NAVER" },
+  { code: "005380", name: "현대차" },
+  { code: "035720", name: "카카오" },
+  { code: "051910", name: "LG화학" },
+  { code: "373220", name: "LG에너지솔루션" },
+  { code: "006400", name: "삼성SDI" },
+  { code: "207940", name: "삼성바이오로직스" },
+  { code: "068270", name: "셀트리온" },
+  { code: "323410", name: "카카오뱅크" },
+  { code: "352820", name: "하이브" },
+];
+
+// 헤더 컴포넌트 내부에 추가할 상태와 함수들
+export default function Header() {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<typeof STOCK_LIST>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const router = useRouter();
+
+  // 검색어 필터링
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const filtered = STOCK_LIST.filter(stock => 
+      stock.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      stock.code.includes(searchQuery)
+    );
+
+    setSuggestions(filtered.slice(0, 6));
+    setShowSuggestions(filtered.length > 0);
+  }, [searchQuery]);
+
+  // 검색 실행
+  const handleSearch = (stockCode?: string, stockName?: string) => {
+    const targetCode = stockCode || searchQuery;
+    
+    if (stockCode) {
+      router.push(`/news?ticker=${stockCode}&name=${encodeURIComponent(stockName || '')}`);
+    } else {
+      const found = STOCK_LIST.find(stock => 
+        stock.name === searchQuery || stock.code === searchQuery
+      );
+      
+      if (found) {
+        router.push(`/news?ticker=${found.code}&name=${encodeURIComponent(found.name)}`);
+      } else {
+        alert('해당 종목을 찾을 수 없습니다.');
+      }
+    }
+    
+    setSearchQuery('');
+    setShowSuggestions(false);
+    setIsSearchOpen(false); // 모바일에서 검색 후 닫기
+  };
+
+  // 키보드 이벤트
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (suggestions.length > 0) {
+        handleSearch(suggestions[0].code, suggestions[0].name);
+      } else {
+        handleSearch();
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+    }
+  };
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -264,17 +347,17 @@ export default function Header() {
           <Link href="#" className="text-sm font-medium hover:text-primary">
             종목 추천
           </Link>
-          <Link href="marketanalysis" className="text-sm font-medium hover:text-primary">
+          <Link href="/marketanalysis" className="text-sm font-medium hover:text-primary">
             시장 분석
           </Link>
           <Link href="#" className="text-sm font-medium hover:text-primary">
             포트폴리오
           </Link>
-          <Link href="#" className="text-sm font-medium hover:text-primary">
+          <Link href="/news" className="text-sm font-medium hover:text-primary">
             뉴스
           </Link>
           {session && session.user && session.user.author === "admin" && (
-            <Link href="stock" className="text-sm font-medium hover:text-primary">
+            <Link href="/stock" className="text-sm font-medium hover:text-primary">
               관리자
             </Link>
           )}
@@ -316,17 +399,17 @@ export default function Header() {
                 <Link href="#" className="text-lg font-medium hover:text-primary">
                   종목 추천
                 </Link>
-                <Link href="#" className="text-lg font-medium hover:text-primary">
+                <Link href="/marketanalysis" className="text-lg font-medium hover:text-primary">
                   시장 분석
                 </Link>
                 <Link href="#" className="text-lg font-medium hover:text-primary">
                   포트폴리오
                 </Link>
-                <Link href="#" className="text-lg font-medium hover:text-primary">
+                <Link href="/news" className="text-lg font-medium hover:text-primary">
                   뉴스
                 </Link>
                 {session && session.user && session.user.author === "admin" && (
-                  <Link href="stock" className="text-lg font-medium hover:text-primary">
+                  <Link href="/stock" className="text-lg font-medium hover:text-primary">
                     관리자
                   </Link>
                 )}

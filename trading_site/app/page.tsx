@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StockChart } from "@/components/stock-chart"
 import { TrendingStocks } from "@/components/trending-stocks"
 import { RecommendedStocks } from "@/components/recommended-stocks"
+import { SearchBar } from "@/components/search-bar"
 
 export default function Page() {
   return (
@@ -125,6 +126,8 @@ export default function Page() {
           </div>
         </div>
       </section>
+
+      
     </>
   )
 }

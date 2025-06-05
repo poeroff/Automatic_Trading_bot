@@ -3,7 +3,7 @@
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+
 import { useEffect, useState } from "react"
 import axios from "axios"
 
@@ -30,32 +30,6 @@ interface StockRankingData {
 }
 
 
-const trendingStocks = [
-  { rank: 1, name: "삼성전자", code: "005930", price: 72800, change: 2.1, volume: 12500000, recommendation: "매수" },
-  {
-    rank: 2,
-    name: "SK하이닉스",
-    code: "000660",
-    price: 168500,
-    change: 4.3,
-    volume: 5600000,
-    recommendation: "강력매수",
-  },
-  {
-    rank: 3,
-    name: "LG에너지솔루션",
-    code: "373220",
-    price: 358000,
-    change: -1.8,
-    volume: 980000,
-    recommendation: "중립",
-  },
-  { rank: 4, name: "카카오", code: "035720", price: 56700, change: 3.2, volume: 4300000, recommendation: "매수" },
-  { rank: 5, name: "NAVER", code: "035420", price: 186500, change: -0.8, volume: 1200000, recommendation: "중립" },
-  { rank: 6, name: "현대차", code: "005380", price: 246000, change: 1.5, volume: 890000, recommendation: "매수" },
-  { rank: 7, name: "LG화학", code: "051910", price: 452000, change: -1.2, volume: 450000, recommendation: "중립" },
-  { rank: 8, name: "셀트리온", code: "068270", price: 178500, change: 2.8, volume: 1100000, recommendation: "매수" },
-]
 
 export function TrendingStocks() {
   const initialData: StockRankingData[] = [];
@@ -64,12 +38,14 @@ export function TrendingStocks() {
   useEffect(() => {
     const fetchData = async () => {
       const response = await axios.get("http://localhost:4000/stock-rankings/tradingvolume")
+      console.log("trending",response)
       setStockRankings(response.data)
     }
     fetchData()
 
   },[])
-  console.log(stockRankings)
+ 
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -84,7 +60,7 @@ export function TrendingStocks() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {stockRankings.map((stock) => (
+          {stockRankings &&stockRankings.map((stock) => (
             <TableRow key={stock.data_rank}>
               <TableCell className="text-center font-medium">{stock.data_rank}</TableCell>
               <TableCell>

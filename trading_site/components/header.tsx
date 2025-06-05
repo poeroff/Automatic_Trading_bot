@@ -230,29 +230,19 @@
 
 //   )
 // }
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Search, Menu } from "lucide-react"
+import { Search, Menu, X } from "lucide-react"
 import { useSessionContext } from "@/app/providers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
-export default function Header() {
-  const { session, updateSession } = useSessionContext()
-  const pathname = usePathname()
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-// header.tsx에서 수정할 부분
-// 기존 imports에 추가
-"use client";
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-// 종목 데이터 (헤더 컴포넌트 내부 또는 상단에 추가)
+// 종목 데이터
 const STOCK_LIST = [
   { code: "005930", name: "삼성전자" },
   { code: "000660", name: "SK하이닉스" },
@@ -266,69 +256,99 @@ const STOCK_LIST = [
   { code: "068270", name: "셀트리온" },
   { code: "323410", name: "카카오뱅크" },
   { code: "352820", name: "하이브" },
-];
+  { code: "247540", name: "에코프로비엠" },
+  { code: "086520", name: "에코프로" },
+  { code: "003670", name: "포스코퓨처엠" },
+  { code: "096770", name: "SK이노베이션" },
+  { code: "000270", name: "기아" },
+  { code: "105560", name: "KB금융" },
+  { code: "055550", name: "신한지주" },
+  { code: "066570", name: "LG전자" },
+]
 
-// 헤더 컴포넌트 내부에 추가할 상태와 함수들
 export default function Header() {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<typeof STOCK_LIST>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const router = useRouter();
+  const { session } = useSessionContext()
+  const router = useRouter()
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  
+  // 검색 관련 상태
+  const [searchQuery, setSearchQuery] = useState('')
+  const [suggestions, setSuggestions] = useState<typeof STOCK_LIST>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
 
-  // 검색어 필터링
+  // 검색어에 따른 자동완성 필터링
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
     }
 
     const filtered = STOCK_LIST.filter(stock => 
       stock.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       stock.code.includes(searchQuery)
-    );
+    )
 
-    setSuggestions(filtered.slice(0, 6));
-    setShowSuggestions(filtered.length > 0);
-  }, [searchQuery]);
+    setSuggestions(filtered.slice(0, 8)) // 최대 8개만 표시
+    setShowSuggestions(filtered.length > 0)
+  }, [searchQuery])
 
   // 검색 실행
   const handleSearch = (stockCode?: string, stockName?: string) => {
-    const targetCode = stockCode || searchQuery;
+    const targetCode = stockCode || searchQuery
     
     if (stockCode) {
-      router.push(`/news?ticker=${stockCode}&name=${encodeURIComponent(stockName || '')}`);
+      router.push(`/news?ticker=${stockCode}&name=${encodeURIComponent(stockName || '')}`)
     } else {
       const found = STOCK_LIST.find(stock => 
         stock.name === searchQuery || stock.code === searchQuery
-      );
+      )
       
       if (found) {
-        router.push(`/news?ticker=${found.code}&name=${encodeURIComponent(found.name)}`);
+        router.push(`/news?ticker=${found.code}&name=${encodeURIComponent(found.name)}`)
       } else {
-        alert('해당 종목을 찾을 수 없습니다.');
+        alert('해당 종목을 찾을 수 없습니다.')
       }
     }
     
-    setSearchQuery('');
-    setShowSuggestions(false);
-    setIsSearchOpen(false); // 모바일에서 검색 후 닫기
-  };
+    // 검색 후 상태 초기화
+    setSearchQuery('')
+    setShowSuggestions(false)
+    setIsSearchOpen(false) // 모바일에서 검색 창 닫기
+  }
 
   // 키보드 이벤트
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      e.preventDefault();
+      e.preventDefault()
       if (suggestions.length > 0) {
-        handleSearch(suggestions[0].code, suggestions[0].name);
+        handleSearch(suggestions[0].code, suggestions[0].name)
       } else {
-        handleSearch();
+        handleSearch()
       }
     } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
+      setShowSuggestions(false)
+      setIsSearchFocused(false)
     }
-  };
+  }
+
+  // 검색창 외부 클릭 시 자동완성 닫기
+  const handleSearchBlur = () => {
+    // 약간의 딜레이를 줘서 suggestion 클릭이 가능하도록
+    setTimeout(() => {
+      setIsSearchFocused(false)
+      setShowSuggestions(false)
+    }, 200)
+  }
+
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true)
+    if (searchQuery && suggestions.length > 0) {
+      setShowSuggestions(true)
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -366,9 +386,40 @@ export default function Header() {
         {/* 데스크탑 검색 및 로그인 */}
         <div className="hidden md:flex items-center gap-4">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="종목 검색..." className="w-64 pl-8" />
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                onFocus={handleSearchFocus}
+                onBlur={handleSearchBlur}
+                placeholder="종목 검색..." 
+                className="w-64 pl-8" 
+              />
+            </div>
+            
+            {/* 데스크탑 자동완성 드롭다운 */}
+            {showSuggestions && isSearchFocused && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                {suggestions.map((stock) => (
+                  <div
+                    key={stock.code}
+                    onClick={() => handleSearch(stock.code, stock.name)}
+                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex justify-between items-center"
+                  >
+                    <div>
+                      <div className="font-medium text-gray-900">{stock.name}</div>
+                      <div className="text-sm text-gray-500">{stock.code}</div>
+                    </div>
+                    <div className="text-xs text-blue-600">분석 →</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+          
           <Link href="/signin">
             <Button>로그인</Button>
           </Link>        
@@ -381,7 +432,7 @@ export default function Header() {
             onClick={() => setIsSearchOpen(!isSearchOpen)}
             className="p-2 text-muted-foreground hover:text-foreground"
           >
-            <Search className="h-5 w-5" />
+            {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </button>
 
           {/* 모바일 메뉴 */}
@@ -425,14 +476,38 @@ export default function Header() {
         <div className="md:hidden border-t py-2 px-4 bg-background">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="종목 검색..." className="w-full pl-8" />
+            <Input 
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
+              placeholder="종목 검색..." 
+              className="w-full pl-8" 
+            />
+            
+            {/* 모바일 자동완성 드롭다운 */}
+            {showSuggestions && isSearchFocused && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                {suggestions.map((stock) => (
+                  <div
+                    key={stock.code}
+                    onClick={() => handleSearch(stock.code, stock.name)}
+                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex justify-between items-center"
+                  >
+                    <div>
+                      <div className="font-medium text-gray-900">{stock.name}</div>
+                      <div className="text-sm text-gray-500">{stock.code}</div>
+                    </div>
+                    <div className="text-xs text-blue-600">분석 →</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
     </header>
   )
 }
-
-
-
-

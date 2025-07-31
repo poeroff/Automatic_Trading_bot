@@ -15,25 +15,12 @@ export class ExceluploadController {
   constructor(private readonly exceluploadService: ExceluploadService, @Inject("REDIS_CLIENT") private readonly redisClient : ClientProxy,private configService : ConfigService,) {}
   private readonly appkey = this.configService.get<string>('appkey')
   private readonly appsecret = this.configService.get<string>('appsecret')
+  private readonly baseUrl = this.configService.get<string>('baseUrl')
 
   //기업공시채널에서 엑셀 파일 올리면 db에 값 넣어주는 기능(.xlsx만 지원)(한국 주식 데이터 삽입입)
   @Post("korea")
   @UseInterceptors(FileInterceptor("file"))
   async koreanStockuUploadExcel(@UploadedFile() file){
-    const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-    if(!savedToken){
-      throw new HttpException('Not Found AccessToken', HttpStatus.NOT_FOUND);
-    }
-    const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/search-stock-info"
-    const headers = {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'authorization': savedToken,
-      'appkey': this.appkey,
-      'appsecret': this.appsecret,
-      'tr_id': 'CTPF1002R', // 주식 차트 데이터 요청 ID
-      "custtype" :"P",
-      "tr_cont" : "M"
-    };
   
     if (!file) {
       throw new HttpException('No file uploaded', HttpStatus.BAD_REQUEST);
@@ -42,6 +29,10 @@ export class ExceluploadController {
     if (!file.originalname.endsWith('.xlsx')) {
       throw new HttpException('Only .xlsx files are allowed', HttpStatus.BAD_REQUEST);
     }
+
+    const fileName = file.originalname.toLowerCase(); // 대소문자 구분 없이 확인
+    const stockMarket = fileName.includes('kospi') ? 'STK' : 'KSQ';
+
 
     // 엑셀 파일 읽기
     const workbook = XLSX.read(file.buffer, { type: 'buffer' ,codepage: 949, raw : true});
@@ -59,7 +50,7 @@ export class ExceluploadController {
     worksheet['H1'] = { v: 'homepage' };
     worksheet['I1'] = { v: 'region' };
 
-    this.exceluploadService.koreanStockReadExcel(worksheet, headers, url);
+    this.exceluploadService.koreanStockReadExcel(worksheet, stockMarket);
   }
 
   @Post("USA")

@@ -2,8 +2,6 @@ import { StockDataService } from './stock-data.service';
 export declare class StockDataController {
     private readonly stockDataService;
     constructor(stockDataService: StockDataService);
-    trueCode(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
-    falseCertified(): Promise<import("./entities/KoreanStockCode.entity").KoreanStockCode[]>;
     createUserInflection(body: {
         date: number;
         highPoint: number;

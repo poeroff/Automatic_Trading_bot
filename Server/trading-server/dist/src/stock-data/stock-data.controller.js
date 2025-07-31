@@ -19,12 +19,6 @@ let StockDataController = class StockDataController {
     constructor(stockDataService) {
         this.stockDataService = stockDataService;
     }
-    trueCode() {
-        return this.stockDataService.trueCode();
-    }
-    falseCertified() {
-        return this.stockDataService.falseCertified();
-    }
     createUserInflection(body) {
         if (body.code) {
             return this.stockDataService.createUserInflectioncode(body.date, body.code, body.highPoint);
@@ -59,18 +53,6 @@ let StockDataController = class StockDataController {
     }
 };
 exports.StockDataController = StockDataController;
-__decorate([
-    (0, common_1.Get)("TrueCode"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "trueCode", null);
-__decorate([
-    (0, common_1.Get)("FalseCertified"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], StockDataController.prototype, "falseCertified", null);
 __decorate([
     (0, common_1.Post)("user-inflection"),
     __param(0, (0, common_1.Body)()),

@@ -1,8 +1,12 @@
+
+CREATE DATABASE IF NOT EXISTS stock;
 CREATE DATABASE IF NOT EXISTS trading;
 CREATE DATABASE IF NOT EXISTS auth;
 
-CREATE USER IF NOT EXISTS 'user'@'%' IDENTIFIED BY 'wqdsdsf123!';
-GRANT ALL PRIVILEGES ON trading.* TO 'user'@'%';
-GRANT ALL PRIVILEGES ON auth.* TO 'user'@'%';
+-- 사용자 생성 및 권한 부여
+CREATE USER IF NOT EXISTS 'admin'@'%' IDENTIFIED BY 'wqdsdsf123!';
+GRANT ALL PRIVILEGES ON stock.* TO 'admin'@'%';
+GRANT ALL PRIVILEGES ON trading.* TO 'admin'@'%';
+GRANT ALL PRIVILEGES ON auth.* TO 'admin'@'%';
 
 FLUSH PRIVILEGES;

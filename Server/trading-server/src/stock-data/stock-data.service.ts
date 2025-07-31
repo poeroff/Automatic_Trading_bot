@@ -24,16 +24,16 @@ export class StockDataService {
     @InjectRepository(UserInflection) private userInflectionRepository: Repository<UserInflection>,
   ) { }
 
-  async trueCode(){
-    try {
-      const codes = await this.KoreanStockCodeRepository.find({where: { unmet_conditions: true , certified: true }});     
+  // async trueCode(){
+  //   try {
+  //     const codes = await this.KoreanStockCodeRepository.find({where: { unmet_conditions: true , certified: true }});     
   
-      return codes
-    } catch (error) {
-      console.error('Error fetching codes:', error);
-      throw new InternalServerErrorException('Failed to fetch codes');
-    }
-  }
+  //     return codes
+  //   } catch (error) {
+  //     console.error('Error fetching codes:', error);
+  //     throw new InternalServerErrorException('Failed to fetch codes');
+  //   }
+  // }
 
   // async getAllCodes() {
   //   return await this.KoreanStockCodeRepository.find();
@@ -124,7 +124,7 @@ export class StockDataService {
     if (!trCode) {
       return { message: 'No stock code or name provided' };
     }
-    trCode.certified = true;
+  
     return await this.KoreanStockCodeRepository.save(trCode);
   }
 
@@ -138,15 +138,15 @@ export class StockDataService {
   //   return await this.koreanstockcodeRepository.save(trCode);
   // }
 
-  async falseCertified() {
-    //relations 쓰는 이유 그 자식 관계 맺어진 데이터까지 가져오기 위해서
+  // async falseCertified() {
+  //   //relations 쓰는 이유 그 자식 관계 맺어진 데이터까지 가져오기 위해서
 
     
-    // const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
-    const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { capital_Impairment: 'N', admn_item_yn: 'N',tr_stop_yn : 'N', mcap: 'N', sale_account: 'N',certified: false , unmet_conditions : true},take : 10 });
+  //   // const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { certified: false }, relations: ['peakDates', 'filteredPeaks'] });
+  //   const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { capital_Impairment: 'N', admn_item_yn: 'N',tr_stop_yn : 'N', mcap: 'N', sale_account: 'N',certified: false , unmet_conditions : true},take : 10 });
 
-    return uncertifiedTrCodes;
-  }
+  //   return uncertifiedTrCodes;
+  // }
 
   async returnHighPeak(code : string){
     const Company = await this.KoreanStockCodeRepository.findOne({where : {code : code}})

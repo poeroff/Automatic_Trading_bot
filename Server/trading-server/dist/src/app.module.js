@@ -59,7 +59,6 @@ const gateway_module_1 = require("./gateway/gateway.module");
 const microservices_1 = require("@nestjs/microservices");
 const redis_module_1 = require("./redis/redis.module");
 const KoreanStockCode_entity_1 = require("./stock-data/entities/KoreanStockCode.entity");
-const WeekStockData_entity_1 = require("./stock-data/entities/WeekStockData.entity");
 const excelupload_module_1 = require("./excelupload/excelupload.module");
 const Alert_entity_1 = require("./stock-data/entities/Alert.entity");
 const signals_module_1 = require("./signals/signals.module");
@@ -75,7 +74,7 @@ const typeOrmModuleOptions = {
         port: configService.get('DB_PORT'),
         database: configService.get('DB_NAME'),
         charset: configService.get("CHAR_SET"),
-        entities: [DayStockData_entity_1.DayStockData, PeakDate_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, FilterPeak_entity_1.FilteredPeak, UserInflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, WeekStockData_entity_1.WeekStockData, Alert_entity_1.Alert, StockFilter_1.StockFilter],
+        entities: [DayStockData_entity_1.DayStockData, PeakDate_entity_1.PeakDate, PeakPrice_entity_1.PeakPrice, FilterPeak_entity_1.FilteredPeak, UserInflection_entity_1.UserInflection, KoreanStockCode_entity_1.KoreanStockCode, Alert_entity_1.Alert, StockFilter_1.StockFilter],
         synchronize: configService.get('DB_SYNC'),
         logging: true,
         timezone: '+09:00'

@@ -14,14 +14,13 @@ const typeorm_1 = require("@nestjs/typeorm");
 const KoreanStockCode_entity_1 = require("../stock-data/entities/KoreanStockCode.entity");
 const redis_module_1 = require("../redis/redis.module");
 const DayStockData_entity_1 = require("../stock-data/entities/DayStockData.entity");
-const WeekStockData_entity_1 = require("../stock-data/entities/WeekStockData.entity");
 const MonthStockData_entity_1 = require("../stock-data/entities/MonthStockData.entity");
 let ExceluploadModule = class ExceluploadModule {
 };
 exports.ExceluploadModule = ExceluploadModule;
 exports.ExceluploadModule = ExceluploadModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([KoreanStockCode_entity_1.KoreanStockCode, DayStockData_entity_1.DayStockData, WeekStockData_entity_1.WeekStockData, MonthStockData_entity_1.MonthStockData]), redis_module_1.RedisModule],
+        imports: [typeorm_1.TypeOrmModule.forFeature([KoreanStockCode_entity_1.KoreanStockCode, DayStockData_entity_1.DayStockData, MonthStockData_entity_1.MonthStockData]), redis_module_1.RedisModule],
         controllers: [excelupload_controller_1.ExceluploadController],
         providers: [excelupload_service_1.ExceluploadService],
     })

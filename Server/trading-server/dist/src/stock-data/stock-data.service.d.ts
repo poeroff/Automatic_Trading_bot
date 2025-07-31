@@ -13,7 +13,6 @@ export declare class StockDataService {
     private filteredPeakRepository;
     private userInflectionRepository;
     constructor(DayStockDataRepository: Repository<DayStockData>, KoreanStockCodeRepository: Repository<KoreanStockCode>, peakDateRepository: Repository<PeakDate>, peakPriceRepository: Repository<PeakPrice>, filteredPeakRepository: Repository<FilteredPeak>, userInflectionRepository: Repository<UserInflection>);
-    trueCode(): Promise<KoreanStockCode[]>;
     createUserInflectioncode(date: number, code: string, highPoint?: number | null): Promise<UserInflection | {
         message: string;
     }>;
@@ -31,7 +30,6 @@ export declare class StockDataService {
     updateCertifiedTrCode(code: string): Promise<KoreanStockCode | {
         message: string;
     }>;
-    falseCertified(): Promise<KoreanStockCode[]>;
     returnHighPeak(code: string): Promise<PeakDate[]>;
     returnInflectionPoint(code: string): Promise<UserInflection[]>;
     StockData(code: string): Promise<{

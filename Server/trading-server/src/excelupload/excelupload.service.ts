@@ -140,60 +140,9 @@ export class ExceluploadService {
       result : "N"
     }
   }
-  // 시가 총액 미달 여부 확인(코스피 : 625억 코스닥 : 375억)
-  async is_below_market_cap_threshold(url: string , headers ,code : string ){
-  
-    const params = {
-      PRDT_TYPE_CD: '300', // 주식 
-      PDNO: code, // 종목 코드 (예: 005930 - 삼성전자)
-    };
-    const response = await Get(url,headers,params)
-
-    const lstg_stqt = response.data.output.lstg_stqt //상장 주수
-    const bfdy_clpr = response.data.output.bfdy_clpr //전일 종가
-    const market_capitalization = lstg_stqt * bfdy_clpr
-    if(response.data.output.mket_id_cd=="STK"){
-      if(market_capitalization >= 62_500_000_000){
-     
-        return {
-          result: "N",
-          mket_id_cd: response.data.output.mket_id_cd,
-          admn_item_yn :  response.data.output.admn_item_yn,
-          tr_stop_yn :  response.data.output.tr_stop_yn
-        };
-      }
-   
-      return {
-        result: "Y",
-        mket_id_cd: response.data.output.mket_id_cd,
-        admn_item_yn :  response.data.output.admn_item_yn,
-        tr_stop_yn :  response.data.output.tr_stop_yn
-      };
-    }
-    else if(response.data.output.mket_id_cd=="KSQ"){
-      if(market_capitalization >= 37_500_000_000){
-   
-        return {
-          result: "N",
-          mket_id_cd: response.data.output.mket_id_cd,
-          admn_item_yn :  response.data.output.admn_item_yn,
-          tr_stop_yn :  response.data.output.tr_stop_yn
-        };
-      }
-  
-      return {
-        result: "Y",
-        mket_id_cd: response.data.output.mket_id_cd,
-        admn_item_yn :  response.data.output.admn_item_yn,
-        tr_stop_yn :  response.data.output.tr_stop_yn
-      };
-    }
-   
-  }
 
 
-  async koreanStockReadExcel(worksheet: XLSX.WorkSheet, headers, url) {
-
+  async koreanStockReadExcel(worksheet: XLSX.WorkSheet, stockMarket ) {
     const range = XLSX.utils.decode_range(worksheet['!ref'] ?? "");
     const startRow = 1; // 2번째 줄 (0-indexed이므로 1)
     const startCol = 0; // A 열 (0-indexed)
@@ -223,17 +172,11 @@ export class ExceluploadService {
         }
       }
       const Company = await this.koreanstockcoderepository.findOne({ where: { company: rowValues[0] } })
-      const CapitalImpaired = await this.isCapitalImpaired(rowValues[1])
-      const market_cap = await this.is_below_market_cap_threshold(url,headers,rowValues[1]);
-      const check_revenue = await this.check_revenue(rowValues[1], market_cap?.mket_id_cd)
 
       //엑셀을 통해 데이터를 삽입할때 이미 있는 종목은 db에 넣지 않는다 (중복 제거)
       if (!Company) {
-          await this.koreanstockcoderepository.save({ company: rowValues[0], code: rowValues[1], category: rowValues[2], products: rowValues[3], listed_date: rowValues[4], settlement_month: rowValues[5], representative: rowValues[6], homepage: rowValues[7], region: rowValues[8], mket_id_cd: market_cap?.mket_id_cd, mcap : market_cap?.result, capital_Impairment :  CapitalImpaired.result, admn_item_yn : market_cap?.admn_item_yn, tr_stop_yn : market_cap?.tr_stop_yn, sale_account : check_revenue.result })
+          await this.koreanstockcoderepository.save({ company: rowValues[0], code: rowValues[1], category: rowValues[2], products: rowValues[3], listed_date: rowValues[4], settlement_month: rowValues[5], representative: rowValues[6], homepage: rowValues[7], region: rowValues[8], mket_id_cd: stockMarket})
       }
-      else if(Company){
-        await this.koreanstockcoderepository.update({ code: rowValues[1] }, { mket_id_cd: market_cap?.mket_id_cd, mcap : market_cap?.result, capital_Impairment :  CapitalImpaired.result, admn_item_yn : market_cap?.admn_item_yn, tr_stop_yn : market_cap?.tr_stop_yn, sale_account : check_revenue.result })
-        }
     }
   }
   findAll() {

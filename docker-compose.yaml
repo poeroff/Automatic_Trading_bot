@@ -1,31 +1,7 @@
 
 
 services:
-  # trading_site:
-  #   container_name: trading_site
-  #   build:
-  #     context: ./trading_site
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 3000:3000
-  #   volumes:
-  #     - ./trading_site:/Trading-clinet
-  #     - /Trading-clinet/node_modules
-  #   env_file:
-  #     - ./trading_site/.env
-  #   environment:
-  #      DATABASE_URL: ${DATABASE_URL}
-  #   command: >
-  #           sh -c "npx prisma migrate deploy --schema=/Trading-clinet/prisma/schema.prisma && npm run dev"
-  #   stdin_open: true  # -i
-  #   tty: true         # -t
-  #   depends_on:
-  #     redis : 
-  #       condition: service_healthy
-  #     mysql :
-  #       condition: service_healthy  
-  #     trading-server :
-  #       condition: service_started
+
 
   trading-server:
     container_name: trading-server
@@ -46,8 +22,8 @@ services:
     tty: true  
     
     depends_on:
-      # mysql:
-      #   condition: service_healthy
+      mysql:
+         condition: service_healthy
       redis:
         condition: service_started
   updateserver:
@@ -70,6 +46,8 @@ services:
     depends_on:
       redis:
         condition: service_started
+      mysql:
+        condition: service_started
   fastapi-server:
     container_name: fastapi-server
     build:
@@ -84,8 +62,8 @@ services:
     environment:
       - TZ=Asia/Seoul  # 시간대 설정
     depends_on:
-      # mysql:
-      #   condition: service_healthy
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_started
     restart: unless-stopped  # 컨테이너가 실패 시 재시작
@@ -103,24 +81,26 @@ services:
       timeout: 5s
       retries: 5
 
-  # mysql:
-  #   image: mysql:8.3
-  #   container_name: mysql
-  #   ports:
-  #     - "3307:3306"
-  #   healthcheck:
-  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-  #     interval: 5s
-  #     timeout: 20s
-  #     retries: 10
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: wqdsdsf123!
-  #     MYSQL_USER: admin
-  #     MYSQL_PASSWORD: wqdsdsf123!
-  #   volumes:
-  #     - mysql-data:/var/lib/mysql
-  #     - ./mysql-init:/docker-entrypoint-initdb.d
+  mysql:
+    image: mysql:8.3
+    container_name: mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+    environment:
+      MYSQL_ROOT_PASSWORD: wqdsdsf123!
+      MYSQL_USER: admin          
+      MYSQL_PASSWORD: wqdsdsf123!
+      MYSQL_DATABASE: stock
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
 
 volumes:
   redis-data:
+  mysql-data:
   # mysql-data:

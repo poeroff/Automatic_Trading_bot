@@ -9,11 +9,10 @@ import { PeakPrice } from './entities/PeakPrice.entity';
 import { FilteredPeak } from './entities/FilterPeak.entity';
 import { UserInflection } from './entities/UserInflection.entity';
 import { KoreanStockCode } from './entities/KoreanStockCode.entity';
-import { WeekStockData } from './entities/WeekStockData.entity';
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DayStockData,PeakDate,PeakPrice,FilteredPeak,UserInflection,KoreanStockCode,WeekStockData])],
+  imports: [TypeOrmModule.forFeature([DayStockData,PeakDate,PeakPrice,FilteredPeak,UserInflection,KoreanStockCode])],
   controllers: [StockDataController],
   providers: [StockDataService],
 })

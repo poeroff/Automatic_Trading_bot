@@ -42,7 +42,7 @@ export class UpdateController {
   }
 
   //AccessToken 발급
-  @Cron('0 33 9 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('0 51 14 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
   createAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"
@@ -72,77 +72,77 @@ export class UpdateController {
     this.updateService.createWebSocketToken(url,headers,data);
   }
 
-  //주식 일봉 데이터 수집(상장 ~ 어제) 주식 데이터가 완전히 비어있을떄 딱 한번 그 외에는 사용하지 말것
-  @Cron('5 27 17 * * *',{timeZone :'Asia/Seoul'})
-  async alldayStockData(){
-    const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-    const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
-    const headers = {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'authorization': savedToken,
-      'appkey': this.appkey,
-      'appsecret': this.appsecret,
-      'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
-      "custtype" :"P",
-      "tr_cont" : "M"
-    };
+  // //주식 일봉 데이터 수집(상장 ~ 어제) 주식 데이터가 완전히 비어있을떄 딱 한번 그 외에는 사용하지 말것
+  // @Cron('5 27 17 * * *',{timeZone :'Asia/Seoul'})
+  // async alldayStockData(){
+  //   const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+  //   const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
+  //   const headers = {
+  //     'Content-Type': 'application/json; charset=UTF-8',
+  //     'authorization': savedToken,
+  //     'appkey': this.appkey,
+  //     'appsecret': this.appsecret,
+  //     'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
+  //     "custtype" :"P",
+  //     "tr_cont" : "M"
+  //   };
  
-    this.updateService.alldayStockData(url,headers)
-  }
-    //주식 일봉 데이터 수집(현재)
-    //@Cron('0 43 19 * * *',{timeZone :'Asia/Seoul'})
-    async dayStockData(){
-      const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-      const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
-      const headers = {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'authorization': savedToken,
-        'appkey': this.appkey,
-        'appsecret': this.appsecret,
-        'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
-        "custtype" :"P",
-        "tr_cont" : "M"
-      };
-      this.updateService.dayStockData(url,headers)
-    }
+  //   this.updateService.alldayStockData(url,headers)
+  // }
+  //   //주식 일봉 데이터 수집(현재)
+  //   //@Cron('0 43 19 * * *',{timeZone :'Asia/Seoul'})
+  //   async dayStockData(){
+  //     const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+  //     const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
+  //     const headers = {
+  //       'Content-Type': 'application/json; charset=UTF-8',
+  //       'authorization': savedToken,
+  //       'appkey': this.appkey,
+  //       'appsecret': this.appsecret,
+  //       'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
+  //       "custtype" :"P",
+  //       "tr_cont" : "M"
+  //     };
+  //     this.updateService.dayStockData(url,headers)
+  //   }
 
-  //주식 주봉 데이터 수집
-  //@Cron('0 42 11 * * *',{timeZone :'Asia/Seoul'})
-  async allweekStockData(){
-    const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-    const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
-    const headers = {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'authorization': savedToken,
-      'appkey': this.appkey,
-      'appsecret': this.appsecret,
-      'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
-      "custtype" :"P",
-      "tr_cont" : "M"
-    };
-    this.updateService.allweekStockData(url,headers)
-  }
+  // //주식 주봉 데이터 수집
+  // //@Cron('0 42 11 * * *',{timeZone :'Asia/Seoul'})
+  // async allweekStockData(){
+  //   const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+  //   const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice";
+  //   const headers = {
+  //     'Content-Type': 'application/json; charset=UTF-8',
+  //     'authorization': savedToken,
+  //     'appkey': this.appkey,
+  //     'appsecret': this.appsecret,
+  //     'tr_id': 'FHKST03010100', // 주식 차트 데이터 요청 ID
+  //     "custtype" :"P",
+  //     "tr_cont" : "M"
+  //   };
+  //   this.updateService.allweekStockData(url,headers)
+  // }
 
   
 
-  //주식 정보 업데이트
-  //@Cron('0 30 20 * * *',{timeZone :'Asia/Seoul'})
-  async stockData(){
-    const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-    const url = "https://openapi.koreainvestment.com:9443/uapi/overseas-price/v1/quotations/industry-price";
-    const headers = {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'authorization': savedToken,
-      'appkey': this.appkey,
-      'appsecret': this.appsecret,
-      'tr_id': 'HHDFS76370100', // 주식 차트 데이터 요청 ID
-      "custtype" :"P"
-    };
+  // //주식 정보 업데이트
+  // //@Cron('0 30 20 * * *',{timeZone :'Asia/Seoul'})
+  // async stockData(){
+  //   const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
+  //   const url = "https://openapi.koreainvestment.com:9443/uapi/overseas-price/v1/quotations/industry-price";
+  //   const headers = {
+  //     'Content-Type': 'application/json; charset=UTF-8',
+  //     'authorization': savedToken,
+  //     'appkey': this.appkey,
+  //     'appsecret': this.appsecret,
+  //     'tr_id': 'HHDFS76370100', // 주식 차트 데이터 요청 ID
+  //     "custtype" :"P"
+  //   };
  
-    const params = {
-      AUTH: '', // 주식
-      EXCD: "NYS", // 종목 코드 (예: 005930 - 삼성전자)
-    };
-    this.updateService.stockData(url,headers,params)
-  }
+  //   const params = {
+  //     AUTH: '', // 주식
+  //     EXCD: "NYS", // 종목 코드 (예: 005930 - 삼성전자)
+  //   };
+  //   this.updateService.stockData(url,headers,params)
+  // }
 }

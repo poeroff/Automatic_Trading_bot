@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.KoreanStockCode = void 0;
 const typeorm_1 = require("typeorm");
 const DayStockData_entity_1 = require("./DayStockData.entity");
-const WeekStockData_entity_1 = require("./WeekStockData.entity");
 const PeakDate_entity_1 = require("./PeakDate.entity");
 const FilterPeak_entity_1 = require("./FilterPeak.entity");
 const UserInflection_entity_1 = require("./UserInflection.entity");
@@ -67,34 +66,6 @@ __decorate([
     __metadata("design:type", String)
 ], KoreanStockCode.prototype, "mket_id_cd", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], KoreanStockCode.prototype, "capital_Impairment", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], KoreanStockCode.prototype, "admn_item_yn", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], KoreanStockCode.prototype, "tr_stop_yn", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], KoreanStockCode.prototype, "mcap", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], KoreanStockCode.prototype, "sale_account", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: true }),
-    __metadata("design:type", Boolean)
-], KoreanStockCode.prototype, "unmet_conditions", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
-    __metadata("design:type", Boolean)
-], KoreanStockCode.prototype, "certified", void 0);
-__decorate([
     (0, typeorm_1.OneToOne)(() => StockFilter_1.StockFilter, (stockFilter) => stockFilter.trCode),
     __metadata("design:type", StockFilter_1.StockFilter)
 ], KoreanStockCode.prototype, "stockFilter", void 0);
@@ -102,10 +73,6 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => DayStockData_entity_1.DayStockData, (daystockData) => daystockData.trCode),
     __metadata("design:type", Array)
 ], KoreanStockCode.prototype, "daystockData", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => WeekStockData_entity_1.WeekStockData, (weekstockData) => weekstockData.trCode),
-    __metadata("design:type", Array)
-], KoreanStockCode.prototype, "weekstockData", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => PeakDate_entity_1.PeakDate, (peakDate) => peakDate.trCode),
     __metadata("design:type", Array)

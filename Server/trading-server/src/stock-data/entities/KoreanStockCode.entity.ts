@@ -1,6 +1,5 @@
 import { Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { DayStockData } from "./DayStockData.entity";
-import { WeekStockData } from "./WeekStockData.entity";
 import { PeakDate } from "./PeakDate.entity";
 import { FilteredPeak } from "./FilterPeak.entity";
 import { UserInflection } from "./UserInflection.entity";
@@ -39,33 +38,11 @@ export class KoreanStockCode {
 
     @Column({nullable : true})
     region : string
+    
     //코스닥 코스피 분류
     @Column()
     mket_id_cd : string
 
-    // 자본 잠식 상태
-    @Column()
-    capital_Impairment : string
-    //관리종목여부
-    @Column()
-    admn_item_yn : string
-    //거래정지여부
-    @Column()
-    tr_stop_yn : string
-    //시가총액 달성 여부
-    @Column()
-    mcap : string
-    // 매출액
-    @Column()
-    sale_account : string
-
-    //고점, 변곡점의 최소 개수가 만족하는지 확인  
-    @Column({default : true})
-    unmet_conditions : boolean
-
-
-    @Column({ type: 'boolean', default: false })
-    certified: boolean; // 인증 여부
 
     @OneToOne(() => StockFilter, (stockFilter) => stockFilter.trCode)
     stockFilter: StockFilter;
@@ -73,8 +50,6 @@ export class KoreanStockCode {
     @OneToMany(() => DayStockData, (daystockData) => daystockData.trCode)
     daystockData: DayStockData[];
 
-    @OneToMany(() => WeekStockData, (weekstockData) => weekstockData.trCode)
-    weekstockData: WeekStockData[];
 
     @OneToMany(() => PeakDate, (peakDate) => peakDate.trCode)
     peakDates: PeakDate[];

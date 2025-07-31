@@ -59,28 +59,17 @@ let ExceluploadController = class ExceluploadController {
         this.configService = configService;
         this.appkey = this.configService.get('appkey');
         this.appsecret = this.configService.get('appsecret');
+        this.baseUrl = this.configService.get('baseUrl');
     }
     async koreanStockuUploadExcel(file) {
-        const savedToken = await this.redisClient.send('get_key', "AccessToken").toPromise();
-        if (!savedToken) {
-            throw new common_1.HttpException('Not Found AccessToken', common_1.HttpStatus.NOT_FOUND);
-        }
-        const url = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/search-stock-info";
-        const headers = {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'authorization': savedToken,
-            'appkey': this.appkey,
-            'appsecret': this.appsecret,
-            'tr_id': 'CTPF1002R',
-            "custtype": "P",
-            "tr_cont": "M"
-        };
         if (!file) {
             throw new common_1.HttpException('No file uploaded', common_1.HttpStatus.BAD_REQUEST);
         }
         if (!file.originalname.endsWith('.xlsx')) {
             throw new common_1.HttpException('Only .xlsx files are allowed', common_1.HttpStatus.BAD_REQUEST);
         }
+        const fileName = file.originalname.toLowerCase();
+        const stockMarket = fileName.includes('kospi') ? 'STK' : 'KSQ';
         const workbook = XLSX.read(file.buffer, { type: 'buffer', codepage: 949, raw: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
@@ -93,7 +82,7 @@ let ExceluploadController = class ExceluploadController {
         worksheet['G1'] = { v: 'representative' };
         worksheet['H1'] = { v: 'homepage' };
         worksheet['I1'] = { v: 'region' };
-        this.exceluploadService.koreanStockReadExcel(worksheet, headers, url);
+        this.exceluploadService.koreanStockReadExcel(worksheet, stockMarket);
     }
     usaStockuUploadExcel() {
         return this.exceluploadService.findAll();

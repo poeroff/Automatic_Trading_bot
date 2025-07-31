@@ -8,4 +8,7 @@ python-dotenv
 aiomysql
 cryptography
 pytz
+redis
 ta
+requests
+python-telegram-bot

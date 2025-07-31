@@ -1,5 +1,4 @@
 import { DayStockData } from "./DayStockData.entity";
-import { WeekStockData } from "./WeekStockData.entity";
 import { PeakDate } from "./PeakDate.entity";
 import { FilteredPeak } from "./FilterPeak.entity";
 import { UserInflection } from "./UserInflection.entity";
@@ -18,16 +17,8 @@ export declare class KoreanStockCode {
     homepage: string;
     region: string;
     mket_id_cd: string;
-    capital_Impairment: string;
-    admn_item_yn: string;
-    tr_stop_yn: string;
-    mcap: string;
-    sale_account: string;
-    unmet_conditions: boolean;
-    certified: boolean;
     stockFilter: StockFilter;
     daystockData: DayStockData[];
-    weekstockData: WeekStockData[];
     peakDates: PeakDate[];
     filteredPeaks: FilteredPeak[];
     userInflections: UserInflection[];

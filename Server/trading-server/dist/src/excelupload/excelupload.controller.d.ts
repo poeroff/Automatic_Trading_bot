@@ -8,6 +8,7 @@ export declare class ExceluploadController {
     constructor(exceluploadService: ExceluploadService, redisClient: ClientProxy, configService: ConfigService);
     private readonly appkey;
     private readonly appsecret;
+    private readonly baseUrl;
     koreanStockuUploadExcel(file: any): Promise<void>;
     usaStockuUploadExcel(): string;
 }

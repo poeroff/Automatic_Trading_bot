@@ -7,16 +7,16 @@ import { UpdateStockDatumDto } from './dto/update-stock-datum.dto';
 export class StockDataController {
   constructor(private readonly stockDataService: StockDataService) {}
   // 키움 api로 통신하는 api
-  @Get("TrueCode")
-  trueCode(){
-    return this.stockDataService.trueCode();
-  }
+  // @Get("TrueCode")
+  // trueCode(){
+  //   return this.stockDataService.trueCode();
+  // }
 
-  //인증이 안된 종목 조회
-  @Get("FalseCertified")
-  falseCertified() {
-     return this.stockDataService.falseCertified();
-  }
+  // //인증이 안된 종목 조회
+  // @Get("FalseCertified")
+  // falseCertified() {
+  //    return this.stockDataService.falseCertified();
+  // }
 
   // @Get("get_all_codes")
   // allCodes() {

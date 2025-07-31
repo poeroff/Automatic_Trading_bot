@@ -22,13 +22,7 @@ export declare class ExceluploadService {
     isCapitalImpaired(code: string): Promise<{
         result: string;
     }>;
-    is_below_market_cap_threshold(url: string, headers: any, code: string): Promise<{
-        result: string;
-        mket_id_cd: any;
-        admn_item_yn: any;
-        tr_stop_yn: any;
-    } | undefined>;
-    koreanStockReadExcel(worksheet: XLSX.WorkSheet, headers: any, url: any): Promise<void>;
+    koreanStockReadExcel(worksheet: XLSX.WorkSheet, stockMarket: any): Promise<void>;
     findAll(): string;
     findOne(id: number): string;
     update(id: number, updateExceluploadDto: UpdateExceluploadDto): string;

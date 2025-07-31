@@ -167,49 +167,7 @@ let ExceluploadService = class ExceluploadService {
             result: "N"
         };
     }
-    async is_below_market_cap_threshold(url, headers, code) {
-        const params = {
-            PRDT_TYPE_CD: '300',
-            PDNO: code,
-        };
-        const response = await (0, axios_get_1.Get)(url, headers, params);
-        const lstg_stqt = response.data.output.lstg_stqt;
-        const bfdy_clpr = response.data.output.bfdy_clpr;
-        const market_capitalization = lstg_stqt * bfdy_clpr;
-        if (response.data.output.mket_id_cd == "STK") {
-            if (market_capitalization >= 62_500_000_000) {
-                return {
-                    result: "N",
-                    mket_id_cd: response.data.output.mket_id_cd,
-                    admn_item_yn: response.data.output.admn_item_yn,
-                    tr_stop_yn: response.data.output.tr_stop_yn
-                };
-            }
-            return {
-                result: "Y",
-                mket_id_cd: response.data.output.mket_id_cd,
-                admn_item_yn: response.data.output.admn_item_yn,
-                tr_stop_yn: response.data.output.tr_stop_yn
-            };
-        }
-        else if (response.data.output.mket_id_cd == "KSQ") {
-            if (market_capitalization >= 37_500_000_000) {
-                return {
-                    result: "N",
-                    mket_id_cd: response.data.output.mket_id_cd,
-                    admn_item_yn: response.data.output.admn_item_yn,
-                    tr_stop_yn: response.data.output.tr_stop_yn
-                };
-            }
-            return {
-                result: "Y",
-                mket_id_cd: response.data.output.mket_id_cd,
-                admn_item_yn: response.data.output.admn_item_yn,
-                tr_stop_yn: response.data.output.tr_stop_yn
-            };
-        }
-    }
-    async koreanStockReadExcel(worksheet, headers, url) {
+    async koreanStockReadExcel(worksheet, stockMarket) {
         const range = XLSX.utils.decode_range(worksheet['!ref'] ?? "");
         const startRow = 1;
         const startCol = 0;
@@ -232,14 +190,8 @@ let ExceluploadService = class ExceluploadService {
                 }
             }
             const Company = await this.koreanstockcoderepository.findOne({ where: { company: rowValues[0] } });
-            const CapitalImpaired = await this.isCapitalImpaired(rowValues[1]);
-            const market_cap = await this.is_below_market_cap_threshold(url, headers, rowValues[1]);
-            const check_revenue = await this.check_revenue(rowValues[1], market_cap?.mket_id_cd);
             if (!Company) {
-                await this.koreanstockcoderepository.save({ company: rowValues[0], code: rowValues[1], category: rowValues[2], products: rowValues[3], listed_date: rowValues[4], settlement_month: rowValues[5], representative: rowValues[6], homepage: rowValues[7], region: rowValues[8], mket_id_cd: market_cap?.mket_id_cd, mcap: market_cap?.result, capital_Impairment: CapitalImpaired.result, admn_item_yn: market_cap?.admn_item_yn, tr_stop_yn: market_cap?.tr_stop_yn, sale_account: check_revenue.result });
-            }
-            else if (Company) {
-                await this.koreanstockcoderepository.update({ code: rowValues[1] }, { mket_id_cd: market_cap?.mket_id_cd, mcap: market_cap?.result, capital_Impairment: CapitalImpaired.result, admn_item_yn: market_cap?.admn_item_yn, tr_stop_yn: market_cap?.tr_stop_yn, sale_account: check_revenue.result });
+                await this.koreanstockcoderepository.save({ company: rowValues[0], code: rowValues[1], category: rowValues[2], products: rowValues[3], listed_date: rowValues[4], settlement_month: rowValues[5], representative: rowValues[6], homepage: rowValues[7], region: rowValues[8], mket_id_cd: stockMarket });
             }
         }
     }

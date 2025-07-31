@@ -31,16 +31,6 @@ let StockDataService = class StockDataService {
         this.filteredPeakRepository = filteredPeakRepository;
         this.userInflectionRepository = userInflectionRepository;
     }
-    async trueCode() {
-        try {
-            const codes = await this.KoreanStockCodeRepository.find({ where: { unmet_conditions: true, certified: true } });
-            return codes;
-        }
-        catch (error) {
-            console.error('Error fetching codes:', error);
-            throw new common_1.InternalServerErrorException('Failed to fetch codes');
-        }
-    }
     async createUserInflectioncode(date, code, highPoint) {
         const trCode = await this.KoreanStockCodeRepository.findOne({ where: { code: code } });
         if (!trCode) {
@@ -87,12 +77,7 @@ let StockDataService = class StockDataService {
         if (!trCode) {
             return { message: 'No stock code or name provided' };
         }
-        trCode.certified = true;
         return await this.KoreanStockCodeRepository.save(trCode);
-    }
-    async falseCertified() {
-        const uncertifiedTrCodes = await this.KoreanStockCodeRepository.find({ where: { capital_Impairment: 'N', admn_item_yn: 'N', tr_stop_yn: 'N', mcap: 'N', sale_account: 'N', certified: false, unmet_conditions: true }, take: 10 });
-        return uncertifiedTrCodes;
     }
     async returnHighPeak(code) {
         const Company = await this.KoreanStockCodeRepository.findOne({ where: { code: code } });

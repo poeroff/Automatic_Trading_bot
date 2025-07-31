@@ -51,14 +51,14 @@ services:
   fastapi-server:
     container_name: fastapi-server
     build:
-      context: ./fastapi-server  # FastAPI 프로젝트 디렉토리
+      context: ./Server/fastapi-server  # FastAPI 프로젝트 디렉토리
       dockerfile: Dockerfile
     ports:
       - "8000:8000"  # FastAPI 기본 포트
     volumes:
-      - ./fastapi-server:/app  # FastAPI 코드 마운트
+      - ./Server/fastapi-server:/app  # FastAPI 코드 마운트
     env_file:
-      - ./fastapi-server/.env
+      - ./Server/fastapi-server/.env
     environment:
       - TZ=Asia/Seoul  # 시간대 설정
     depends_on:

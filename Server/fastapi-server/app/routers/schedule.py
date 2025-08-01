@@ -115,11 +115,10 @@ async def get_daily_price(stock_code, redis_client, required_data_count=100):
             }
             
             # API 호출 시간 기록
-            call_start_time = time.time()
             response = requests.get(url, headers=headers, params=params)
-            call_duration = time.time() - call_start_time
+         
             
-            logger.info(f"API 응답 상태코드: {response.status_code} (소요시간: {call_duration:.2f}초)")
+
             
             if response.status_code == 200:
                 data = response.json()
@@ -209,7 +208,7 @@ async def day_find_freak_update_logic(pool, redis_client):
                 total = len(stocks)
                 logger.info(f"총 {total}개 주식 처리 시작")
 
-                for i, stock in enumerate(stocks):
+                for i, stock in enumerate(stocks): 
                     try:
                         logger.info(f"진행률: {i+1}/{total} - {stock['name']} ({stock['code']}) 분석중...")
                         
@@ -223,13 +222,12 @@ async def day_find_freak_update_logic(pool, redis_client):
                             signal_result = cci_detector.calculate_cci_ema_stochrsi_signal(df)
                             
                             if signal_result and signal_result['success']:
-                                logger.info(f"{stock['name']} - CCI: {signal_result['current_cci']}, "f"CCI+EMA: {signal_result['current_cci_ema']}")
 
                                 # 실제 거래 실행
                                 if signal_result['latest_buy_signal']:
                                     await test_telegram_async(stock['name'], signal_result)
                                     await trader.place_buy_order_with_check(
-                                            stock['name'], stock['code'], redis_client, order_amount=500000
+                                            stock['name'], stock['code'], redis_client, order_amount=100000
                                     )
                                 elif signal_result['latest_sell_signal'] or signal_result['latest_stop_loss_signal']:
                                     await trader.place_sell_order_with_check(

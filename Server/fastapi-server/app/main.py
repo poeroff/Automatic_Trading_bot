@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 async_scheduler = AsyncIOScheduler(timezone=timezone('Asia/Seoul'))
 
 # 실제 작업 - 수정된 
-@async_scheduler.scheduled_job('cron', hour=15, minute=48)
+@async_scheduler.scheduled_job('cron', hour=14, minute=35)
 async def async_DayFindFeakUpdate():
     try:
         logger.info("=== 스케줄 작업 시작 ===")
         db_pool = app.state.db_pool
-        redis_client = app.state.redis_client  # Redis 클라이언트 추가
+        redis_client = app.state.redis_client  # Redis 클라이언트 추
         
         # 두 매개변수 모두 전달
         await schedule.day_find_freak_update_logic(db_pool, redis_client)

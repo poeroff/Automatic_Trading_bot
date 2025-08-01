@@ -264,3 +264,114 @@ async def NO_STOCK():
         print("🎉 비동기 테스트 완료!")
     else:
         print("❌ python-telegram-bot 라이브러리가 필요합니다")
+
+async def Wallet_No_MOENY():
+    """비동기 텔레그램 테스트"""
+    bot_token = os.getenv("bot_token")
+    chat_id = os.getenv("chat_id")
+
+    print("🧪 비동기 텔레그램 테스트 시작...")
+
+    if TelegramNotifierBot:
+        notifier = TelegramNotifierBot(bot_token, chat_id)
+        # 수익/손실에 따른 이모지와 메시지
+        
+        # 주식 신호 메시지
+        message = f"""현재 지갑에 잔액이 없습니다""".strip()
+        await notifier.send_message_async(message)
+        print("🎉 비동기 테스트 완료!")
+    else:
+        print("❌ python-telegram-bot 라이브러리가 필요합니다")
+
+async def BUY_ERROR():
+    """비동기 텔레그램 테스트"""
+    bot_token = "8427797627:AAHcjJNciO_DJYyjK4gby5WJFGBc9fs4N9k"
+    chat_id = 7103296678
+
+    print("🧪 비동기 텔레그램 테스트 시작...")
+
+    if TelegramNotifierBot:
+        notifier = TelegramNotifierBot(bot_token, chat_id)
+        # 수익/손실에 따른 이모지와 메시지
+        
+        # 주식 신호 메시지
+        message = f"""매수하는 과정에서 문제가 생겼습니다.""".strip()
+        await notifier.send_message_async(message)
+        print("🎉 비동기 테스트 완료!")
+    else:
+        print("❌ python-telegram-bot 라이브러리가 필요합니다")
+
+async def BUY_API_ERROR():
+    """비동기 텔레그램 테스트"""
+    bot_token = "8427797627:AAHcjJNciO_DJYyjK4gby5WJFGBc9fs4N9k"
+    chat_id = 7103296678
+
+    print("🧪 비동기 텔레그램 테스트 시작...")
+
+    if TelegramNotifierBot:
+        notifier = TelegramNotifierBot(bot_token, chat_id)
+        # 수익/손실에 따른 이모지와 메시지
+        
+        # 주식 신호 메시지
+        message = f"""매수하는 과정에서 API 문제가 생겼습니다.""".strip()
+        await notifier.send_message_async(message)
+        print("🎉 비동기 테스트 완료!")
+    else:
+        print("❌ python-telegram-bot 라이브러리가 필요합니다")
+
+
+async def SEEL_ERROR():
+    """비동기 텔레그램 테스트"""
+    bot_token = "8427797627:AAHcjJNciO_DJYyjK4gby5WJFGBc9fs4N9k"
+    chat_id = 7103296678
+
+    print("🧪 비동기 텔레그램 테스트 시작...")
+
+    if TelegramNotifierBot:
+        notifier = TelegramNotifierBot(bot_token, chat_id)
+        # 수익/손실에 따른 이모지와 메시지
+        
+        # 주식 신호 메시지
+        message = f"""매도하는 과정에서 문제가 생겼습니다.""".strip()
+        await notifier.send_message_async(message)
+        print("🎉 비동기 테스트 완료!")
+    else:
+        print("❌ python-telegram-bot 라이브러리가 필요합니다")
+
+async def PRICE_EROR():
+    """비동기 텔레그램 테스트"""
+    bot_token = "8427797627:AAHcjJNciO_DJYyjK4gby5WJFGBc9fs4N9k"
+    chat_id = 7103296678
+
+    print("🧪 비동기 텔레그램 테스트 시작...")
+
+    if TelegramNotifierBot:
+        notifier = TelegramNotifierBot(bot_token, chat_id)
+        # 수익/손실에 따른 이모지와 메시지
+        
+        # 주식 신호 메시지
+        message = f"""현재가 조회부분에서 에러가 났습니다다.""".strip()
+        await notifier.send_message_async(message)
+        print("🎉 비동기 테스트 완료!")
+    else:
+        print("❌ python-telegram-bot 라이브러리가 필요합니다")
+
+
+async def COUNT_EROR():
+    """비동기 텔레그램 테스트"""
+    bot_token = "8427797627:AAHcjJNciO_DJYyjK4gby5WJFGBc9fs4N9k"
+    chat_id = 7103296678
+
+    print("🧪 비동기 텔레그램 테스트 시작...")
+
+    if TelegramNotifierBot:
+        notifier = TelegramNotifierBot(bot_token, chat_id)
+        # 수익/손실에 따른 이모지와 메시지
+        
+        # 주식 신호 메시지
+        message = f"""수량 계산 부분에서 에러가 났습니다다.""".strip()
+        await notifier.send_message_async(message)
+        print("🎉 비동기 테스트 완료!")
+    else:
+        print("❌ python-telegram-bot 라이브러리가 필요합니다")
+

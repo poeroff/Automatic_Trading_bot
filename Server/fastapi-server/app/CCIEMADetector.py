@@ -9,7 +9,7 @@ class CCIEMAStochRSIDetector:
     
     def __init__(self, cci_length=20, ema_length=13, rsi_length=14, stoch_length=14, 
                  k_smooth=3, d_smooth=3, buy_threshold=-150, stoch_rsi_threshold=50,
-                 sell_threshold_cci_ema=100, sell_threshold_cci=150, stop_loss_threshold=-175):
+                 sell_threshold_cci_ema=100, sell_threshold_cci=125, stop_loss_threshold=-175):
         self.cci_length = cci_length
         self.ema_length = ema_length
         self.rsi_length = rsi_length
@@ -146,7 +146,7 @@ class CCIEMAStochRSIDetector:
                 (df_work['cci_ema'].shift(1) < self.sell_threshold_cci_ema)
             )
             
-            # 매도 신호 2: CCI가 150을 위로 뚫었다가 아래로 떨어질 때 (Pine Script와 동일)
+            # 매도 신호 2: CCI가 125을 위로 뚫었다가 아래로 떨어질 때 (Pine Script와 동일)
             sell_condition_cci = (
                 (df_work['cci'] <= self.sell_threshold_cci) & 
                 (df_work['cci'].shift(1) > self.sell_threshold_cci)

@@ -42,7 +42,7 @@ export class UpdateController {
   }
 
   //AccessToken 발급
-  @Cron('0 51 14 * * *',{timeZone :'Asia/Seoul'})
+  @Cron('0 24 14 * * *',{timeZone :'Asia/Seoul'})
   //@Cron('0 0 * * * *')
   createAccessToken(){
     const url = "https://openapi.koreainvestment.com:9443/oauth2/tokenP"

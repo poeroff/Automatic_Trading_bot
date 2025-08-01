@@ -134,7 +134,7 @@ class KISAutoTraderWithBalance:
                 return 0
             
             # 주문 가능 현금
-            available_cash = int(balance_data.get('output2', [{}])[0].get('ord_psbl_cash', 0))
+            available_cash = int(balance_data.get('output2', [{}])[0].get('prvs_rcdl_excc_amt', 0))
             logger.info(f"💰 주문 가능 현금: {available_cash:,}원")
             
             return available_cash
@@ -143,7 +143,7 @@ class KISAutoTraderWithBalance:
             logger.error(f"현금 조회 에러: {e}")
             return 0
     
-    async def place_buy_order_with_check(self, stockname, stock_code, redis_client, order_amount=100000):
+    async def place_buy_order_with_check(self, stockname, stock_code, redis_client, order_amount):
         """잔고 확인 후 매수 주문"""
         try:
             logger.info(f"🔥 {stock_code} 매수 주문 시작")
@@ -166,7 +166,7 @@ class KISAutoTraderWithBalance:
                 return False
             
             trade_success = await self.auto_trader.place_buy_order(
-                    stockname , stock_code, redis_client, order_amount=100000  # 10만원
+                    stockname , stock_code, redis_client, order_amount  # 10만원
             )
             return trade_success
         except Exception as e:

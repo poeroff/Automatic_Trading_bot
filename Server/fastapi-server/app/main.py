@@ -18,15 +18,29 @@ logger = logging.getLogger(__name__)
 async_scheduler = AsyncIOScheduler(timezone=timezone('Asia/Seoul'))
 
 # 실제 작업 - 수정된 
-@async_scheduler.scheduled_job('cron', hour=14, minute=35)
+@async_scheduler.scheduled_job('cron', hour=13, minute=3)
 async def async_DayFindFeakUpdate():
     try:
         logger.info("=== 스케줄 작업 시작 ===")
         db_pool = app.state.db_pool
         redis_client = app.state.redis_client  # Redis 클라이언트 추
-        
         # 두 매개변수 모두 전달
         await schedule.day_find_freak_update_logic(db_pool, redis_client)
+        logger.info("=== 스케줄 작업 완료 ===")
+    except asyncio.CancelledError:
+        logger.info("Scheduled job cancelled, cleaning up...")
+    except Exception as e:
+        logger.error(f"Error in scheduled job: {e}")
+
+# 실제 작업 - 수정된 
+@async_scheduler.scheduled_job('cron', hour=15, minute=20)
+async def async_Balance_check():
+    try:
+        logger.info("=== 스케줄 작업 시작 ===")
+        db_pool = app.state.db_pool
+        redis_client = app.state.redis_client  # Redis 클라이언트 추
+        # 두 매개변수 모두 전달
+        await schedule.Balance_check(db_pool, redis_client)
         logger.info("=== 스케줄 작업 완료 ===")
     except asyncio.CancelledError:
         logger.info("Scheduled job cancelled, cleaning up...")

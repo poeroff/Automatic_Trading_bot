@@ -16,7 +16,7 @@ from ..EMA import MACrossSignalDetector
 from ..CCIEMADetector import CCIEMAStochRSIDetector
 from ..Trader import KISAutoTrader
 from ..wallet import KISAutoTraderWithBalance
-from ..TelegramNotifier import test_telegram_async
+from ..TelegramNotifier import test_telegram_async,profit_Balance_check_Telegram_batch,Wallet_No_MOENY
 
 
 load_dotenv() 
@@ -220,15 +220,11 @@ async def day_find_freak_update_logic(pool, redis_client):
                             
                             # 이동평균 크로스 신호 계산
                             signal_result = cci_detector.calculate_cci_ema_stochrsi_signal(df)
-                            
                             if signal_result and signal_result['success']:
-
+                               
                                 # 실제 거래 실행
                                 if signal_result['latest_buy_signal']:
-                                    await test_telegram_async(stock['name'], signal_result)
-                                    await trader.place_buy_order_with_check(
-                                            stock['name'], stock['code'], redis_client, order_amount=100000
-                                    )
+                                    await trader.place_buy_order_with_check(stock['name'], stock['code'], redis_client,  signal_result , order_amount=500000)
                                 elif signal_result['latest_sell_signal'] or signal_result['latest_stop_loss_signal']:
                                     await trader.place_sell_order_with_check(
                                             stock['name'], stock['code'], redis_client
@@ -279,6 +275,55 @@ async def day_find_freak_update_logic(pool, redis_client):
     except Exception as e:
         logger.error(f"Main loop error: {e}")
         return False
+async def Balance_check(pool, redis_client):
+    WALLET = KISAutoTraderWithBalance()
+    result = await WALLET.get_account_balance(redis_client)
+    logger.info(f"{result['output2']}")  # 올바른 방법    
+    if result and 'output1' in result:
+        logger.info("=== 📊 현재 보유 종목 현황 ===")
+        
+        # 모든 종목 데이터를 리스트에 수집
+        stocks_data = []
+        
+        for i, stock in enumerate(result['output1'], 1):
+            stock_data = {
+                'stock_code': stock['pdno'],
+                'stock_name': stock['prdt_name'],
+                'quantity': int(stock['hldg_qty']),
+                'avg_price': float(stock['pchs_avg_pric']),
+                'current_price': int(stock['prpr']),
+                'profit_loss': int(stock['evlu_pfls_amt']),
+                'profit_rate': float(stock['evlu_pfls_rt'])
+            }
+            stocks_data.append(stock_data)
+        
+        # 요약 데이터 준비
+        summary_data = None
+        if 'output2' in result and result['output2']:
+            summary = result['output2'][0]
+            summary_data = {
+                'total_eval': int(summary['tot_evlu_amt']),
+                'total_profit': int(summary['evlu_pfls_smtl_amt'])
+            }
+
+        stocks_data.sort(key=lambda x: x['profit_rate'], reverse=True)
+        
+        # 통합 메시지로 한 번에 전송
+        await profit_Balance_check_Telegram_batch(stocks_data, summary_data)
+        
+        # 로그 출력
+        for stock_data in stocks_data:
+            logger.info(f"{stock_data['stock_name']}: {stock_data['profit_loss']:+,}원 ({stock_data['profit_rate']:+.2f}%)")
+        
+        if summary_data:
+            logger.info("=== 💰 포트폴리오 요약 ===")
+            logger.info(f"총 평가금액: {summary_data['total_eval']:,}원")
+            logger.info(f"총 손익: {summary_data['total_profit']:,}원")
+            logger.info("=======================")
+    else:
+        logger.error("❌ 계좌 잔고 조회 실패")
+    
+    return True
 
 
 # 2) FastAPI 라우터 핸들러

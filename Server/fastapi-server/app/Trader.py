@@ -273,20 +273,13 @@ class KISAutoTrader:
             if method2_available == 0 and method3_max_qty == 0:
                 logger.warning(f"{stock_code} API 주문가능금액 0 - 계좌 잔고로만 계산")
                 
-                # 매우 보수적 계산 (25% 안전마진)
-                safe_amount = min(method1_available, target_amount) * 0.75
+                safe_amount = min(method1_available, target_amount) * 0.9
                 
                 # 수수료 및 세금 고려
-                commission_tax = safe_amount * 0.005  # 0.5% 여유
+                commission_tax = safe_amount * 0.002  # 0.5% 여유
                 final_amount = safe_amount - commission_tax
                 
                 quantity = int(final_amount // price)
-                
-                # 추가로 2-3주 더 줄이기 (API 내부 계산 차이 고려)
-                if quantity > 3:
-                    quantity = quantity - 3
-                elif quantity > 1:
-                    quantity = quantity - 1
                 
                 if quantity < 1:
                     logger.warning(f"{stock_code} 극보수적 계산으로도 주문 불가능")
@@ -306,7 +299,7 @@ class KISAutoTrader:
             
             # 정상적인 API 응답이 있을 때
             cash_available = min(method1_available, method2_available, target_amount)
-            safe_amount = cash_available * 0.97
+            safe_amount = cash_available * 0.98
             
             calc_quantity = int(safe_amount // price)
             final_quantity = min(calc_quantity, method3_max_qty)
@@ -417,7 +410,7 @@ class KISAutoTrader:
             logger.error(f"{stockname} 리셋 후 매수 주문 에러: {e}")
             return False
 
-    async def place_buy_order(self, stockname, stock_code, redis_client, order_amount=100000):
+    async def place_buy_order(self, stockname, stock_code, redis_client, order_amount):
         """개선된 매수 주문"""
         try:
             logger.info(f"🔥 {stockname}({stock_code}) 매수 주문 시작")
@@ -537,7 +530,7 @@ class KISAutoTrader:
             await BUY_API_ERROR()
             logger.error(f"{stockname} 매수 주문 에러: {e}")
             return False
-    
+        
     async def place_sell_order(self, stockname, stock_code, redis_client, holding):
         """개선된 매도 주문"""
         try:
@@ -562,7 +555,7 @@ class KISAutoTrader:
             headers = await self.get_trading_headers(redis_client, "TTTC0011U")
             
             if not headers:
-                await SEEL_ERROR()
+                await SEEL_ERROR(stockname)
                 return False
             
             order_data = {
@@ -600,9 +593,9 @@ class KISAutoTrader:
                 else:
                     error_msg = result.get('msg1', '알 수 없는 오류')
                     logger.error(f"❌ {stockname} 매도 주문 실패: {error_msg}")
-                    await SEEL_ERROR()
+                    await SEEL_ERROR(stockname)
             else:
-                await SEEL_ERROR()
+                await SEEL_ERROR(stockname)
                 logger.error(f"❌ {stockname} 매도 주문 API 에러: {response.status_code}")
                 logger.error(f"응답: {response.text}")
             

@@ -134,7 +134,7 @@ async def test_telegram_async(stockname, signal_result):
 
 
 async def Buy_telegram_async(
-    stockname, order_no, quantity, current_price, total_amount
+    stockname, order_no, quantity, current_price, total_amount, kind
 ):
     """비동기 텔레그램 테스트"""
     bot_token = os.getenv("bot_token")
@@ -146,7 +146,7 @@ async def Buy_telegram_async(
         notifier = TelegramNotifierBot(bot_token, chat_id)
         # 주식 신호 메시지
         message = f"""
-            💰 <b>매수 주문 체결!</b>
+            💰 <b>{kind} 주문 체결!</b>
 
             📈 <b>종목정보</b>
             • 종목명: {stockname}
@@ -155,10 +155,9 @@ async def Buy_telegram_async(
             • 주문번호: <b>{order_no}</b>
             • 수량: <b>{quantity:,}주</b>
             • 체결가격: <b>{current_price:,}원</b>
-            • 총 투자금액: <b>{total_amount:,}원</b>
 
 
-            🎯 매수 완료! 수익 실현을 기대해봅시다! 📊
+            🎯 {kind} 완료!
             """.strip()
         await notifier.send_message_async(message)
         print("🎉 비동기 테스트 완료!")
@@ -303,7 +302,7 @@ async def NO_STOCK():
     else:
         print("❌ python-telegram-bot 라이브러리가 필요합니다")
 
-async def Wallet_No_MOENY(stockname, redis_client):
+async def Wallet_No_MOENY(stockname, redis_client,kind):
     """비동기 텔레그램 테스트"""
     bot_token = os.getenv("bot_token")
     chat_id = os.getenv("chat_id")
@@ -318,17 +317,11 @@ async def Wallet_No_MOENY(stockname, redis_client):
         
         # 주식 신호 메시지 (꾸며진 버전)
         message = f"""
-🚨 **매수 실패 알림** 🚨
+🚨 **{kind} 실패 알림** 🚨
 
 📈 **종목명**: {stockname}
 💰 **현재 잔액**: {available_cash:,}원
-❌ **상태**: 매수 가능 금액 부족
-
-💡 **해결방법**:
-- 계좌에 충분한 자금을 입금해주세요
-- 다른 보유 종목 일부 매도를 고려해보세요
-
-
+❌ **상태**: {kind} 가능 금액 부족
         """.strip()
         
         await notifier.send_message_async(message)

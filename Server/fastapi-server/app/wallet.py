@@ -144,9 +144,10 @@ class KISAutoTraderWithBalance:
             logger.error(f"현금 조회 에러: {e}")
             return 0
     
-    async def place_buy_order_with_check(self, stockname, stock_code, redis_client,  signal_result , order_amount):
+    async def place_buy_order_with_check(self, stockname, stock_code, redis_client, order_amount,kind ):
         """잔고 확인 후 매수 주문"""
         try:
+           
             logger.info(f"🔥 {stock_code} 매수 주문 시작")
             
             # 1. 이미 보유 중인지 확인
@@ -160,15 +161,15 @@ class KISAutoTraderWithBalance:
             # 2. 매수 가능 현금 확인
             available_cash = await self.get_available_cash(redis_client)
             if available_cash < order_amount:
-                await Wallet_No_MOENY(stockname,redis_client)
+                await Wallet_No_MOENY(stockname,redis_client,kind)
                 logger.warning(f"⚠️ 매수 가능 현금 부족!")
                 logger.warning(f"   필요금액: {order_amount:,}원")
                 logger.warning(f"   보유현금: {available_cash:,}원")
                 return False
-            await test_telegram_async(stockname, signal_result)
+
 
             trade_success = await self.auto_trader.place_buy_order(
-                    stockname , stock_code, redis_client, order_amount  # 10만원
+                    stockname , stock_code, redis_client, order_amount,kind
             )
             return trade_success
         except Exception as e:

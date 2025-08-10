@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 async_scheduler = AsyncIOScheduler(timezone=timezone('Asia/Seoul'))
 
 # 실제 작업 - 수정된 
-@async_scheduler.scheduled_job('cron', hour=13, minute=3)
+@async_scheduler.scheduled_job('cron', hour=9, minute=0)
 async def async_DayFindFeakUpdate():
     try:
         logger.info("=== 스케줄 작업 시작 ===")
@@ -33,7 +33,7 @@ async def async_DayFindFeakUpdate():
         logger.error(f"Error in scheduled job: {e}")
 
 # 실제 작업 - 수정된 
-@async_scheduler.scheduled_job('cron', hour=15, minute=20)
+@async_scheduler.scheduled_job('cron', hour=15, minute=15)
 async def async_Balance_check():
     try:
         logger.info("=== 스케줄 작업 시작 ===")
@@ -46,6 +46,7 @@ async def async_Balance_check():
         logger.info("Scheduled job cancelled, cleaning up...")
     except Exception as e:
         logger.error(f"Error in scheduled job: {e}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

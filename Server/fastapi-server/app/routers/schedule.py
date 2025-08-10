@@ -223,8 +223,9 @@ async def day_find_freak_update_logic(pool, redis_client):
                             if signal_result and signal_result['success']:
                                
                                 # 실제 거래 실행
+                               
                                 if signal_result['latest_buy_signal']:
-                                    await trader.place_buy_order_with_check(stock['name'], stock['code'], redis_client,  signal_result , order_amount=500000)
+                                    await trader.place_buy_order_with_check(stock['name'], stock['code'], redis_client,  order_amount=500000 , kind ="매수")
                                 elif signal_result['latest_sell_signal'] or signal_result['latest_stop_loss_signal']:
                                     await trader.place_sell_order_with_check(
                                             stock['name'], stock['code'], redis_client
@@ -275,9 +276,11 @@ async def day_find_freak_update_logic(pool, redis_client):
     except Exception as e:
         logger.error(f"Main loop error: {e}")
         return False
+    
 async def Balance_check(pool, redis_client):
-    WALLET = KISAutoTraderWithBalance()
-    result = await WALLET.get_account_balance(redis_client)
+   
+    trader = KISAutoTraderWithBalance()
+    result = await trader.get_account_balance(redis_client)
     logger.info(f"{result['output2']}")  # 올바른 방법    
     if result and 'output1' in result:
         logger.info("=== 📊 현재 보유 종목 현황 ===")
@@ -296,6 +299,8 @@ async def Balance_check(pool, redis_client):
                 'profit_rate': float(stock['evlu_pfls_rt'])
             }
             stocks_data.append(stock_data)
+            if  float(stock['evlu_pfls_rt']) <= -20:
+                await trader.place_buy_order_with_check(stock['prdt_name'], stock['pdno'], redis_client,  order_amount=500000 ,kind ="추가매수" )
         
         # 요약 데이터 준비
         summary_data = None
@@ -323,6 +328,9 @@ async def Balance_check(pool, redis_client):
     else:
         logger.error("❌ 계좌 잔고 조회 실패")
     
+    return True
+
+async def Additional_purchase(pool, redis_client):
     return True
 
 

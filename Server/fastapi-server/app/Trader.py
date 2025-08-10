@@ -410,7 +410,7 @@ class KISAutoTrader:
             logger.error(f"{stockname} 리셋 후 매수 주문 에러: {e}")
             return False
 
-    async def place_buy_order(self, stockname, stock_code, redis_client, order_amount):
+    async def place_buy_order(self, stockname, stock_code, redis_client, order_amount,kind):
         """개선된 매수 주문"""
         try:
             logger.info(f"🔥 {stockname}({stock_code}) 매수 주문 시작")
@@ -461,7 +461,7 @@ class KISAutoTrader:
                     logger.info(f"   단가: {current_price:,}원")
                     logger.info(f"   총액: {total_amount:,}원")
 
-                    await Buy_telegram_async(stockname, order_no, quantity, current_price, total_amount)
+                    await Buy_telegram_async(stockname, order_no, quantity, current_price, total_amount,kind)
                     return True
                 else:
                     error_msg = result.get('msg1', '알 수 없는 오류')
@@ -494,7 +494,7 @@ class KISAutoTrader:
                             logger.info(f"   수량: {reduced_quantity}주")
                             logger.info(f"   총액: {total_amount:,}원")
                             
-                            await Buy_telegram_async(stockname, order_no, reduced_quantity, current_price, total_amount)
+                            await Buy_telegram_async(stockname, order_no, reduced_quantity, current_price, total_amount,kind)
                             return True
                         else:
                             # 재시도도 실패하면 더 줄여서 한번 더
@@ -515,7 +515,7 @@ class KISAutoTrader:
                                         logger.info(f"   최종수량: {final_quantity}주")
                                         logger.info(f"   총액: {total_amount:,}원")
                                         
-                                        await Buy_telegram_async(stockname, order_no, final_quantity, current_price, total_amount)
+                                        await Buy_telegram_async(stockname, order_no, final_quantity, current_price, total_amount,kind)
                                         return True
                     
                     await BUY_ERROR()

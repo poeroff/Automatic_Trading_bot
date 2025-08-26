@@ -4,7 +4,7 @@ import requests
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-from .TelegramNotifier import Buy_telegram_async,SELL_telegram_async,BUY_ERROR,SEEL_ERROR,COUNT_EROR,PRICE_EROR,BUY_API_ERROR
+from .DiscordNotifier import Buy_discord_async,SELL_discord_async,BUY_ERROR,SEEL_ERROR,COUNT_EROR,PRICE_EROR,BUY_API_ERROR
 
 load_dotenv() 
 
@@ -253,7 +253,7 @@ class KISAutoTrader:
             logger.error(f"미체결 주문 취소 에러: {e}")
             return False
 
-    async def calculate_smart_order_quantity(self, stock_code, price, target_amount=100000, redis_client=None):
+    async def calculate_smart_order_quantity(self, stock_code, price, target_amount, redis_client=None):
         """스마트 주문 수량 계산"""
         try:
             # 1. 계좌 잔고 확인
@@ -273,33 +273,49 @@ class KISAutoTrader:
             if method2_available == 0 and method3_max_qty == 0:
                 logger.warning(f"{stock_code} API 주문가능금액 0 - 계좌 잔고로만 계산")
                 
-                safe_amount = min(method1_available, target_amount) * 0.9
+                # 잔고가 target_amount보다 적으면 매수 불가
+                if method1_available < target_amount:
+                    logger.warning(f"잔고 부족: 잔고 {method1_available:,}원 < 목표 {target_amount:,}원")
+                    return 0
+                
+                # 잔고가 충분하면 target_amount의 90% 사용
+                safe_amount = target_amount * 0.9
+                logger.info(f"잔고 충분 - 목표금액 {target_amount:,}원의 90% 사용")
                 
                 # 수수료 및 세금 고려
-                commission_tax = safe_amount * 0.002  # 0.5% 여유
+                commission_tax = safe_amount * 0.002  # 0.2% 여유
                 final_amount = safe_amount - commission_tax
                 
                 quantity = int(final_amount // price)
                 
                 if quantity < 1:
-                    logger.warning(f"{stock_code} 극보수적 계산으로도 주문 불가능")
+                    logger.warning(f"{stock_code} 계산 후 주문 불가능")
                     return 0
                 
                 actual_cost = quantity * price
                 
-                logger.info(f"=== {stock_code} 극보수적 계산 ===")
+                logger.info(f"=== {stock_code} API 0 응답 계산 ===")
                 logger.info(f"계좌가용: {method1_available:,}원")
-                logger.info(f"1차안전금액: {safe_amount:,}원 (75%)")
+                logger.info(f"목표금액: {target_amount:,}원")
+                logger.info(f"안전금액: {safe_amount:,}원")
                 logger.info(f"수수료제외: {final_amount:,}원")
-                logger.info(f"계산수량: {quantity}주 (추가 2-3주 차감)")
+                logger.info(f"계산수량: {quantity}주")
                 logger.info(f"실제비용: {actual_cost:,}원")
                 logger.info("===============================")
                 
                 return quantity
             
             # 정상적인 API 응답이 있을 때
-            cash_available = min(method1_available, method2_available, target_amount)
-            safe_amount = cash_available * 0.98
+            api_available = min(method1_available, method2_available)
+            
+            # 가용금액이 target_amount보다 적으면 매수 불가
+            if api_available < target_amount:
+                logger.warning(f"가용금액 부족: 가용 {api_available:,}원 < 목표 {target_amount:,}원")
+                return 0
+            
+            # 가용금액이 충분하면 target_amount의 90% 사용
+            safe_amount = target_amount * 0.9
+            logger.info(f"가용금액 충분 - 목표금액 {target_amount:,}원의 90% 사용")
             
             calc_quantity = int(safe_amount // price)
             final_quantity = min(calc_quantity, method3_max_qty)
@@ -323,7 +339,6 @@ class KISAutoTrader:
             logger.info(f"최종수량: {final_quantity}주")
             logger.info(f"예상비용: {actual_cost:,}원")
             logger.info("================================")
-            
             return final_quantity
             
         except Exception as e:
@@ -331,85 +346,7 @@ class KISAutoTrader:
             logger.error(f"스마트 수량 계산 에러: {e}")
             return 0
 
-    async def calculate_order_quantity_conservative(self, stock_code, price, order_amount=100000, redis_client=None):
-        """보수적 주문 수량 계산 - 기존 호환성 유지"""
-        return await self.calculate_smart_order_quantity(stock_code, price, order_amount, redis_client)
-        
-    async def place_buy_order_with_reset(self, stockname, stock_code, redis_client, order_amount=100000):
-        """미체결 주문 리셋 후 매수 주문"""
-        try:
-            logger.info(f"🔥 {stockname}({stock_code}) 리셋 후 매수 주문 시작")
-            
-            # 1. 모든 미체결 주문 취소
-            reset_success = await self.cancel_all_pending_orders(redis_client)
-            if reset_success:
-                logger.info("✅ 미체결 주문 리셋 완료")
-            else:
-                logger.warning("⚠️ 미체결 주문 리셋 실패 또는 없음 - 진행")
-            
-            # 2. 현재가 조회
-            current_price = await self.get_current_price(stock_code, redis_client)
-            if not current_price:
-                await PRICE_EROR()
-                logger.error(f"{stockname} 현재가 조회 실패")
-                return False
-            
-            # 3. 리셋 후 스마트 주문 수량 계산
-            quantity = await self.calculate_smart_order_quantity(stock_code, current_price, order_amount, redis_client)
-            if quantity == 0:
-                logger.warning(f"{stockname} 리셋 후에도 주문 수량 0 - 주문 취소")
-                return False
-            
-            logger.info(f"{stockname} 리셋 후 주문 시도: {quantity}주 × {current_price:,}원 = {quantity * current_price:,}원")
-
-            # 4. 매수 주문 실행
-            url = f"{self.base_url}/uapi/domestic-stock/v1/trading/order-cash"
-            headers = await self.get_trading_headers(redis_client, "TTTC0012U")
-            
-            if not headers:
-                await BUY_API_ERROR()
-                return False
-
-            order_data = {
-                "CANO": self.account_number,
-                "ACNT_PRDT_CD": "01",
-                "PDNO": stock_code,
-                "ORD_DVSN": "01",
-                "ORD_QTY": str(quantity),
-                "ORD_UNPR": "0",
-            }
-            
-            response = requests.post(url, headers=headers, json=order_data)
-            
-            if response.status_code == 200:
-                result = response.json()
-                if result.get('rt_cd') == '0':
-                    order_no = result.get('output', {}).get('ODNO', '')
-                    total_amount = current_price * quantity
-                    
-                    logger.info(f"✅ {stockname} 리셋 후 매수 주문 성공!")
-                    logger.info(f"   주문번호: {order_no}")
-                    logger.info(f"   수량: {quantity}주")
-                    logger.info(f"   단가: {current_price:,}원")
-                    logger.info(f"   총액: {total_amount:,}원")
-
-                    await Buy_telegram_async(stockname, order_no, quantity, current_price, total_amount)
-                    return True
-                else:
-                    error_msg = result.get('msg1', '알 수 없는 오류')
-                    logger.error(f"❌ {stockname} 리셋 후 매수 주문 실패: {error_msg}")
-                    await BUY_ERROR()
-            else:
-                await BUY_API_ERROR()
-                logger.error(f"❌ {stockname} 리셋 후 매수 주문 API 에러: {response.status_code}")
-            
-            return False
-            
-        except Exception as e:
-            await BUY_API_ERROR()
-            logger.error(f"{stockname} 리셋 후 매수 주문 에러: {e}")
-            return False
-
+   
     async def place_buy_order(self, stockname, stock_code, redis_client, order_amount,kind):
         """개선된 매수 주문"""
         try:
@@ -461,7 +398,7 @@ class KISAutoTrader:
                     logger.info(f"   단가: {current_price:,}원")
                     logger.info(f"   총액: {total_amount:,}원")
 
-                    await Buy_telegram_async(stockname, order_no, quantity, current_price, total_amount,kind)
+                    await Buy_discord_async(stockname, order_no, quantity, current_price, total_amount,kind)
                     return True
                 else:
                     error_msg = result.get('msg1', '알 수 없는 오류')
@@ -494,7 +431,7 @@ class KISAutoTrader:
                             logger.info(f"   수량: {reduced_quantity}주")
                             logger.info(f"   총액: {total_amount:,}원")
                             
-                            await Buy_telegram_async(stockname, order_no, reduced_quantity, current_price, total_amount,kind)
+                            await Buy_discord_async(stockname, order_no, reduced_quantity, current_price, total_amount,kind)
                             return True
                         else:
                             # 재시도도 실패하면 더 줄여서 한번 더
@@ -515,7 +452,7 @@ class KISAutoTrader:
                                         logger.info(f"   최종수량: {final_quantity}주")
                                         logger.info(f"   총액: {total_amount:,}원")
                                         
-                                        await Buy_telegram_async(stockname, order_no, final_quantity, current_price, total_amount,kind)
+                                        await Buy_discord_async(stockname, order_no, final_quantity, current_price, total_amount,kind)
                                         return True
                     
                     await BUY_ERROR()
@@ -583,11 +520,13 @@ class KISAutoTrader:
                     logger.info(f"   예상총액: {total_amount:,}원")
                     
                     if is_profit:
-                        logger.info(f"   🎉 예상수익: +{profit_amount:,}원 ({((current_price/avg_price-1)*100):+.2f}%)")
-                        await SELL_telegram_async(stockname, order_no, quantity, current_price, total_amount, profit_amount, True)
+                        profit_rate = ((current_price/avg_price-1)*100) if avg_price > 0 else 0
+                        logger.info(f"   🎉 예상수익: +{profit_amount:,}원 ({profit_rate:+.2f}%)")
+                        await SELL_discord_async(stockname, order_no, quantity, current_price, total_amount, profit_amount, True)
                     else:
-                        logger.info(f"   😢 예상손실: {profit_amount:,}원 ({((current_price/avg_price-1)*100):+.2f}%)")
-                        await SELL_telegram_async(stockname, order_no, quantity, current_price, total_amount, profit_amount, False)
+                        profit_rate = ((current_price/avg_price-1)*100) if avg_price > 0 else 0
+                        logger.info(f"   😢 예상손실: {profit_amount:,}원 ({profit_rate:+.2f}%)")
+                        await SELL_discord_async(stockname, order_no, quantity, current_price, total_amount, profit_amount, False)
                     
                     return True
                 else:
@@ -602,6 +541,6 @@ class KISAutoTrader:
             return False
             
         except Exception as e:
-            await SEEL_ERROR()
+            await SEEL_ERROR(stockname)
             logger.error(f"{stockname} 매도 주문 에러: {e}")
             return False

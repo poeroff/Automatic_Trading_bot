@@ -10,5 +10,8 @@ cryptography
 pytz
 redis
 ta
+httpx
 requests
 python-telegram-bot
+discord.js
+discord

@@ -3,9 +3,11 @@ import logging
 import requests
 import os
 from datetime import datetime
+import calendar
 from dotenv import load_dotenv
 from .Trader import KISAutoTrader
-from .TelegramNotifier import Wallet_No_MOENY,NO_STOCK,test_telegram_async
+from .DiscordNotifier import Wallet_No_MOENY,NO_STOCK,test_discord_async
+
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -73,6 +75,7 @@ class KISAutoTraderWithBalance:
             
             if response.status_code == 200:
                 result = response.json()
+                logger.info(f"응답: {result}")
                 if result.get('rt_cd') == '0':
                     logger.info(f"✅ 계좌 잔고 조회 성공 {result}")
                     return result
@@ -87,6 +90,67 @@ class KISAutoTraderWithBalance:
         except Exception as e:
             logger.error(f"잔고 조회 에러: {e}")
             return None
+        
+    async def  profit(self,redis_client):
+        """기간별 수익률 확인"""
+        def get_month_date_range(year, month):
+            """특정 년월의 시작일과 마지막일 반환"""
+            from datetime import datetime
+            import calendar
+            
+            # 해당 월의 첫째 날
+            start_date = f"{year}{month:02d}01"
+            
+            # 해당 월의 마지막 날
+            last_day = calendar.monthrange(year, month)[1]
+            end_date = f"{year}{month:02d}{last_day:02d}"
+            
+            return start_date, end_date
+
+        try:
+            
+            url = f"{self.base_url}/uapi/domestic-stock/v1/trading/inquire-period-profit"
+            headers = await self.get_trading_headers(redis_client, "TTTC8708R")
+            
+            if not headers:
+                return None
+            now = datetime.now()
+            start_date, end_date = get_month_date_range(now.year, now.month)
+            
+            params = {
+                "CANO": self.account_no,                    # 종합계좌번호 (8자리)
+                "ACNT_PRDT_CD": self.account_cd,           # 계좌상품코드 (2자리)
+                "INQR_STRT_DT": start_date,                # 조회시작일자 (YYYYMMDD)
+                "INQR_END_DT": end_date,                   # 조회종료일자 (YYYYMMDD)
+                "PDNO": "",                        # 상품번호 (12자리, 공란시 전체)
+                "SORT_DVSN": "00",                         # 정렬구분 (00:최근순, 01:과거순, 02:최근순)
+                "INQR_DVSN": "00",                         # 조회구분 (00 입력)
+                "CBLC_DVSN": "00",                         # 잔고구분 (00:전체)
+                "CTX_AREA_FK100": "",                      # 연속조회검색조건100
+                "CTX_AREA_NK100": ""                       # 연속조회키100
+            }
+            
+            
+            response = requests.get(url, headers=headers, params=params)
+            logger.info(response)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('rt_cd') == '0':
+                    logger.info(f"✅ 계좌 잔고 조회 성공 {result}")
+                    return result
+                else:
+                    logger.error(f"잔고 조회 실패: {result.get('msg1', '')}")
+            else:
+                logger.error(f"잔고 조회 API 에러: {response.status_code}")
+                logger.error(f"응답: {response.text}")
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"잔고 조회 에러: {e}")
+            return None
+
     
     async def check_stock_holding(self, stock_code, redis_client):
         """특정 종목 보유 여부 확인"""
@@ -147,8 +211,9 @@ class KISAutoTraderWithBalance:
     async def place_buy_order_with_check(self, stockname, stock_code, redis_client, order_amount,kind ):
         """잔고 확인 후 매수 주문"""
         try:
-           
-            logger.info(f"🔥 {stock_code} 매수 주문 시작")
+            result = await self.get_account_balance(redis_client)
+            if len(result['output1']) >= 19:
+                return False
             
             # 1. 이미 보유 중인지 확인
             holding = await self.check_stock_holding(stock_code, redis_client)
@@ -157,6 +222,29 @@ class KISAutoTraderWithBalance:
                 logger.warning(f"   보유수량: {holding['quantity']}주")
                 logger.warning(f"   🚫 중복 매수를 방지합니다.")
                 return False
+            
+            # 2. 매수 가능 현금 확인
+            available_cash = await self.get_available_cash(redis_client)
+            if available_cash < order_amount:
+                await Wallet_No_MOENY(stockname,redis_client,kind)
+                logger.warning(f"⚠️ 매수 가능 현금 부족!")
+                logger.warning(f"   필요금액: {order_amount:,}원")
+                logger.warning(f"   보유현금: {available_cash:,}원")
+                return False
+
+
+            trade_success = await self.auto_trader.place_buy_order(
+                    stockname , stock_code, redis_client, order_amount,kind
+            )
+            return trade_success
+        except Exception as e:
+            logger.error(f"매수 주문 에러: {e}")
+            return False
+        
+    async def add_buy_order_with_check(self, stockname, stock_code, redis_client, order_amount, kind ):
+        """잔고 확인 후 추가 매수 주문"""
+        try:
+            logger.info(f"🔥 {stock_code} 매수 주문 시작")
             
             # 2. 매수 가능 현금 확인
             available_cash = await self.get_available_cash(redis_client)

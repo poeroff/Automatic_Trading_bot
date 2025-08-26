@@ -9,6 +9,7 @@ from pytz import timezone
 import logging
 from datetime import datetime
 import redis.asyncio as redis
+from discord.connection import start_discord_bot, stop_discord_bot
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 async_scheduler = AsyncIOScheduler(timezone=timezone('Asia/Seoul'))
 
 # 실제 작업 - 수정된 
-@async_scheduler.scheduled_job('cron', hour=9, minute=0)
+@async_scheduler.scheduled_job('cron', hour=12, minute=26)
 async def async_DayFindFeakUpdate():
     try:
         logger.info("=== 스케줄 작업 시작 ===")
@@ -69,6 +70,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Redis 연결 실패: {e}")
     
+    # Discord 봇 시작
+    logger.info("Starting Discord bot...")
+    discord_task = asyncio.create_task(start_discord_bot())
+    app.state.discord_task = discord_task
+    
     logger.info("Starting scheduler...")
     async_scheduler.start()
     logger.info(f"Scheduled jobs: {async_scheduler.get_jobs()}")
@@ -80,6 +86,12 @@ async def lifespan(app: FastAPI):
     finally:
         logger.info("Shutting down... Closing connections")
         async_scheduler.shutdown(wait=False)
+        
+        # Discord 봇 종료
+        await stop_discord_bot()
+        if hasattr(app.state, 'discord_task'):
+            app.state.discord_task.cancel()
+            
         await app.state.redis_client.aclose()  # Redis 연결 종료 추가
         await close_db_pool(app.state.db_pool)
 

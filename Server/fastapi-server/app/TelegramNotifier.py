@@ -222,62 +222,71 @@ async def SELL_telegram_async(
     else:
         print("❌ python-telegram-bot 라이브러리가 필요합니다")
         
-async def profit_Balance_check_Telegram_batch(stocks_data, summary_data=None):
-    """모든 종목을 하나의 메시지로 통합해서 전송"""
+async def profit_Balance_check_Telegram_batch(stocks_data, summary_data=None, realized_returns=None):
+    """포트폴리오 현황 + 실현 수익률 통합 텔레그램 전송"""
     bot_token = os.getenv("bot_token")
     chat_id = os.getenv("chat_id")
     
     print("🧪 비동기 텔레그램 통합 전송 시작...")
     
-    if TelegramNotifierBot:
-        notifier = TelegramNotifierBot(bot_token, chat_id)
+    if not TelegramNotifierBot:
+        print("❌ python-telegram-bot 라이브러리가 필요합니다")
+        return
         
-        # 메시지 헤더
-        message = "📊 **전체 보유종목 현황**\n\n"
+    notifier = TelegramNotifierBot(bot_token, chat_id)
+    
+    # 메시지 구성
+    message = "📊 **투자 현황 리포트**\n\n"
+    
+    # 1. 실현 수익률 섹션
+    if realized_returns and realized_returns["trades"]:
+        message += "💰 **실현 매매 수익률** (이번 달)\n"
+        for trade in realized_returns["trades"]:
+            profit_emoji = "🟢" if trade["수익률"] > 0 else "🔴" if trade["수익률"] < 0 else "⚪"
+            message += f"{profit_emoji} {trade['거래일']}: {trade['수익률']:+.2f}% ({trade['실현손익']:+,}원)\n"
         
-        # 각 종목 정보 추가
-        for i, stock_data in enumerate(stocks_data, 1):
-            stock_code = stock_data['stock_code']
-            stock_name = stock_data['stock_name']
-            quantity = stock_data['quantity']
-            avg_price = stock_data['avg_price']
-            current_price = stock_data['current_price']
-            profit_loss = stock_data['profit_loss']
-            profit_rate = stock_data['profit_rate']
-            
-            # 수익/손실에 따른 이모지와 상태
-            if profit_loss > 0:
+        message += f"📈 총 실현손익: **{realized_returns['total_profit']:+,}원** ({realized_returns['trade_count']}건)\n\n"
+    else:
+        message += "💰 **실현 매매 수익률**: 이번 달 매도 거래 없음\n\n"
+    
+    # 2. 보유 종목 현황
+    message += "📈 **보유 종목 현황**\n"
+    for i, stock in enumerate(stocks_data, 1):
+        if stock['quantity'] > 0:  # 보유 중인 종목만
+            # 수익/손실 상태 표시
+            if stock['profit_loss'] > 0:
                 status_emoji = "🟢"
                 status_text = "수익"
-            elif profit_loss < 0:
-                status_emoji = "🔴"
+            elif stock['profit_loss'] < 0:
+                status_emoji = "🔴" 
                 status_text = "손실"
             else:
                 status_emoji = "⚪"
                 status_text = "보합"
             
-            # 개별 종목 정보
-            stock_message = f"""**{i}. {stock_name} ({stock_code})**
-📈 보유: {quantity:,}주 | 평단: {avg_price:,.0f}원
-📊 현재가: {current_price:,}원
-{status_emoji} {status_text}: {profit_loss:+,}원 ({profit_rate:+.2f}%)
+            message += f"""**{i}. {stock['stock_name']}** ({stock['stock_code']})
+📊 {stock['quantity']:,}주 | 평단: {stock['avg_price']:,.0f}원 | 현재: {stock['current_price']:,}원
+{status_emoji} {status_text}: {stock['profit_loss']:+,}원 ({stock['profit_rate']:+.2f}%)
 
 """
-            message += stock_message
+    
+    # 3. 포트폴리오 요약
+    if summary_data:
+        total_eval = summary_data['total_eval']
+        total_profit = summary_data['total_profit']
+        profit_emoji = "🟢" if total_profit > 0 else "🔴" if total_profit < 0 else "⚪"
         
-        # 요약 정보 추가 (있는 경우)
-        if summary_data:
-            total_eval = summary_data['total_eval']
-            total_profit = summary_data['total_profit']
-            
-            message += f"""💰 **포트폴리오 요약**
-총 평가금액: {total_eval:,}원
-총 손익: {total_profit:+,}원"""
+        message += f"""💼 **포트폴리오 요약**
+💰 총 평가금액: {total_eval:,}원
+{profit_emoji} 총 평가손익: {total_profit:+,}원"""
         
-        await notifier.send_message_async(message.strip())
-        print("🎉 비동기 통합 전송 완료!")
-    else:
-        print("❌ python-telegram-bot 라이브러리가 필요합니다")
+        # 전체 수익률 계산
+        if total_eval > 0 and total_profit != 0:
+            total_return = (total_profit / (total_eval - total_profit)) * 100
+            message += f" ({total_return:+.2f}%)"
+    
+    await notifier.send_message_async(message.strip())
+    print("🎉 비동기 통합 전송 완료!")
 
 
 

@@ -16,7 +16,8 @@ from ..EMA import MACrossSignalDetector
 from ..CCIEMADetector import CCIEMAStochRSIDetector
 from ..Trader import KISAutoTrader
 from ..wallet import KISAutoTraderWithBalance
-from ..TelegramNotifier import test_telegram_async,profit_Balance_check_Telegram_batch,Wallet_No_MOENY
+from ..DiscordNotifier import test_discord_async,profit_Balance_check_Discord_batch,Wallet_No_MOENY
+import requests
 
 
 load_dotenv() 
@@ -226,7 +227,8 @@ async def day_find_freak_update_logic(pool, redis_client):
                                
                                 if signal_result['latest_buy_signal']:
                                     await trader.place_buy_order_with_check(stock['name'], stock['code'], redis_client,  order_amount=500000 , kind ="매수")
-                                elif signal_result['latest_sell_signal'] or signal_result['latest_stop_loss_signal']:
+                                elif signal_result['latest_sell_signal'] or signal_result['latest_stop_loss_signal']:  
+                                    logger.info(f"{stock['name']} - 매도 신호 감지됨")
                                     await trader.place_sell_order_with_check(
                                             stock['name'], stock['code'], redis_client
                                     )
@@ -280,14 +282,17 @@ async def day_find_freak_update_logic(pool, redis_client):
 async def Balance_check(pool, redis_client):
    
     trader = KISAutoTraderWithBalance()
+    
+    # 기간별 수익률과 현재 잔고 조회
+    profit_result = await trader.profit(redis_client)
+ 
     result = await trader.get_account_balance(redis_client)
-    logger.info(f"{result['output2']}")  # 올바른 방법    
+        
     if result and 'output1' in result:
         logger.info("=== 📊 현재 보유 종목 현황 ===")
         
-        # 모든 종목 데이터를 리스트에 수집
+        # 보유 종목 데이터 수집
         stocks_data = []
-        
         for i, stock in enumerate(result['output1'], 1):
             stock_data = {
                 'stock_code': stock['pdno'],
@@ -299,10 +304,15 @@ async def Balance_check(pool, redis_client):
                 'profit_rate': float(stock['evlu_pfls_rt'])
             }
             stocks_data.append(stock_data)
-            if  float(stock['evlu_pfls_rt']) <= -20:
-                await trader.place_buy_order_with_check(stock['prdt_name'], stock['pdno'], redis_client,  order_amount=500000 ,kind ="추가매수" )
+            
+            # -15% 이하시 추가매수
+            if float(stock['evlu_pfls_rt']) <= -15:
+                await trader.add_buy_order_with_check(
+                    stock['prdt_name'], stock['pdno'], redis_client, 
+                    order_amount=500000, kind="추가매수"
+                )
         
-        # 요약 데이터 준비
+        # 포트폴리오 요약 데이터
         summary_data = None
         if 'output2' in result and result['output2']:
             summary = result['output2'][0]
@@ -310,11 +320,15 @@ async def Balance_check(pool, redis_client):
                 'total_eval': int(summary['tot_evlu_amt']),
                 'total_profit': int(summary['evlu_pfls_smtl_amt'])
             }
-
+        
+        # 실현 수익률 분석
+        realized_returns = analyze_realized_profit(profit_result) if profit_result else None
+        
+        # 수익률 순 정렬
         stocks_data.sort(key=lambda x: x['profit_rate'], reverse=True)
         
-        # 통합 메시지로 한 번에 전송
-        await profit_Balance_check_Telegram_batch(stocks_data, summary_data)
+        # 텔레그램 통합 전송
+        await profit_Balance_check_Discord_batch(stocks_data, summary_data, realized_returns)
         
         # 로그 출력
         for stock_data in stocks_data:
@@ -330,8 +344,43 @@ async def Balance_check(pool, redis_client):
     
     return True
 
-async def Additional_purchase(pool, redis_client):
-    return True
+def analyze_realized_profit(profit_result):
+    """기간별 수익률 데이터에서 실현 수익률 분석"""
+    try:
+        if not profit_result or 'output1' not in profit_result:
+            return None
+            
+        trades = profit_result['output1']
+        realized_trades = []
+        total_realized_profit = 0
+    
+        
+        for trade in trades:
+            # 매도가 발생한 거래만 필터링
+            sll_amt = int(trade.get('sll_amt', 0))
+            if sll_amt > 0:
+                rlzt_pfls = int(trade.get('rlzt_pfls', 0))  # 그대로 원 단위
+                pfls_rt = float(trade.get('pfls_rt', 0))
+                
+                realized_trade = {
+                    "거래일": trade.get('trad_dt', ''),
+                    "매도금액": sll_amt,       # 100,300원
+                    "매도수량": int(trade.get('sll_qty1', 0)),  # 68주
+                    "실현손익": rlzt_pfls,     # 1,313원 (실제 원 단위)
+                    "수익률": pfls_rt          # 1.33%
+                }
+                realized_trades.append(realized_trade)
+                total_realized_profit += rlzt_pfls  # 1,313원 그대로 합산
+        
+        return {
+            "trades": realized_trades,
+            "total_profit": total_realized_profit,  # 실제 원 단위 총합
+            "trade_count": len(realized_trades)
+        } if realized_trades else None
+        
+    except Exception as e:
+        logger.error(f"실현 수익률 분석 에러: {e}")
+        return None
 
 
 # 2) FastAPI 라우터 핸들러

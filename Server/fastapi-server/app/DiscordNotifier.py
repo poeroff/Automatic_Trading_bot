@@ -445,3 +445,32 @@ async def COUNT_EROR():
     message = f"""수량 계산 부분에서 에러가 났습니다.""".strip()
     await notifier.send_message_async(message)
     logger.info("Discord notification completed!")
+
+
+async def BUY_ORDER_ERROR(stockname, stock_code, error_message):
+    """매수 주문 에러 Discord 알림"""
+    channel_id = os.getenv("DISCORD_CHANNEL_ID")
+
+    logger.info("Starting buy order error Discord notification...")
+
+    if not channel_id:
+        logger.error("DISCORD_CHANNEL_ID environment variable not set")
+        return
+
+    notifier = DiscordNotifierBot(channel_id)
+    message = f"""
+🚨 **매수 주문 에러 발생!** 🚨
+
+📈 **종목정보**
+• 종목명: {stockname}
+• 종목코드: {stock_code}
+
+❌ **에러 내용**
+• {error_message}
+
+⚠️ 매수 주문 처리 중 문제가 발생했습니다.
+관리자 확인이 필요합니다.
+    """.strip()
+    
+    await notifier.send_message_async(message)
+    logger.info("Discord buy order error notification completed!")

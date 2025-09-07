@@ -10,14 +10,18 @@ from pyampd.ampd import find_peaks
 import pandas as pd
 import asyncio
 import redis.asyncio as redis
-import requests
 from dotenv import load_dotenv
 from ..EMA import MACrossSignalDetector
 from ..CCIEMADetector import CCIEMAStochRSIDetector
 from ..Trader import KISAutoTrader
 from ..wallet import KISAutoTraderWithBalance
 from ..DiscordNotifier import test_discord_async,profit_Balance_check_Discord_batch,Wallet_No_MOENY
-import requests
+from ..kis_session import kis_session
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+# SSL 경고 무시
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 
 load_dotenv() 
@@ -115,8 +119,8 @@ async def get_daily_price(stock_code, redis_client, required_data_count=100):
                 "FID_INPUT_DATE_2": end_date
             }
             
-            # API 호출 시간 기록
-            response = requests.get(url, headers=headers, params=params)
+            # API 호출 시간 기록 (SSL 검증 비활성화)
+            response = kis_session.get(url, headers=headers, params=params)
          
             
 

@@ -1,12 +1,17 @@
 import asyncio
 import logging
-import requests
 import os
 from datetime import datetime
 import calendar
 from dotenv import load_dotenv
 from .Trader import KISAutoTrader
-from .DiscordNotifier import Wallet_No_MOENY,NO_STOCK,test_discord_async
+from .DiscordNotifier import Wallet_No_MOENY,NO_STOCK,test_discord_async,BUY_ORDER_ERROR
+from .kis_session import kis_session
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+# SSL 경고 무시
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 
 load_dotenv()
@@ -71,7 +76,7 @@ class KISAutoTraderWithBalance:
             }
             logger.info(f"{params}")
             
-            response = requests.get(url, headers=headers, params=params)
+            response = kis_session.get(url, headers=headers, params=params)
             
             if response.status_code == 200:
                 result = response.json()
@@ -131,7 +136,7 @@ class KISAutoTraderWithBalance:
             }
             
             
-            response = requests.get(url, headers=headers, params=params)
+            response = kis_session.get(url, headers=headers, params=params)
             logger.info(response)
             
             if response.status_code == 200:
@@ -212,7 +217,7 @@ class KISAutoTraderWithBalance:
         """잔고 확인 후 매수 주문"""
         try:
             result = await self.get_account_balance(redis_client)
-            if len(result['output1']) >= 19:
+            if len(result['output1']) >= 15:
                 return False
             
             # 1. 이미 보유 중인지 확인
@@ -239,6 +244,7 @@ class KISAutoTraderWithBalance:
             return trade_success
         except Exception as e:
             logger.error(f"매수 주문 에러: {e}")
+            await BUY_ORDER_ERROR(stockname, stock_code, str(e))
             return False
         
     async def add_buy_order_with_check(self, stockname, stock_code, redis_client, order_amount, kind ):
@@ -262,6 +268,7 @@ class KISAutoTraderWithBalance:
             return trade_success
         except Exception as e:
             logger.error(f"매수 주문 에러: {e}")
+            await BUY_ORDER_ERROR(stockname, stock_code, str(e))
             return False
     
     async def place_sell_order_with_check(self, stockname, stock_code, redis_client):

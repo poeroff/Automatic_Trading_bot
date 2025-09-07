@@ -1,10 +1,16 @@
 import asyncio
 import logging
-import requests
+import time
 from datetime import datetime
 from dotenv import load_dotenv
 import os
 from .DiscordNotifier import Buy_discord_async,SELL_discord_async,BUY_ERROR,SEEL_ERROR,COUNT_EROR,PRICE_EROR,BUY_API_ERROR
+from .kis_session import kis_session
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+# SSL 경고 무시
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 load_dotenv() 
 
@@ -53,7 +59,7 @@ class KISAutoTrader:
                 "FID_INPUT_ISCD": stock_code
             }
             
-            response = requests.get(url, headers=headers, params=params)
+            response = kis_session.get(url, headers=headers, params=params)
             if response.status_code == 200:
                 data = response.json()
                 if 'output' in data:
@@ -89,7 +95,7 @@ class KISAutoTrader:
                 "CTX_AREA_NK100": ""
             }
             
-            response = requests.get(url, headers=headers, params=params)
+            response = kis_session.get(url, headers=headers, params=params)
             
             if response.status_code == 200:
                 data = response.json()
@@ -128,7 +134,7 @@ class KISAutoTrader:
                 "ORD_DVSN": "01"
             }
             
-            response = requests.get(url, headers=headers, params=params)
+            response = kis_session.get(url, headers=headers, params=params)
             
             if response.status_code == 200:
                 data = response.json()
@@ -179,7 +185,7 @@ class KISAutoTrader:
                 "CTX_AREA_NK100": ""
             }
             
-            response = requests.get(url, headers=headers, params=params)
+            response = requests.get(url, headers=headers, params=params, verify=False)
             
             if response.status_code != 200:
                 logger.error(f"미체결 조회 실패: {response.status_code}")
@@ -221,7 +227,7 @@ class KISAutoTrader:
                         "QTY_ALL_ORD_YN": "Y"  # 전량 취소
                     }
                     
-                    cancel_response = requests.post(cancel_url, headers=cancel_headers, json=cancel_data)
+                    cancel_response = kis_session.post(cancel_url, headers=cancel_headers, json=cancel_data)
                     
                     if cancel_response.status_code == 200:
                         cancel_result = cancel_response.json()
@@ -384,7 +390,7 @@ class KISAutoTrader:
                 "ORD_UNPR": "0",
             }
             
-            response = requests.post(url, headers=headers, json=order_data)
+            response = kis_session.post(url, headers=headers, json=order_data)
             
             if response.status_code == 200:
                 result = response.json()
@@ -419,7 +425,7 @@ class KISAutoTrader:
                         return False
                     
                     order_data["ORD_QTY"] = str(reduced_quantity)
-                    retry_response = requests.post(url, headers=headers, json=order_data)
+                    retry_response = kis_session.post(url, headers=headers, json=order_data)
                     
                     if retry_response.status_code == 200:
                         retry_result = retry_response.json()
@@ -440,7 +446,7 @@ class KISAutoTrader:
                                 logger.info(f"{stockname} 2차 재시도: {reduced_quantity}주 → {final_quantity}주")
                                 
                                 order_data["ORD_QTY"] = str(final_quantity)
-                                final_response = requests.post(url, headers=headers, json=order_data)
+                                final_response = kis_session.post(url, headers=headers, json=order_data)
                                 
                                 if final_response.status_code == 200:
                                     final_result = final_response.json()
@@ -504,7 +510,7 @@ class KISAutoTrader:
                 "ORD_UNPR": "0",
             }
             
-            response = requests.post(url, headers=headers, json=order_data)
+            response = kis_session.post(url, headers=headers, json=order_data)
             
             if response.status_code == 200:
                 result = response.json()

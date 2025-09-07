@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 async_scheduler = AsyncIOScheduler(timezone=timezone('Asia/Seoul'))
 
 # 실제 작업 - 수정된 
-@async_scheduler.scheduled_job('cron', hour=12, minute=26)
+@async_scheduler.scheduled_job('cron', hour=10, minute=39)
 async def async_DayFindFeakUpdate():
     try:
         logger.info("=== 스케줄 작업 시작 ===")
@@ -34,7 +34,7 @@ async def async_DayFindFeakUpdate():
         logger.error(f"Error in scheduled job: {e}")
 
 # 실제 작업 - 수정된 
-@async_scheduler.scheduled_job('cron', hour=15, minute=15)
+@async_scheduler.scheduled_job('cron', hour=15, minute=0)
 async def async_Balance_check():
     try:
         logger.info("=== 스케줄 작업 시작 ===")

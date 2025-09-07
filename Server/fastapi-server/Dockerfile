@@ -9,6 +9,7 @@ WORKDIR /app
 # 3. 시스템 종속성 설치 (선택 사항)
 RUN apt-get update && apt-get install -y \
     gcc \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Asia/Seoul  
